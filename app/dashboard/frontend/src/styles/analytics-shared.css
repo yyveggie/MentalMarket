@@ -1,0 +1,58 @@
+.info-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; font-size: 10px; border-radius: 50%;
+  background: var(--surface-2); color: var(--text-dim); cursor: help;
+  vertical-align: middle; margin-left: 4px; transition: all 0.15s;
+}
+.info-btn:hover { background: var(--accent); color: #fff; }
+
+.card-title { position: relative; }
+
+.custom-tooltip {
+  position: absolute; top: 100%; left: 0; z-index: 100; margin-top: 6px;
+  padding: 10px 14px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-size: 11px; font-weight: 400;
+  line-height: 1.6; white-space: pre-line; min-width: 280px; max-width: 380px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); pointer-events: none;
+  animation: tooltip-fade 0.15s ease;
+}
+@keyframes tooltip-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.stat-item { display: flex; flex-direction: column; gap: 2px; }
+.stat-label { font-size: 11px; color: var(--text-muted); }
+.stat-value { font-size: 22px; font-weight: 700; color: var(--heading); font-family: var(--font-mono); line-height: 1.2; }
+.stat-value small { font-size: 13px; font-weight: 500; }
+.stat-value.num { font-size: 18px; }
+.stat-desc { font-size: 10px; color: var(--text-dim); }
+
+.wealth-list { display: flex; flex-direction: column; gap: 12px; }
+.wealth-row { display: flex; flex-direction: column; gap: 4px; }
+.wealth-header { display: flex; justify-content: space-between; align-items: center; }
+.wealth-label { font-size: 12px; font-weight: 600; }
+.wealth-count { font-size: 11px; color: var(--text-muted); }
+.wealth-bar-bg { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.wealth-bar { height: 100%; border-radius: 3px; transition: width 0.3s ease; opacity: 0.7; }
+.wealth-nums { display: flex; gap: 12px; font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); }
+
+.liq-list { display: flex; flex-direction: column; gap: 10px; }
+.liq-row { display: flex; align-items: center; gap: 12px; }
+.liq-label { font-size: 11px; font-weight: 600; min-width: 80px; }
+.liq-bars { display: flex; gap: 16px; flex: 1; }
+.liq-bar-wrap { display: flex; align-items: center; gap: 4px; }
+.liq-tag { font-size: 10px; color: var(--text-muted); }
+.liq-num { font-size: 13px; font-weight: 600; color: var(--heading); font-family: var(--font-mono); }
+
+.loss-aversion { display: flex; flex-direction: column; gap: 16px; }
+.la-section { display: flex; flex-direction: column; gap: 6px; }
+.la-header { font-size: 11px; font-weight: 600; }
+.la-bars { display: flex; flex-direction: column; gap: 6px; }
+.la-row { display: flex; align-items: center; gap: 8px; }
+.la-label { font-size: 11px; color: var(--text-muted); min-width: 60px; }
+.la-bar-bg { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.la-bar { height: 100%; border-radius: 3px; transition: width 0.3s ease; opacity: 0.7; }
+.la-pct { font-size: 12px; font-weight: 600; color: var(--heading); font-family: var(--font-mono); min-width: 40px; text-align: right; }

@@ -1,0 +1,26 @@
+# Data
+data/
+
+# Run logs/results
+runs/
+
+# Papers
+论文，不必看/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Conda
+.conda/
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# IDE
+.vscode/

@@ -1,0 +1,26 @@
+services:
+  simulation:
+    build: .
+    container_name: mentalmarket
+    command: ["--config", "config_100.yaml"]
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./runs:/app/runs
+      - ./config.yaml:/app/config.yaml:ro
+      - ./config_100.yaml:/app/config_100.yaml:ro
+      - ./data:/app/data:ro
+      - ./app/dashboard/static:/app/app/dashboard/static
+    environment:
+      - PYTHONUNBUFFERED=1
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    restart: "no"

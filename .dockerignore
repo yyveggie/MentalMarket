@@ -1,0 +1,10 @@
+.conda/
+.git/
+.vscode/
+.cursor/
+__pycache__/
+*.pyc
+runs/
+app/dashboard/frontend/node_modules/
+*.egg-info/
+.env
