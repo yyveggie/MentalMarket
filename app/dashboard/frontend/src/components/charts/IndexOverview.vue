@@ -9,7 +9,7 @@ const broadSvg = ref<SVGSVGElement>()
 
 const broad = computed(() => store.broadMarket)
 
-type SortKey = 'symbol' | 'pctChg' | 'price' | 'volume' | 'volatility'
+type SortKey = 'symbol' | 'pctChg' | 'price' | 'volume'
 const sortKey = ref<SortKey>('pctChg')
 const sortAsc = ref(false)
 
@@ -32,11 +32,9 @@ const sortOptions = [
   { key: 'pctChg' as SortKey, label: '涨跌' },
   { key: 'price' as SortKey, label: '价格' },
   { key: 'volume' as SortKey, label: '成交量' },
-  { key: 'volatility' as SortKey, label: '波动' },
 ]
 
 const indexData = computed(() => {
-  const indicators = store.technicalIndicators
   const items = Object.entries(store.indexSeries)
     .map(([symbol, rows]) => {
       const last = rows[rows.length - 1]
@@ -45,7 +43,6 @@ const indexData = computed(() => {
       const high = prices.length ? Math.max(...prices) : 0
       const low = prices.length ? Math.min(...prices) : 0
       const totalVol = rows.reduce((s, r) => s + (r.volume ?? 0), 0)
-      const ind = indicators[symbol]
       return {
         symbol,
         price: last?.close ?? 0,
@@ -53,8 +50,6 @@ const indexData = computed(() => {
         volume: totalVol,
         high,
         low,
-        rsi: ind?.rsi_14 ?? null,
-        volatility: ind?.volatility ?? null,
         sparkline: prices.slice(-30),
       }
     })
@@ -106,15 +101,9 @@ function renderBroadChart() {
   const color = isUp ? '#ef5350' : '#26a69a'
 
   const area = d3.area<number>()
-    .x((_, i) => x(i))
-    .y0(iH)
-    .y1((d) => y(d))
-    .curve(d3.curveMonotoneX)
-
+    .x((_, i) => x(i)).y0(iH).y1((d) => y(d)).curve(d3.curveMonotoneX)
   const line = d3.line<number>()
-    .x((_, i) => x(i))
-    .y((d) => y(d))
-    .curve(d3.curveMonotoneX)
+    .x((_, i) => x(i)).y((d) => y(d)).curve(d3.curveMonotoneX)
 
   g.append('path').datum(prices).attr('fill', color).attr('opacity', 0.08).attr('d', area)
   g.append('path').datum(prices).attr('fill', 'none').attr('stroke', color).attr('stroke-width', 1.2).attr('d', line)
@@ -211,8 +200,6 @@ watch(() => store.broadIndexSeries, renderBroadChart, { deep: true })
           <div class="idx-cell"><span class="idx-lbl">高</span><span class="idx-val">{{ fmt(idx.high, 2) }}</span></div>
           <div class="idx-cell"><span class="idx-lbl">低</span><span class="idx-val">{{ fmt(idx.low, 2) }}</span></div>
           <div class="idx-cell"><span class="idx-lbl">量</span><span class="idx-val">{{ fmt(idx.volume, 0) }}</span></div>
-          <div class="idx-cell"><span class="idx-lbl">RSI</span><span class="idx-val">{{ idx.rsi != null ? fmt(idx.rsi, 1) : '-' }}</span></div>
-          <div class="idx-cell"><span class="idx-lbl">波动</span><span class="idx-val">{{ idx.volatility != null ? (idx.volatility * 100).toFixed(1) + '%' : '-' }}</span></div>
         </div>
       </div>
       <div v-if="indexData.length === 0" class="idx-empty"></div>
@@ -238,13 +225,6 @@ watch(() => store.broadIndexSeries, renderBroadChart, { deep: true })
   align-items: baseline;
   gap: 8px;
   margin-bottom: 3px;
-}
-
-.broad-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--heading);
-  font-family: var(--font-sans);
 }
 
 .broad-value {
@@ -374,7 +354,7 @@ watch(() => store.broadIndexSeries, renderBroadChart, { deep: true })
 
 .idx-detail-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 2px;
   margin-top: 2px;
 }

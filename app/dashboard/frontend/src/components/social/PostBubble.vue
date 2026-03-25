@@ -58,7 +58,7 @@ const tradingDayDisplay = computed(() => {
 
     <div class="post-footer">
       <span v-if="showEngagement" class="stat">❤️ {{ post.likes }}</span>
-      <span v-if="showEngagement && (post.dislikes || 0) > 0" class="stat">👎 {{ post.dislikes }}</span>
+      <span v-if="showEngagement" class="stat">👎 {{ post.dislikes || 0 }}</span>
       <span v-if="showEngagement" class="stat">🔁 {{ post.retweet_count }}</span>
       <span v-if="post.original_post_id" class="stat">📎 #{{ post.original_post_id }}</span>
     </div>

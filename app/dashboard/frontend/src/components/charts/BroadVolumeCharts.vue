@@ -250,9 +250,15 @@ watch([() => store.broadIndexSeries, () => store.indexSeries], renderAll, { deep
   gap: 16px;
 }
 
+.bv-row > .card {
+  display: flex;
+  flex-direction: column;
+}
+
 .chart-svg {
   width: 100%;
-  height: 160px;
+  flex: 1;
+  min-height: 120px;
 }
 
 .volume-split {
