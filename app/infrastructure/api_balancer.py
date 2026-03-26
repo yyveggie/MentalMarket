@@ -9,8 +9,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import pprint
+import re
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
@@ -44,11 +46,58 @@ class APIBalancer:
     # 公共系统 prompt 缓存
     _system_cache: Optional[str] = None
     _system_cache_by_tom: dict[int, str] = field(default_factory=dict, repr=False)
-    _bound_model_cache: dict[tuple, BaseChatModel] = field(default_factory=dict, repr=False)
+    _bound_model_cache: dict[tuple, Any] = field(default_factory=dict, repr=False)
     temperature: float = 0.7
     max_tokens: int = 512
+    max_retries_per_provider: int = 4
+    retry_backoff_base_seconds: float = 1.0
+    retry_backoff_cap_seconds: float = 8.0
+    print_full_prompt: bool = True
     debug_print: bool = True
     colorized_print: bool = True
+
+    @staticmethod
+    def _extract_status_code(err: Exception) -> int | None:
+        status = getattr(err, "status_code", None)
+        if isinstance(status, int):
+            return status
+        response = getattr(err, "response", None)
+        response_status = getattr(response, "status_code", None)
+        if isinstance(response_status, int):
+            return response_status
+        text = str(err)
+        m = re.search(r"\b([1-5]\d\d)\b", text)
+        if m:
+            try:
+                return int(m.group(1))
+            except ValueError:
+                return None
+        return None
+
+    def _is_retryable_error(self, err: Exception) -> bool:
+        status = self._extract_status_code(err)
+        name = type(err).__name__
+        if status is not None:
+            # 429 限流与 5xx 服务端异常可重试；其余 4xx 一般是请求内容/参数问题。
+            if status == 429 or 500 <= status < 600:
+                return True
+            if 400 <= status < 500:
+                return False
+
+        lname = name.lower()
+        if "badrequest" in lname or "invalidrequest" in lname:
+            return False
+        retryable_keywords = ("connect", "timeout", "tempor", "rate", "unavailable")
+        if any(k in lname for k in retryable_keywords):
+            return True
+        return True
+
+    def _should_dump_prompt(self, err: Exception) -> bool:
+        status = self._extract_status_code(err)
+        name = type(err).__name__
+        if status is not None:
+            return 400 <= status < 500 and status != 429
+        return "BadRequestError" in name
 
     def add_provider(self, cfg: ProviderConfig):
         self.providers[cfg.name] = cfg
@@ -59,13 +108,16 @@ class APIBalancer:
             self._semaphores[name] = asyncio.Semaphore(cfg.max_concurrency)
             self._counters[name] = 0
             
-            model_kwargs = {"extra_body": dict(cfg.extra_body)} if cfg.extra_body else {}
+            model_kwargs: dict[str, Any] = {}
+            if cfg.extra_body:
+                model_kwargs["extra_body"] = dict(cfg.extra_body)
+            if self.max_tokens > 0:
+                model_kwargs["max_tokens"] = self.max_tokens
             self._models[name] = ChatOpenAI(
                 model=cfg.model,
                 api_key=cfg.api_key,  # type: ignore
                 base_url=cfg.base_url,
                 temperature=self.temperature,
-                max_tokens=self.max_tokens,
                 max_retries=1,
                 timeout=cfg.timeout,
                 model_kwargs=model_kwargs,
@@ -116,7 +168,6 @@ class APIBalancer:
         first_provider = self._pick_provider(tom_level)
         ordered = [first_provider.name] + [n for n in candidates if n != first_provider.name]
 
-        max_retries_per_provider = 2
         last_err: Exception | None = None
         for attempt, provider_name in enumerate(ordered):
             provider = self.providers[provider_name]
@@ -125,7 +176,7 @@ class APIBalancer:
 
             tool_ids = tuple(id(t) for t in tools) if tools else ()
             cache_key = (provider_name, tool_ids, tool_choice)
-            for retry in range(max_retries_per_provider):
+            for retry in range(self.max_retries_per_provider):
                 retry_wait = 0.0
                 async with sem:
                     if tools:
@@ -138,22 +189,53 @@ class APIBalancer:
                             self._bound_model_cache[cache_key] = bound_model
                     else:
                         bound_model = model
+
+                    if self.print_full_prompt:
+                        print("\033[96m===== FULL PROMPT/MESSAGES BEFORE API CALL =====\033[0m")
+                        print(f"[ToM Level: {tom_level}] Provider: {provider.name}  Model: {provider.model}  Round: {round_info}")
+                        print("--- all_messages ---")
+                        pprint.pprint(all_messages)
+                        if tools:
+                            print("--- tools ---")
+                            print([getattr(t, "__name__", t.__class__.__name__) for t in tools])
+                        if tool_choice is not None:
+                            print("--- tool_choice ---")
+                            print(tool_choice)
+                        print("\033[96m===============================================\033[0m")
+
                     try:
                         res = await bound_model.ainvoke(all_messages)
                     except Exception as api_err:
                         last_err = api_err
-                        if retry < max_retries_per_provider - 1:
-                            retry_wait = 1.0 * (2 ** retry)
+                        retryable = self._is_retryable_error(api_err)
+                        status_code = self._extract_status_code(api_err)
+                        # 仅对 4xx(非429) 打印 prompt/messages，便于定位请求内容问题。
+                        if self._should_dump_prompt(api_err):
+                            print("\033[91m===== LLM 400 BadRequestError: PROMPT/MESSAGES THAT CAUSED ERROR =====\033[0m")
+                            print(f"[ToM Level: {tom_level}] Provider: {provider.name}  Model: {provider.model}  Round: {round_info}")
+                            print("--- all_messages ---")
+                            pprint.pprint(all_messages)
+                            print("--- Exception ---")
+                            print(api_err)
+                            print("\033[91m===============================================================\033[0m")
+
+                        retry_budget = self.max_retries_per_provider if retryable else 1
+                        if retry < retry_budget - 1:
+                            retry_wait = min(
+                                self.retry_backoff_base_seconds * (2 ** retry),
+                                self.retry_backoff_cap_seconds,
+                            )
                             logger.warning(
-                                "API call failed [%s/%s] (ToM%d) %s: %s — retry %d/%d in %.1fs",
+                                "API call failed [%s/%s] (ToM%d) %s: %s(status=%s,retryable=%s) — retry %d/%d in %.1fs",
                                 provider.name, provider.model, tom_level, round_info,
-                                type(api_err).__name__, retry + 1, max_retries_per_provider, retry_wait,
+                                type(api_err).__name__, status_code, retryable,
+                                retry + 1, retry_budget, retry_wait,
                             )
                         else:
                             logger.warning(
-                                "API call failed [%s/%s] (ToM%d) %s: %s: %s — failover to next provider (%d/%d)",
+                                "API call failed [%s/%s] (ToM%d) %s: %s(status=%s,retryable=%s): %s — failover to next provider (%d/%d)",
                                 provider.name, provider.model, tom_level, round_info,
-                                type(api_err).__name__, api_err, attempt + 1, len(ordered),
+                                type(api_err).__name__, status_code, retryable, api_err, attempt + 1, len(ordered),
                             )
                             break
                     else:
@@ -186,9 +268,14 @@ class APIBalancer:
 def build_balancer_from_config(api_config: dict) -> APIBalancer:
     """从配置字典创建负载均衡器"""
     infer_cfg = api_config.get("inference", {})
+    default_timeout = float(infer_cfg.get("request_timeout", 90.0))
     balancer = APIBalancer(
         temperature=float(infer_cfg.get("temperature", 0.7)),
         max_tokens=int(infer_cfg.get("max_tokens", 512)),
+        max_retries_per_provider=int(infer_cfg.get("max_retries_per_provider", 4)),
+        retry_backoff_base_seconds=float(infer_cfg.get("retry_backoff_base_seconds", 1.0)),
+        retry_backoff_cap_seconds=float(infer_cfg.get("retry_backoff_cap_seconds", 8.0)),
+        print_full_prompt=bool(infer_cfg.get("print_full_prompt", True)),
         debug_print=bool(infer_cfg.get("debug_print", True)),
         colorized_print=bool(infer_cfg.get("colorized_print", True)),
     )
@@ -205,7 +292,7 @@ def build_balancer_from_config(api_config: dict) -> APIBalancer:
             api_key=api_key,
             model=provider_cfg["model"],
             max_concurrency=provider_cfg.get("max_concurrency", 20),
-            timeout=provider_cfg.get("timeout", 60.0),
+            timeout=provider_cfg.get("timeout", default_timeout),
             extra_body=provider_cfg.get("extra_body", {}),
         )
         balancer.add_provider(cfg)
