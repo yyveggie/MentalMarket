@@ -1,0 +1,128 @@
+{
+  "600036": {
+    "total_sentiment": -41.051812,
+    "comment_count": 226,
+    "avg_sentiment": -0.181645,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600048": {
+    "total_sentiment": -56.203963,
+    "comment_count": 382,
+    "avg_sentiment": -0.147131,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600276": {
+    "total_sentiment": -8.661801,
+    "comment_count": 66,
+    "avg_sentiment": -0.131239,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600309": {
+    "total_sentiment": -17.130622,
+    "comment_count": 97,
+    "avg_sentiment": -0.176604,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600519": {
+    "total_sentiment": -34.425371,
+    "comment_count": 161,
+    "avg_sentiment": -0.213822,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600690": {
+    "total_sentiment": -346.764299,
+    "comment_count": 1744,
+    "avg_sentiment": -0.198833,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600887": {
+    "total_sentiment": -36.986479,
+    "comment_count": 203,
+    "avg_sentiment": -0.182199,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600900": {
+    "total_sentiment": -44.980251,
+    "comment_count": 200,
+    "avg_sentiment": -0.224901,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "601012": {
+    "total_sentiment": -304.638946,
+    "comment_count": 1624,
+    "avg_sentiment": -0.187586,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "601318": {
+    "total_sentiment": -44.191335,
+    "comment_count": 249,
+    "avg_sentiment": -0.177475,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "601390": {
+    "total_sentiment": -159.506171,
+    "comment_count": 863,
+    "avg_sentiment": -0.184828,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "601668": {
+    "total_sentiment": -178.183131,
+    "comment_count": 843,
+    "avg_sentiment": -0.211368,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "601888": {
+    "total_sentiment": -69.210738,
+    "comment_count": 355,
+    "avg_sentiment": -0.19496,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "601899": {
+    "total_sentiment": -42.679047,
+    "comment_count": 203,
+    "avg_sentiment": -0.210242,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "688041": {
+    "total_sentiment": -56.364509,
+    "comment_count": 380,
+    "avg_sentiment": -0.148328,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "688981": {
+    "total_sentiment": -65.772955,
+    "comment_count": 284,
+    "avg_sentiment": -0.231595,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "601919": {
+    "total_sentiment": -233.870914,
+    "comment_count": 1130,
+    "avg_sentiment": -0.206965,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  },
+  "600150": {
+    "total_sentiment": -445.662332,
+    "comment_count": 1779,
+    "avg_sentiment": -0.250513,
+    "model": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "device": "mps"
+  }
+}

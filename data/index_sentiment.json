@@ -1,0 +1,210 @@
+{
+  "TLEI": {
+    "index_name": "交通与运输指数",
+    "industry": "交通与运输",
+    "index_sentiment": -0.22772,
+    "stocks_with_data": 2,
+    "stocks_total": 2,
+    "weight_redistributed": 0.0,
+    "detail": {
+      "601919": {
+        "avg_sentiment": -0.206965,
+        "comment_count": 1130,
+        "original_weight": 0.5234,
+        "adjusted_weight": 0.5234
+      },
+      "600150": {
+        "avg_sentiment": -0.250513,
+        "comment_count": 1779,
+        "original_weight": 0.4766,
+        "adjusted_weight": 0.4766
+      }
+    }
+  },
+  "MEI": {
+    "index_name": "制造业指数",
+    "industry": "制造业",
+    "index_sentiment": -0.193082,
+    "stocks_with_data": 2,
+    "stocks_total": 8,
+    "weight_redistributed": 0.6771,
+    "detail": {
+      "601012": {
+        "avg_sentiment": -0.187586,
+        "comment_count": 1624,
+        "original_weight": 0.1651,
+        "adjusted_weight": 0.511304
+      },
+      "600690": {
+        "avg_sentiment": -0.198833,
+        "comment_count": 1744,
+        "original_weight": 0.1578,
+        "adjusted_weight": 0.488696
+      }
+    }
+  },
+  "CPEI": {
+    "index_name": "化工与制药指数",
+    "industry": "化工与制药",
+    "index_sentiment": -0.148568,
+    "stocks_with_data": 2,
+    "stocks_total": 3,
+    "weight_redistributed": 0.2568,
+    "detail": {
+      "600276": {
+        "avg_sentiment": -0.131239,
+        "comment_count": 66,
+        "original_weight": 0.4593,
+        "adjusted_weight": 0.618003
+      },
+      "600309": {
+        "avg_sentiment": -0.176604,
+        "comment_count": 97,
+        "original_weight": 0.2839,
+        "adjusted_weight": 0.381997
+      }
+    }
+  },
+  "IEEI": {
+    "index_name": "基础设施与工程指数",
+    "industry": "基础设施与工程",
+    "index_sentiment": -0.202186,
+    "stocks_with_data": 2,
+    "stocks_total": 3,
+    "weight_redistributed": 0.2011,
+    "detail": {
+      "601668": {
+        "avg_sentiment": -0.211368,
+        "comment_count": 843,
+        "original_weight": 0.5225,
+        "adjusted_weight": 0.654024
+      },
+      "601390": {
+        "avg_sentiment": -0.184828,
+        "comment_count": 863,
+        "original_weight": 0.2764,
+        "adjusted_weight": 0.345976
+      }
+    }
+  },
+  "REEI": {
+    "index_name": "房地产指数",
+    "industry": "房地产",
+    "index_sentiment": -0.147131,
+    "stocks_with_data": 1,
+    "stocks_total": 1,
+    "weight_redistributed": 0.0,
+    "detail": {
+      "600048": {
+        "avg_sentiment": -0.147131,
+        "comment_count": 382,
+        "original_weight": 1.0,
+        "adjusted_weight": 1.0
+      }
+    }
+  },
+  "TSEI": {
+    "index_name": "旅游与服务指数",
+    "industry": "旅游与服务",
+    "index_sentiment": -0.19496,
+    "stocks_with_data": 1,
+    "stocks_total": 1,
+    "weight_redistributed": 0.0,
+    "detail": {
+      "601888": {
+        "avg_sentiment": -0.19496,
+        "comment_count": 355,
+        "original_weight": 1.0,
+        "adjusted_weight": 1.0
+      }
+    }
+  },
+  "CGEI": {
+    "index_name": "消费品指数",
+    "industry": "消费品",
+    "index_sentiment": -0.208778,
+    "stocks_with_data": 2,
+    "stocks_total": 5,
+    "weight_redistributed": 0.1769,
+    "detail": {
+      "600519": {
+        "avg_sentiment": -0.213822,
+        "comment_count": 161,
+        "original_weight": 0.6918,
+        "adjusted_weight": 0.840481
+      },
+      "600887": {
+        "avg_sentiment": -0.182199,
+        "comment_count": 203,
+        "original_weight": 0.1313,
+        "adjusted_weight": 0.159519
+      }
+    }
+  },
+  "TTEI": {
+    "index_name": "科技与通信指数",
+    "industry": "科技与通信",
+    "index_sentiment": -0.198549,
+    "stocks_with_data": 2,
+    "stocks_total": 10,
+    "weight_redistributed": 0.7005,
+    "detail": {
+      "688981": {
+        "avg_sentiment": -0.231595,
+        "comment_count": 284,
+        "original_weight": 0.1807,
+        "adjusted_weight": 0.603138
+      },
+      "688041": {
+        "avg_sentiment": -0.148328,
+        "comment_count": 380,
+        "original_weight": 0.1189,
+        "adjusted_weight": 0.396862
+      }
+    }
+  },
+  "EREI": {
+    "index_name": "能源与资源指数",
+    "industry": "能源与资源",
+    "index_sentiment": -0.218507,
+    "stocks_with_data": 2,
+    "stocks_total": 6,
+    "weight_redistributed": 0.4067,
+    "detail": {
+      "600900": {
+        "avg_sentiment": -0.224901,
+        "comment_count": 200,
+        "original_weight": 0.3345,
+        "adjusted_weight": 0.563796
+      },
+      "601899": {
+        "avg_sentiment": -0.210242,
+        "comment_count": 203,
+        "original_weight": 0.2588,
+        "adjusted_weight": 0.436204
+      }
+    }
+  },
+  "FSEI": {
+    "index_name": "金融服务指数",
+    "industry": "金融服务",
+    "index_sentiment": -0.179309,
+    "stocks_with_data": 2,
+    "stocks_total": 11,
+    "weight_redistributed": 0.5919,
+    "detail": {
+      "601318": {
+        "avg_sentiment": -0.177475,
+        "comment_count": 249,
+        "original_weight": 0.2286,
+        "adjusted_weight": 0.560294
+      },
+      "600036": {
+        "avg_sentiment": -0.181645,
+        "comment_count": 226,
+        "original_weight": 0.1794,
+        "adjusted_weight": 0.439706
+      }
+    }
+  }
+}

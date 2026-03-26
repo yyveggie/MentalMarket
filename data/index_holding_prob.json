@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "method": "sentiment_weighted",
+    "description": "基于情绪值和市值权重的指数持仓概率。composite = α×sentiment_norm + (1-α)×weight_norm，再线性映射到 [P_floor, P_ceil]。",
+    "sentiment_alpha": 0.6,
+    "market_weight_alpha": 0.4,
+    "probability_floor": 0.15,
+    "probability_ceiling": 0.70,
+    "max_holdings_per_agent": 6,
+    "min_holdings_per_agent": 1,
+    "weight_normalization": "log",
+    "source_sentiment": "data/index_sentiment.json",
+    "source_profile": "data/stock_profile.csv"
+  },
+  "holdings": {
+    "CPEI": {
+      "name": "化工与制药指数",
+      "index_sentiment": -0.148568,
+      "market_weight_pct": 6.491,
+      "sentiment_norm": 0.9822,
+      "weight_norm_log": 0.5492,
+      "composite_score": 0.8090,
+      "probability": 0.595
+    },
+    "FSEI": {
+      "name": "金融服务指数",
+      "index_sentiment": -0.179309,
+      "market_weight_pct": 33.014,
+      "sentiment_norm": 0.6008,
+      "weight_norm_log": 1.0,
+      "composite_score": 0.7605,
+      "probability": 0.568
+    },
+    "REEI": {
+      "name": "房地产指数",
+      "index_sentiment": -0.147131,
+      "market_weight_pct": 0.969,
+      "sentiment_norm": 1.0,
+      "weight_norm_log": 0.0223,
+      "composite_score": 0.6089,
+      "probability": 0.485
+    },
+    "TTEI": {
+      "name": "科技与通信指数",
+      "index_sentiment": -0.198549,
+      "market_weight_pct": 12.963,
+      "sentiment_norm": 0.3619,
+      "weight_norm_log": 0.7413,
+      "composite_score": 0.5137,
+      "probability": 0.433
+    },
+    "MEI": {
+      "name": "制造业指数",
+      "index_sentiment": -0.193082,
+      "market_weight_pct": 8.946,
+      "sentiment_norm": 0.4298,
+      "weight_norm_log": 0.6382,
+      "composite_score": 0.5132,
+      "probability": 0.432
+    },
+    "CGEI": {
+      "name": "消费品指数",
+      "index_sentiment": -0.208778,
+      "market_weight_pct": 18.245,
+      "sentiment_norm": 0.2350,
+      "weight_norm_log": 0.8357,
+      "composite_score": 0.4753,
+      "probability": 0.411
+    },
+    "EREI": {
+      "name": "能源与资源指数",
+      "index_sentiment": -0.218507,
+      "market_weight_pct": 13.16,
+      "sentiment_norm": 0.1143,
+      "weight_norm_log": 0.7452,
+      "composite_score": 0.3667,
+      "probability": 0.352
+    },
+    "IEEI": {
+      "name": "基础设施与工程指数",
+      "index_sentiment": -0.202186,
+      "market_weight_pct": 3.137,
+      "sentiment_norm": 0.3169,
+      "weight_norm_log": 0.3479,
+      "composite_score": 0.3293,
+      "probability": 0.331
+    },
+    "TSEI": {
+      "name": "旅游与服务指数",
+      "index_sentiment": -0.19496,
+      "market_weight_pct": 0.894,
+      "sentiment_norm": 0.4065,
+      "weight_norm_log": 0.0,
+      "composite_score": 0.2439,
+      "probability": 0.284
+    },
+    "TLEI": {
+      "name": "交通与运输指数",
+      "index_sentiment": -0.22772,
+      "market_weight_pct": 2.182,
+      "sentiment_norm": 0.0,
+      "weight_norm_log": 0.2474,
+      "composite_score": 0.0990,
+      "probability": 0.205
+    }
+  }
+}
