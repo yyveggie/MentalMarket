@@ -30,7 +30,9 @@ const groups = computed(() => {
       count: agents.length,
       avgWealth: tom?.avg_wealth ?? 0,
       avgReturn: tom?.avg_return_pct ?? 0,
-      profitRatio: tom?.positive_return_ratio ?? 0,
+      roiPct: tom?.roi_pct ?? 0,
+      winRate: tom?.win_rate_trade_pct ?? 0,
+      positiveReturnRatio: tom?.positive_return_ratio ?? 0,
       totalTrades: tom?.total_trades ?? 0,
       buyCount,
       sellCount,
@@ -62,7 +64,6 @@ const recentActivity = computed(() => {
     </div>
 
     <template v-else>
-      <!-- ToM 概览条 -->
       <div class="tom-bars">
         <div v-for="g in groups" :key="g.level" class="tom-bar" :class="`tom${g.level}`">
           <div class="bar-header">
@@ -71,18 +72,28 @@ const recentActivity = computed(() => {
           </div>
           <div class="bar-stats">
             <div class="bar-stat">
-              <span class="bs-label">财富</span>
+              <span class="bs-label">财富（平均）</span>
               <span class="bs-value">{{ fmtCompact(g.avgWealth) }}</span>
             </div>
             <div class="bar-stat">
-              <span class="bs-label">收益率</span>
+              <span class="bs-label">收益率（平均）</span>
               <span class="bs-value" :class="g.avgReturn > 0 ? 'color-up' : g.avgReturn < 0 ? 'color-down' : ''">
                 {{ g.avgReturn > 0 ? '+' : '' }}{{ g.avgReturn.toFixed(1) }}%
               </span>
             </div>
             <div class="bar-stat">
-              <span class="bs-label">盈利率</span>
-              <span class="bs-value" :class="g.profitRatio >= 50 ? 'color-up' : 'color-down'">{{ g.profitRatio.toFixed(0) }}%</span>
+              <span class="bs-label">ROI</span>
+              <span class="bs-value" :class="g.roiPct > 0 ? 'color-up' : g.roiPct < 0 ? 'color-down' : ''">
+                {{ g.roiPct > 0 ? '+' : '' }}{{ g.roiPct.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="bar-stat">
+              <span class="bs-label">胜率</span>
+              <span class="bs-value" :class="g.winRate >= 50 ? 'color-up' : 'color-down'">{{ g.winRate.toFixed(0) }}%</span>
+            </div>
+            <div class="bar-stat">
+              <span class="bs-label">正收益比</span>
+              <span class="bs-value" :class="g.positiveReturnRatio >= 50 ? 'color-up' : 'color-down'">{{ g.positiveReturnRatio.toFixed(0) }}%</span>
             </div>
             <div class="bar-stat">
               <span class="bs-label">交易</span>

@@ -116,9 +116,12 @@ export interface TomLevelSummary {
   median_wealth: number
   min_wealth: number
   max_wealth: number
+  avg_initial_asset?: number
   avg_return_pct: number
+  roi_pct?: number
   avg_pnl: number
   positive_return_ratio: number
+  win_rate_trade_pct?: number
   total_trades: number
   gini_coefficient?: number
   top10_wealth_share?: number

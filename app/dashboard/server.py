@@ -1156,13 +1156,25 @@ class RealtimeDashboard:
             if not n:
                 tom_summary[str(level)] = {
                     "count": 0, "avg_wealth": 0, "total_wealth": 0,
-                    "avg_return_pct": 0, "avg_pnl": 0, "positive_return_ratio": 0,
+                    "avg_initial_asset": 0, "avg_return_pct": 0, "roi_pct": 0,
+                    "avg_pnl": 0, "positive_return_ratio": 0, "win_rate_trade_pct": 0,
                     "total_trades": 0, "avg_trades_per_agent": 0,
                     "median_wealth": 0, "min_wealth": 0, "max_wealth": 0,
                     "gini_coefficient": 0, "top10_wealth_share": 0,
                 }
                 continue
             wealths_sorted = sorted(td["wealths"])
+            level_agents = [a for a in self.agent_manager.agents.values() if a.agent_id != 0 and a.tom_level == level]
+            total_initial_asset = sum(float(a.initial_asset) for a in level_agents)
+            total_realized_gains = sum(int(getattr(a, "cum_realized_gains", 0) or 0) for a in level_agents)
+            total_realized_losses = sum(int(getattr(a, "cum_realized_losses", 0) or 0) for a in level_agents)
+            realized_trade_count = total_realized_gains + total_realized_losses
+            roi_pct = 0.0
+            if total_initial_asset > 0:
+                roi_pct = (sum(td["wealths"]) - total_initial_asset) / total_initial_asset * 100.0
+            win_rate_trade_pct = 0.0
+            if realized_trade_count > 0:
+                win_rate_trade_pct = total_realized_gains / realized_trade_count * 100.0
             tom_summary[str(level)] = {
                 "count": n,
                 "avg_wealth": round(sum(td["wealths"]) / n, 2),
@@ -1170,9 +1182,12 @@ class RealtimeDashboard:
                 "median_wealth": round(wealths_sorted[n // 2], 2),
                 "min_wealth": round(wealths_sorted[0], 2),
                 "max_wealth": round(wealths_sorted[-1], 2),
+                "avg_initial_asset": round(total_initial_asset / n, 2) if n > 0 else 0.0,
                 "avg_return_pct": round(sum(td["returns"]) / n * 100, 2),
+                "roi_pct": round(roi_pct, 2),
                 "avg_pnl": round(sum(td["pnls"]) / n, 2),
                 "positive_return_ratio": round(sum(1 for r in td["returns"] if r > 0) / n * 100, 1),
+                "win_rate_trade_pct": round(win_rate_trade_pct, 1),
                 "total_trades": sum(td["trades"]),
                 "avg_trades_per_agent": round(sum(td["trades"]) / n, 1),
                 "gini_coefficient": round(self._gini_coefficient(wealths_sorted), 4),

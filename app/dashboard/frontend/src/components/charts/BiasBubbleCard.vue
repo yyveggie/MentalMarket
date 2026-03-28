@@ -33,8 +33,8 @@ const corrPct = computed(() =>
     </div>
     <div class="metric-footer">
       <span v-if="corrPct !== null">信心-价格相关 {{ corrPct }}%</span>
-      <span v-if="bias.avg_confidence !== null">平均信心 {{ bias.avg_confidence.toFixed(2) }}</span>
-      <span v-if="bias.avg_deviation_pct !== null">平均偏离 {{ bias.avg_deviation_pct.toFixed(2) }}%</span>
+      <span v-if="bias.avg_confidence !== null">信心（平均） {{ bias.avg_confidence.toFixed(2) }}</span>
+      <span v-if="bias.avg_deviation_pct !== null">偏离（平均） {{ bias.avg_deviation_pct.toFixed(2) }}%</span>
     </div>
   </div>
 </template>

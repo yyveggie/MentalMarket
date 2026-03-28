@@ -5,7 +5,7 @@ import { useTooltip, pct } from '@/composables/useTooltip'
 
 const store = useMarketStore()
 const { activeTooltip, showTip, hideTip } = useTooltip()
-const tip = '平均感知帖数 = 每次决策时 Agent 看到的社交帖子数均值\n新闻曝光率 = 感知到新闻帖的决策占比\n关注者帖子 = 来自已关注用户的帖子被看到的累计次数\n\n支持按 ToM 阶层筛选查看'
+const tip = '感知帖数（平均） = 每次决策时 Agent 看到的社交帖子数（平均）\n新闻曝光率 = 感知到新闻帖的决策占比\n关注者帖子 = 来自已关注用户的帖子被看到的累计次数\n\n支持按 ToM 阶层筛选查看'
 
 const selectedTom = ref<string>('all')
 const tomOptions = ['all', '0', '1', '2'] as const
@@ -37,7 +37,7 @@ const newsExposure = computed(() => pct(current.value.has_news, current.value.to
       >{{ tomLabels[opt] }}</button>
     </div>
     <div class="stat-grid">
-      <div class="stat-item"><span class="stat-label">平均感知帖数</span><span class="stat-value num">{{ avgPerceived }}</span></div>
+      <div class="stat-item"><span class="stat-label">感知帖数（平均）</span><span class="stat-value num">{{ avgPerceived }}</span></div>
       <div class="stat-item"><span class="stat-label">新闻曝光率</span><span class="stat-value">{{ newsExposure }}</span></div>
       <div class="stat-item"><span class="stat-label">关注者帖子</span><span class="stat-value num">{{ current.following_authors.toLocaleString() }}</span><span class="stat-desc">关注人发帖被看到次数</span></div>
       <div class="stat-item"><span class="stat-label">总感知事件</span><span class="stat-value num">{{ current.total.toLocaleString() }}</span></div>

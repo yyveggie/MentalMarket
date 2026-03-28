@@ -90,12 +90,6 @@ onMounted(() => {
 onUnmounted(() => resizeObs?.disconnect())
 watch(() => store.priceTrend, renderPriceChart, { deep: true })
 
-const gridStyle = computed(() => {
-  const count = Object.keys(store.cdaBySymbol).length
-  const cols = Math.min(3, Math.max(1, Math.ceil(count / 2)))
-  return { gridTemplateColumns: `repeat(${cols}, 1fr)` }
-})
-
 const symbolEntries = computed(() => {
   return Object.entries(store.cdaBySymbol)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -132,7 +126,7 @@ const symbolEntries = computed(() => {
 
     <div v-if="symbolEntries.length === 0" class="empty-hint"></div>
 
-    <div class="ob-grid" :style="gridStyle">
+    <div class="ob-grid">
       <div v-for="entry in symbolEntries" :key="entry.symbol" class="ob-panel">
         <div class="ob-header">
           <span class="ob-symbol">{{ entry.symbol }}</span>
@@ -196,6 +190,8 @@ const symbolEntries = computed(() => {
 
 .ob-grid {
   display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: row;
   gap: 6px;
 }
 

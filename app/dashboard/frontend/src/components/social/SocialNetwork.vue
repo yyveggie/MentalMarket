@@ -233,7 +233,7 @@ watch(() => store.socialGraph, render, { deep: true })
     <div class="sn-controls">
       <div class="sn-stats">
         <span>{{ stats.totalFollows.toLocaleString() }} 关注</span>
-        <span>均值 {{ stats.avgFollowing }}</span>
+        <span>关注数（平均） {{ stats.avgFollowing }}</span>
         <span>{{ stats.kolCount }} KOL</span>
       </div>
       <div class="sn-filters">

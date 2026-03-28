@@ -39,6 +39,18 @@ const holdingSortOptions = [
   { key: 'trade_count' as HoldingSort, label: '交易' },
 ]
 
+const holdingMetricHints = [
+  { key: 'avgWealth', label: '财富（平均）', tip: '该 ToM 组所有智能体当前总财富（现金+持仓市值）的平均值。' },
+  { key: 'avgReturn', label: '收益率（平均）', tip: '该 ToM 组智能体收益率的平均值。单个收益率=（当前财富-初始资产）/初始资产。' },
+  { key: 'roiPct', label: 'ROI', tip: '组级 ROI = （该组总财富-该组总初始资产）/该组总初始资产。' },
+  { key: 'winRate', label: '胜率', tip: '胜率 = 盈利交易数 / (盈利交易数 + 亏损交易数) × 100%' },
+  { key: 'positiveReturnRatio', label: '正收益比', tip: '正收益比占比 = 收益率大于 0 的人数 / 该组总人数。' },
+  { key: 'totalTrades', label: '交易', tip: '该 ToM 组累计成交笔数总和。' },
+  { key: 'buyCount', label: '买', tip: '最近一次已执行动作为买入（buy）的智能体数量。' },
+  { key: 'sellCount', label: '卖', tip: '最近一次已执行动作为卖出（sell）的智能体数量。' },
+  { key: 'thinkingCount', label: '思考', tip: '当前处于思考状态（正在推理/决策）的智能体数量。' },
+]
+
 function toggleHoldingSort(key: HoldingSort) {
   if (holdingSort.value === key) {
     holdingSortAsc.value = !holdingSortAsc.value
@@ -117,6 +129,14 @@ onUnmounted(() => disconnect())
               <span class="toolbar-label">ToM</span>
               <button class="toolbar-btn" :class="{ active: holdingTomFilter === null }" @click="holdingTomFilter = null">全部</button>
               <button v-for="t in [0, 1, 2]" :key="t" class="toolbar-btn" :class="{ active: holdingTomFilter === t, [`tom${t}-btn`]: true }" @click="holdingTomFilter = holdingTomFilter === t ? null : t">T{{ t }}</button>
+            </div>
+            <div class="toolbar-group metric-help-group">
+              <span v-for="item in holdingMetricHints" :key="item.key" class="toolbar-help-item">
+                <span class="toolbar-help-label">{{ item.label }}</span>
+                <span class="help-icon" tabindex="0" aria-label="指标解释">?
+                  <span class="help-pop">{{ item.tip }}</span>
+                </span>
+              </span>
             </div>
           </div>
           <TradingArena @agent-click="onAgentClick" />
@@ -227,6 +247,7 @@ onUnmounted(() => disconnect())
   gap: 16px;
   margin-bottom: 8px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .toolbar-group {
@@ -267,6 +288,68 @@ onUnmounted(() => disconnect())
 .toolbar-btn.tom0-btn.active { background: var(--tom0-bg); color: var(--tom0); }
 .toolbar-btn.tom1-btn.active { background: var(--tom1-bg); color: var(--tom1); }
 .toolbar-btn.tom2-btn.active { background: var(--tom2-bg); color: var(--tom2); }
+
+.metric-help-group {
+  margin-left: auto;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toolbar-help-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-help-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.help-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--text-dim);
+  cursor: help;
+  outline: none;
+}
+
+.help-pop {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: 320px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  line-height: 1.35;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.help-icon:hover .help-pop,
+.help-icon:focus .help-pop {
+  opacity: 1;
+  visibility: visible;
+}
 
 .holdings-section {
   margin-top: 8px;
@@ -374,6 +457,9 @@ onUnmounted(() => disconnect())
 @media (max-width: 960px) {
   .grid-2, .grid-3, .grid-3-1 {
     grid-template-columns: 1fr;
+  }
+  .metric-help-group {
+    margin-left: 0;
   }
   .arena-box {
     height: 300px;

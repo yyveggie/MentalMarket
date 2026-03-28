@@ -19,14 +19,13 @@ import os
 import random
 import signal
 import subprocess
-import sys
 import time
 from pathlib import Path
 
 import yaml
 
 from app.domain.agent import AgentManager
-from app.infrastructure.api_balancer import APIBalancer, build_balancer_from_config
+from app.infrastructure.api_balancer import build_balancer_from_config
 from app.infrastructure.data_logger import DataLogger
 from app.simulation.engine import SimulationEngine
 from app.domain.orderbook import OrderBook, Side

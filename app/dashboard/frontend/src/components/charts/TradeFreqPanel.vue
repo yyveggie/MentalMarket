@@ -7,7 +7,7 @@ const store = useMarketStore()
 const { activeTooltip, showTip, hideTip } = useTooltip()
 const tomLabels: Record<number, string> = { 0: 'ToM0', 1: 'ToM1', 2: 'ToM2' }
 const tomColors: Record<number, string> = { 0: '#78909c', 1: '#0288d1', 2: '#7c4dff' }
-const tip = '按 ToM 阶数统计交易频率\n总交易 = 该阶层所有 Agent 的累计成交笔数\n人均 = 总交易 / Agent 数量'
+const tip = '按 ToM 阶数统计交易频率\n总交易 = 该阶层所有 Agent 的累计成交笔数\n交易笔数（平均） = 总交易 / Agent 数量'
 
 const tradeFreqByTom = computed(() => {
   const result: Array<{ level: number; count: number; totalDecisions: number; avgPerAgent: number }> = []
@@ -38,7 +38,7 @@ const tradeFreqByTom = computed(() => {
         </div>
         <div class="wealth-nums">
           <span>总交易 {{ t.totalDecisions.toLocaleString() }}</span>
-          <span>人均 {{ t.avgPerAgent.toFixed(1) }} 笔</span>
+          <span>交易笔数（平均） {{ t.avgPerAgent.toFixed(1) }} 笔</span>
         </div>
       </div>
     </div>
