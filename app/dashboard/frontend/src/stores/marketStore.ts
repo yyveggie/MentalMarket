@@ -20,6 +20,8 @@ import type {
   LiquidityStats,
   PlanStats,
   IndexRow,
+  RealIndexPoint,
+  RealCalendarDay,
   ThinkingAgent,
   Metrics,
   BroadMarket,
@@ -51,6 +53,8 @@ export const useMarketStore = defineStore('market', () => {
   const deviationTrend = ref<DeviationPoint[]>([])
   const indexSeries = ref<Record<string, IndexRow[]>>({})
   const broadIndexSeries = ref<IndexRow[]>([])
+  const realIndexSeries = ref<Record<string, RealIndexPoint[]>>({})
+  const realCurveCalendar = ref<RealCalendarDay[]>([])
   const marketMicro = ref<Record<string, MarketMicro>>({})
   const technicalIndicators = ref<Record<string, TechnicalIndicator>>({})
 
@@ -103,6 +107,8 @@ export const useMarketStore = defineStore('market', () => {
     deviationTrend.value = state.deviation_trend
     indexSeries.value = state.index_series
     broadIndexSeries.value = state.broad_index_series
+    realIndexSeries.value = state.real_index_series ?? realIndexSeries.value
+    realCurveCalendar.value = state.real_curve_calendar ?? realCurveCalendar.value
     marketMicro.value = state.market_micro
     technicalIndicators.value = state.technical_indicators
 
@@ -206,6 +212,8 @@ export const useMarketStore = defineStore('market', () => {
     deviationTrend,
     indexSeries,
     broadIndexSeries,
+    realIndexSeries,
+    realCurveCalendar,
     marketMicro,
     technicalIndicators,
     tomSummary,

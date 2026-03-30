@@ -175,6 +175,23 @@ export interface IndexRow {
   pct_chg: number
 }
 
+/** 真实指数曲线点（可含休市补齐点） */
+export interface RealIndexPoint {
+  date: string
+  close: number
+  volatility: number | null
+  up_down: number
+  market_status: string
+  is_closed: boolean
+}
+
+/** 交易日序列与真实日期映射 */
+export interface RealCalendarDay {
+  day: number
+  date: string
+  market_status: string
+}
+
 /** 价格趋势点 */
 export interface PriceTrendPoint {
   t: number
@@ -208,6 +225,23 @@ export interface Metrics {
   completed_trade_agents: number
   completed_decision_agents: number
   broad_market: BroadMarket
+  prediction_accuracy_pct?: number | null
+  prediction_sample_count?: number
+  prediction_accuracy_same_day_pct?: number | null
+  prediction_same_day_sample_count?: number
+  prediction_accuracy_forward1_pct?: number | null
+  prediction_forward1_sample_count?: number
+  volatility_fit_pct?: number | null
+  volatility_fit_sample_count?: number
+  volatility_qlike?: number | null
+  volatility_log_rmse?: number | null
+  mz_alpha?: number | null
+  mz_beta?: number | null
+  mz_r2?: number | null
+  mz_wald_chi2?: number | null
+  mz_p_value?: number | null
+  mz_sample_count?: number
+  include_closed_days_for_metrics?: boolean
 }
 
 /** 行为偏差统计 */
@@ -287,6 +321,8 @@ export interface MarketState {
   index_snapshot: IndexRow[]
   index_series: Record<string, IndexRow[]>
   broad_index_series: IndexRow[]
+  real_index_series?: Record<string, RealIndexPoint[]>
+  real_curve_calendar?: RealCalendarDay[]
   active: ActiveState
   holdings: AgentHolding[]
   social_hot: SocialPost[]

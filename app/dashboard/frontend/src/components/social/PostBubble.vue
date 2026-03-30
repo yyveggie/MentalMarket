@@ -20,7 +20,17 @@ const sourceBadge = computed(() => {
 const isHot = computed(() => props.post.likes - (props.post.dislikes || 0) + props.post.retweet_count * 3 >= 5)
 const isSystem = computed(() => props.post.agent_id === -1)
 const showEngagement = computed(() => props.post.source !== 'news')
+const isNews = computed(() => props.post.source === 'news')
 const DEFAULT_TRADING_DAY_SECONDS = 3600
+
+const displayContent = computed(() => {
+  const text = String(props.post.content ?? '')
+  if (!isNews.value) return text
+  // 新闻模式下将短横线列表转为更紧凑的圆点列表，并压缩多余空行。
+  return text
+    .replace(/^\s*-\s+/gm, '• ')
+    .replace(/\n{3,}/g, '\n\n')
+})
 
 const tradingDayDisplay = computed(() => {
   const td = Number(props.post.trading_day)
@@ -40,6 +50,7 @@ const tradingDayDisplay = computed(() => {
     class="post-bubble"
     :class="{
       'hot-glow': isHot,
+      'news-post': isNews,
       highlight,
     }"
   >
@@ -54,7 +65,7 @@ const tradingDayDisplay = computed(() => {
       <span class="post-time">T={{ fmt(post.timestamp, 1) }}</span>
     </div>
 
-    <div class="post-content">{{ post.content }}</div>
+    <div class="post-content" :class="{ 'post-content-news': isNews }">{{ displayContent }}</div>
 
     <div class="post-footer">
       <span v-if="showEngagement" class="stat">❤️ {{ post.likes }}</span>
@@ -111,8 +122,24 @@ const tradingDayDisplay = computed(() => {
   font-size: 12px;
   color: var(--text);
   line-height: 1.5;
-  word-break: break-all;
+  word-break: break-word;
   margin-bottom: 6px;
+}
+
+.post-content-news {
+  white-space: pre-wrap;
+  line-height: 1.4;
+  font-size: 11.5px;
+  margin-bottom: 4px;
+}
+
+.post-bubble.news-post {
+  padding: 8px 10px;
+}
+
+.post-bubble.news-post .post-header {
+  gap: 4px;
+  margin-bottom: 3px;
 }
 
 .post-footer {
@@ -121,6 +148,10 @@ const tradingDayDisplay = computed(() => {
   font-size: 10px;
   color: var(--text-dim);
   font-family: var(--font-mono);
+}
+
+.post-footer:empty {
+  display: none;
 }
 
 .stat {

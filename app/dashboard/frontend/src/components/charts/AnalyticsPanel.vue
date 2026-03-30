@@ -11,7 +11,6 @@ import TradeFreqPanel from './TradeFreqPanel.vue'
 import LiquidityPanel from './LiquidityPanel.vue'
 import LossAversionPanel from './LossAversionPanel.vue'
 import PlanExecutionPanel from './PlanExecutionPanel.vue'
-import MarketMakerPanel from './MarketMakerPanel.vue'
 </script>
 
 <template>
@@ -28,7 +27,6 @@ import MarketMakerPanel from './MarketMakerPanel.vue'
     <TradeFreqPanel />
     <LiquidityPanel />
     <PlanExecutionPanel />
-    <MarketMakerPanel />
   </div>
 </template>
 
