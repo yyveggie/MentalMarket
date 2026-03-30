@@ -802,6 +802,32 @@ watch(currentTradingDay, () => {
   <div class="idx-overview card">
     <div class="panel-head">
       <div class="card-title">{{ centerTitle }}</div>
+      <!-- 全局拟合指标 -->
+      <div class="global-fit-pills" v-if="store.metrics">
+        <span v-if="store.metrics.prediction_accuracy_same_day_pct != null || store.metrics.prediction_accuracy_pct != null" class="fit-pill">
+          🎯 同日 <b>{{ fmt(store.metrics.prediction_accuracy_same_day_pct ?? store.metrics.prediction_accuracy_pct, 1) }}%</b>
+          <small v-if="(store.metrics.prediction_same_day_sample_count ?? store.metrics.prediction_sample_count ?? 0) > 0">
+            n={{ store.metrics.prediction_same_day_sample_count ?? store.metrics.prediction_sample_count }}
+          </small>
+        </span>
+        <span v-if="store.metrics.prediction_accuracy_forward1_pct != null" class="fit-pill">
+          🧭 前瞻1日 <b>{{ fmt(store.metrics.prediction_accuracy_forward1_pct, 1) }}%</b>
+          <small v-if="(store.metrics.prediction_forward1_sample_count ?? 0) > 0">n={{ store.metrics.prediction_forward1_sample_count }}</small>
+        </span>
+        <span v-if="store.metrics.volatility_fit_pct != null" class="fit-pill">
+          📈 拟合 <b>{{ fmt(store.metrics.volatility_fit_pct, 1) }}%</b>
+        </span>
+        <span v-if="store.metrics.volatility_qlike != null" class="fit-pill">
+          📐 QL <b>{{ fmt(store.metrics.volatility_qlike, 3) }}</b>
+        </span>
+        <span v-if="store.metrics.volatility_log_rmse != null" class="fit-pill">
+          📏 LR <b>{{ fmt(store.metrics.volatility_log_rmse, 3) }}</b>
+        </span>
+        <span v-if="store.metrics.mz_beta != null || store.metrics.mz_p_value != null" class="fit-pill">
+          🧮 MZ β=<b>{{ store.metrics.mz_beta == null ? '-' : fmt(store.metrics.mz_beta, 3) }}</b>
+          p=<b>{{ store.metrics.mz_p_value == null ? '-' : fmt(store.metrics.mz_p_value, 3) }}</b>
+        </span>
+      </div>
       <div class="panel-actions">
         <div class="mode-switch" role="group" aria-label="图表模式">
           <button
@@ -1035,6 +1061,36 @@ watch(currentTradingDay, () => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.global-fit-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.fit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  background: var(--surface-1);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.fit-pill b {
+  color: var(--heading);
+}
+
+.fit-pill small {
+  font-size: 9px;
+  opacity: 0.7;
 }
 
 .panel-actions {

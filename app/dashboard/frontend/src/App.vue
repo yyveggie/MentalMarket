@@ -16,6 +16,7 @@ import BroadVolumeCharts from '@/components/charts/BroadVolumeCharts.vue'
 import SocialFeed from '@/components/social/SocialFeed.vue'
 import SocialNetwork from '@/components/social/SocialNetwork.vue'
 import KolPanel from '@/components/social/KolPanel.vue'
+import CollapseTransition from '@/components/layout/CollapseTransition.vue'
 import AgentCard from '@/components/agent/AgentCard.vue'
 import DecisionFlow from '@/components/agent/DecisionFlow.vue'
 import AgentLeaderboard from '@/components/charts/AgentLeaderboard.vue'
@@ -26,6 +27,34 @@ const { connect, disconnect } = useWebSocket()
 
 const sidePanelOpen = ref(false)
 const selectedAgentId = ref<number | null>(null)
+
+// ── 可折叠 Section ──
+const STORAGE_KEY = 'mm-collapsed-sections'
+type SectionKey = 'index' | 'holdings' | 'decisions' | 'broad' | 'sentiment' | 'social' | 'social-graph' | 'tom' | 'orderbook' | 'micro' | 'bias'
+
+function loadCollapsed(): Set<SectionKey> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return new Set(JSON.parse(raw) as SectionKey[])
+  } catch {}
+  return new Set()
+}
+function saveCollapsed(s: Set<SectionKey>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...s]))
+}
+
+const collapsedSections = ref<Set<SectionKey>>(loadCollapsed())
+function toggleSection(key: SectionKey) {
+  if (collapsedSections.value.has(key)) {
+    collapsedSections.value.delete(key)
+  } else {
+    collapsedSections.value.add(key)
+  }
+  saveCollapsed(collapsedSections.value)
+}
+function isSectionOpen(key: SectionKey) {
+  return !collapsedSections.value.has(key)
+}
 
 type HoldingSort = 'agent_id' | 'wealth' | 'return_pct' | 'trade_count'
 const holdingSort = ref<HoldingSort>('agent_id')
@@ -107,99 +136,184 @@ onUnmounted(() => disconnect())
     <main class="main">
       <!-- 0. 市场概览：大盘 + 指数 -->
       <section id="sec-index">
-        <IndexOverview />
+        <div class="section-header" @click="toggleSection('index')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('index') }">▾</span>
+          <span class="section-title">市场概览</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('index')">
+          <div class="section-body">
+            <IndexOverview />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 1. 持仓总览 -->
       <section id="sec-holdings">
-        <div class="card pulse-holdings">
-          <div class="card-title">
-            持仓总览
-            <span class="holdings-count">{{ filteredHoldings.length }}/{{ store.holdings.length }}</span>
-          </div>
-          <div class="holdings-toolbar">
-            <div class="toolbar-group">
-              <span class="toolbar-label">排序</span>
-              <button v-for="s in holdingSortOptions" :key="s.key"
-                class="toolbar-btn" :class="{ active: holdingSort === s.key }"
-                @click="toggleHoldingSort(s.key)"
-              >{{ s.label }}{{ holdingSort === s.key ? (holdingSortAsc ? ' ▲' : ' ▼') : '' }}</button>
-            </div>
-            <div class="toolbar-group">
-              <span class="toolbar-label">ToM</span>
-              <button class="toolbar-btn" :class="{ active: holdingTomFilter === null }" @click="holdingTomFilter = null">全部</button>
-              <button v-for="t in [0, 1, 2]" :key="t" class="toolbar-btn" :class="{ active: holdingTomFilter === t, [`tom${t}-btn`]: true }" @click="holdingTomFilter = holdingTomFilter === t ? null : t">T{{ t }}</button>
-            </div>
-            <div class="toolbar-group metric-help-group">
-              <span v-for="item in holdingMetricHints" :key="item.key" class="toolbar-help-item">
-                <span class="toolbar-help-label">{{ item.label }}</span>
-                <span class="help-icon" tabindex="0" aria-label="指标解释">?
-                  <span class="help-pop">{{ item.tip }}</span>
-                </span>
-              </span>
-            </div>
-          </div>
-          <TradingArena @agent-click="onAgentClick" />
-          <div v-if="filteredHoldings.length > 0" class="holdings-section">
-            <div class="holdings-grid-compact">
-              <AgentCard
-                v-for="agent in filteredHoldings"
-                :key="agent.agent_id"
-                :agent="agent"
-                @click="onAgentClick(agent.agent_id)"
-              />
-            </div>
-          </div>
+        <div class="section-header" @click="toggleSection('holdings')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('holdings') }">▾</span>
+          <span class="section-title">持仓总览</span>
+          <span class="holdings-count">{{ filteredHoldings.length }}/{{ store.holdings.length }}</span>
         </div>
+        <CollapseTransition :show="isSectionOpen('holdings')">
+          <div class="section-body">
+          <div class="card pulse-holdings">
+            <div class="holdings-toolbar">
+              <div class="toolbar-group">
+                <span class="toolbar-label">排序</span>
+                <button v-for="s in holdingSortOptions" :key="s.key"
+                  class="toolbar-btn" :class="{ active: holdingSort === s.key }"
+                  @click="toggleHoldingSort(s.key)"
+                >{{ s.label }}{{ holdingSort === s.key ? (holdingSortAsc ? ' ▲' : ' ▼') : '' }}</button>
+              </div>
+              <div class="toolbar-group">
+                <span class="toolbar-label">ToM</span>
+                <button class="toolbar-btn" :class="{ active: holdingTomFilter === null }" @click="holdingTomFilter = null">全部</button>
+                <button v-for="t in [0, 1, 2]" :key="t" class="toolbar-btn" :class="{ active: holdingTomFilter === t, [`tom${t}-btn`]: true }" @click="holdingTomFilter = holdingTomFilter === t ? null : t">T{{ t }}</button>
+              </div>
+              <div class="toolbar-group metric-help-group">
+                <span v-for="item in holdingMetricHints" :key="item.key" class="toolbar-help-item">
+                  <span class="toolbar-help-label">{{ item.label }}</span>
+                  <span class="help-icon" tabindex="0" aria-label="指标解释">?
+                    <span class="help-pop">{{ item.tip }}</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+            <TradingArena @agent-click="onAgentClick" />
+            <div v-if="filteredHoldings.length > 0" class="holdings-section">
+              <div class="holdings-grid-compact">
+                <AgentCard
+                  v-for="agent in filteredHoldings"
+                  :key="agent.agent_id"
+                  :agent="agent"
+                  @click="onAgentClick(agent.agent_id)"
+                />
+              </div>
+            </div>
+            </div>
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 1.5 决策流 -->
       <section id="sec-decisions">
-        <DecisionFlow />
+        <div class="section-header" @click="toggleSection('decisions')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('decisions') }">▾</span>
+          <span class="section-title">决策流</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('decisions')">
+          <div class="section-body">
+            <DecisionFlow />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 2. 大盘走势 + 指数成交量 | 排行榜 -->
-      <section class="grid-3-1">
-        <BroadVolumeCharts />
-        <AgentLeaderboard />
+      <section>
+        <div class="section-header" @click="toggleSection('broad')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('broad') }">▾</span>
+          <span class="section-title">大盘走势 / 排行榜</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('broad')">
+          <div class="section-body grid-3-1">
+            <BroadVolumeCharts />
+            <AgentLeaderboard />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 3. 情绪/信心 + 偏离度/大盘 -->
-      <section id="sec-sentiment" class="grid-2">
-        <SentimentChart />
-        <DeviationChart />
+      <section id="sec-sentiment">
+        <div class="section-header" @click="toggleSection('sentiment')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('sentiment') }">▾</span>
+          <span class="section-title">情绪 / 偏离度</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('sentiment')">
+          <div class="section-body grid-2">
+            <SentimentChart />
+            <DeviationChart />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 3. 社交信息流 -->
-      <section id="sec-social" class="social-section">
-        <SocialFeed />
+      <section id="sec-social">
+        <div class="section-header" @click="toggleSection('social')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('social') }">▾</span>
+          <span class="section-title">社交信息流</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('social')">
+          <div class="section-body social-section">
+            <SocialFeed />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 3.5 社交网络图谱 + KOL 列表 -->
-      <section class="grid-3-1">
-        <SocialNetwork />
-        <KolPanel />
+      <section>
+        <div class="section-header" @click="toggleSection('social-graph')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('social-graph') }">▾</span>
+          <span class="section-title">社交网络 / KOL</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('social-graph')">
+          <div class="section-body grid-3-1">
+            <SocialNetwork />
+            <KolPanel />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 4. ToM 分析 -->
       <section id="sec-tom">
-        <TomAnalytics />
+        <div class="section-header" @click="toggleSection('tom')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('tom') }">▾</span>
+          <span class="section-title">ToM 分析</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('tom')">
+          <div class="section-body">
+            <TomAnalytics />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 4. 订单簿（含价格走势） -->
       <section id="sec-orderbook">
-        <OrderBook />
+        <div class="section-header" @click="toggleSection('orderbook')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('orderbook') }">▾</span>
+          <span class="section-title">订单簿</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('orderbook')">
+          <div class="section-body">
+            <OrderBook />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 5. 微观结构 + 技术指标 -->
-      <section id="sec-micro" class="grid-2">
-        <MarketMicro />
-        <TechnicalIndicators />
+      <section id="sec-micro">
+        <div class="section-header" @click="toggleSection('micro')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('micro') }">▾</span>
+          <span class="section-title">微观结构 / 技术指标</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('micro')">
+          <div class="section-body grid-2">
+            <MarketMicro />
+            <TechnicalIndicators />
+          </div>
+        </CollapseTransition>
       </section>
 
       <!-- 6. 深度分析面板 -->
       <section id="sec-bias">
-        <AnalyticsPanel />
+        <div class="section-header" @click="toggleSection('bias')">
+          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('bias') }">▾</span>
+          <span class="section-title">行为偏差分析</span>
+        </div>
+        <CollapseTransition :show="isSectionOpen('bias')">
+          <div class="section-body">
+            <AnalyticsPanel />
+          </div>
+        </CollapseTransition>
       </section>
     </main>
 
@@ -228,6 +342,51 @@ onUnmounted(() => disconnect())
 
 .main > section {
   margin-bottom: 16px;
+}
+
+/* ── 可折叠 Section ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.section-header:hover {
+  background: var(--surface-1);
+}
+
+.section-chevron {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.section-chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+.section-header .holdings-count {
+  margin-left: auto;
+}
+
+.section-body {
+  margin-top: 8px;
 }
 
 .pulse-holdings {

@@ -67,34 +67,6 @@ const m = computed(() => store.metrics)
       <div class="pill">🧠 思考中 <b>{{ thinkingCount }}</b></div>
       <div class="pill">📝 决策 <b>{{ m?.unique_decision_agents_10s ?? 0 }}</b>/{{ m?.window_seconds ?? 10 }}s</div>
       <div class="pill">💹 挂单 <b>{{ m?.unique_order_agents_10s ?? 0 }}</b>/{{ m?.window_seconds ?? 10 }}s</div>
-      <div v-if="m?.prediction_accuracy_same_day_pct != null || m?.prediction_accuracy_pct != null" class="pill">
-        🎯 同日准确率
-        <b>{{ fmt(m?.prediction_accuracy_same_day_pct ?? m?.prediction_accuracy_pct, 1) }}%</b>
-        <span v-if="((m?.prediction_same_day_sample_count ?? m?.prediction_sample_count ?? 0) > 0)">
-          n={{ m?.prediction_same_day_sample_count ?? m?.prediction_sample_count }}
-        </span>
-      </div>
-      <div v-if="m?.prediction_accuracy_forward1_pct != null" class="pill">
-        🧭 前瞻1日
-        <b>{{ fmt(m.prediction_accuracy_forward1_pct, 1) }}%</b>
-        <span v-if="(m.prediction_forward1_sample_count ?? 0) > 0">n={{ m.prediction_forward1_sample_count }}</span>
-      </div>
-      <div v-if="m?.volatility_fit_pct != null" class="pill">
-        📈 拟合度 <b>{{ fmt(m.volatility_fit_pct, 1) }}%</b>
-        <span v-if="(m.volatility_fit_sample_count ?? 0) > 0">n={{ m.volatility_fit_sample_count }}</span>
-      </div>
-      <div v-if="m?.volatility_qlike != null" class="pill">
-        📐 QLIKE <b>{{ fmt(m.volatility_qlike, 3) }}</b>
-      </div>
-      <div v-if="m?.volatility_log_rmse != null" class="pill">
-        📏 Log-RMSE <b>{{ fmt(m.volatility_log_rmse, 3) }}</b>
-      </div>
-      <div v-if="m?.mz_beta != null || m?.mz_p_value != null" class="pill">
-        🧮 MZ
-        <span>β=<b>{{ m?.mz_beta == null ? '-' : fmt(m.mz_beta, 3) }}</b></span>
-        <span>p=<b>{{ m?.mz_p_value == null ? '-' : fmt(m.mz_p_value, 3) }}</b></span>
-        <span v-if="(m?.mz_sample_count ?? 0) > 0">n={{ m?.mz_sample_count }}</span>
-      </div>
     </div>
   </header>
 </template>
@@ -155,8 +127,9 @@ const m = computed(() => store.metrics)
 .header-pills {
   display: flex;
   gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-left: auto;
+  overflow-x: auto;
 }
 
 .pill {

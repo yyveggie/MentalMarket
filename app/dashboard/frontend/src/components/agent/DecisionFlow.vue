@@ -19,7 +19,6 @@ watch(decisions, () => {
 
 <template>
   <div class="decision-flow card">
-    <div class="card-title">决策流</div>
     <div v-if="store.thinkingAgents.length" class="thinking-bar">
       思考中: {{ store.thinkingAgents.map((a) => `A${a.agent_id}`).join(', ') }}
     </div>
