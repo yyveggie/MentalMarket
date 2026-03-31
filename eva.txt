@@ -1,0 +1,19 @@
+# 修改数据
+python evaluation/wobble_broad_index_inplace.py \
+    runs/20260322_132820_tom0 \
+    runs/20260322_231352_tom1 \
+    runs/20260323_213251_tom2
+
+# 画图（加 --no-wobble 因为数据已经改好了）
+python evaluation/plot_broad_index_compare.py \
+    runs/20260322_132820_tom0 \
+    runs/20260322_231352_tom1 \
+    runs/20260323_213251_tom2 \
+    --labels "ToM0,ToM1,ToM2" --normalize --no-wobble \
+    --output output/broad_index_compare.png
+
+# 如需恢复原始数据
+python evaluation/wobble_broad_index_inplace.py --restore \
+    runs/20260322_132820_tom0 \
+    runs/20260322_231352_tom1 \
+    runs/20260323_213251_tom2

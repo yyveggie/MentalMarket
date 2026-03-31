@@ -157,7 +157,6 @@ watch(() => store.tomSummary, renderAll, { deep: true })
 
 <template>
   <div class="card">
-    <div class="card-title">ToM 分析</div>
 
     <!-- Charts: 4 columns -->
     <div class="chart-row">

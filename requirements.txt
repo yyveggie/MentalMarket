@@ -8,3 +8,4 @@ langchain-openai>=0.3.0
 langgraph>=0.2.0
 sortedcontainers>=2.4.0
 orjson>=3.9.0
+pymongo>=4.0.0

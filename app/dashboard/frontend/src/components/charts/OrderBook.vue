@@ -117,7 +117,6 @@ const symbolEntries = computed(() => {
 
 <template>
   <div class="card">
-    <div class="card-title">订单簿</div>
 
     <!-- 内嵌价格走势图 -->
     <div class="price-trend-section">

@@ -44,7 +44,6 @@ class RealtimeDashboard:
         port: int = 8765,
         l2_depth: int = 10,
         l2_quote_orders: int = 6,
-        index_lookback: int = 300,
         trading_day_seconds: float = 60.0,
         max_recent_events: int = 200,
         dashboard_config: dict | None = None,
@@ -65,7 +64,6 @@ class RealtimeDashboard:
         self.port = int(port)
         self.l2_depth = max(1, int(l2_depth))
         self.l2_quote_orders = int(l2_quote_orders)
-        self.index_lookback = max(20, int(index_lookback))
         self.trading_day_seconds = max(1e-6, float(trading_day_seconds))
 
         dcfg = dashboard_config or {}
@@ -125,6 +123,19 @@ class RealtimeDashboard:
         }
 
         self._social_graph_top_n: int = int(dcfg.get("social_graph_top_n", 30))
+
+        self._real_index_series: dict[str, list[dict]] = {}
+        self._real_curve_calendar: list[dict] = []
+        self._real_curve_include_closed_days: bool = bool(dcfg.get("real_curve_include_closed_days", True))
+        self._metrics_include_closed_days: bool = bool(dcfg.get("metrics_include_closed_days", False))
+        self._experimental_daily_title_mode: bool = bool(dcfg.get("experimental_daily_title_mode", False))
+        if self._experimental_daily_title_mode:
+            self._load_real_index_curves(
+                curves_file=str(dcfg.get("real_index_curves_file", "data/index_volatility_curves.json")),
+                calendar_news_file=str(dcfg.get("real_calendar_news_file", "data/news2.json")),
+            )
+        else:
+            _logger.info("Real index curves disabled (experimental_daily_title_mode=False)")
 
         self._heavy_cache: dict = {}
         self._heavy_cache_time: float = 0.0
@@ -337,6 +348,628 @@ class RealtimeDashboard:
                 lines = [l for l in raw.decode("utf-8", errors="replace").splitlines() if l.strip()]
                 chunk_size *= 2
         return lines[-n:]
+
+    @staticmethod
+    def _resolve_repo_path(path_text: str) -> Path:
+        p = Path(str(path_text or "").strip())
+        if p.is_absolute():
+            return p
+        return Path(__file__).resolve().parents[2] / p
+
+    @staticmethod
+    def _normalize_real_rows(rows: list[dict]) -> list[dict]:
+        out: list[dict] = []
+        for row in sorted(rows, key=lambda x: str(x.get("date", ""))):
+            date = str(row.get("date", "")).strip()
+            if not date:
+                continue
+            close = row.get("close")
+            if close is None:
+                continue
+            try:
+                close_v = float(close)
+            except (TypeError, ValueError):
+                continue
+            vol = row.get("volatility")
+            vol_v = None
+            if vol is not None:
+                try:
+                    vol_v = float(vol)
+                except (TypeError, ValueError):
+                    vol_v = None
+            up_down_raw = row.get("up_down")
+            up_down_v = 1 if vol_v is not None and vol_v > 0 else 0
+            if up_down_raw is not None:
+                try:
+                    up_down_v = int(up_down_raw)
+                except (TypeError, ValueError):
+                    pass
+            out.append(
+                {
+                    "date": date,
+                    "close": round(close_v, 6),
+                    "volatility": None if vol_v is None else round(vol_v, 8),
+                    "up_down": 1 if up_down_v > 0 else 0,
+                    "market_status": str(row.get("market_status", "")),
+                    "is_closed": bool(row.get("is_closed", False)),
+                }
+            )
+        return out
+
+    @staticmethod
+    def _build_calendar_from_news(news_items: list[dict]) -> list[dict]:
+        by_day: dict[int, dict] = {}
+        by_date: dict[str, dict] = {}
+
+        for item in news_items:
+            if not isinstance(item, dict):
+                continue
+            date = str(item.get("date", "")).strip()
+            if not date:
+                continue
+            status = str(item.get("market_status", "")).strip()
+            weekday = str(item.get("weekday", "")).strip()
+            day_raw = item.get("day")
+            day_int = None
+            if day_raw is not None:
+                try:
+                    day_int = int(day_raw)
+                except (TypeError, ValueError):
+                    day_int = None
+
+            if day_int is not None and day_int > 0:
+                if day_int not in by_day:
+                    by_day[day_int] = {
+                        "day": day_int,
+                        "date": date,
+                        "market_status": status,
+                        "weekday": weekday,
+                    }
+                else:
+                    if not by_day[day_int].get("market_status") and status:
+                        by_day[day_int]["market_status"] = status
+                    if not by_day[day_int].get("weekday") and weekday:
+                        by_day[day_int]["weekday"] = weekday
+            else:
+                if date not in by_date:
+                    by_date[date] = {"date": date, "market_status": status, "weekday": weekday}
+                else:
+                    if not by_date[date].get("market_status") and status:
+                        by_date[date]["market_status"] = status
+                    if not by_date[date].get("weekday") and weekday:
+                        by_date[date]["weekday"] = weekday
+
+        if by_day:
+            return [by_day[d] for d in sorted(by_day.keys())]
+
+        out: list[dict] = []
+        for i, date in enumerate(sorted(by_date.keys()), start=1):
+            item = by_date[date]
+            out.append(
+                {
+                    "day": i,
+                    "date": date,
+                    "market_status": str(item.get("market_status", "")),
+                    "weekday": str(item.get("weekday", "")),
+                }
+            )
+        return out
+
+    def _expand_real_rows_with_calendar(self, rows: list[dict], calendar: list[dict]) -> list[dict]:
+        row_by_date: dict[str, dict] = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            date = str(row.get("date", "")).strip()
+            if date:
+                row_by_date[date] = row
+
+        out: list[dict] = []
+        prev_close: float | None = None
+        for cal in calendar:
+            date = str(cal.get("date", "")).strip()
+            if not date:
+                continue
+            status = str(cal.get("market_status", "")).strip()
+            source = row_by_date.get(date)
+            if source is not None:
+                close_raw = source.get("close")
+                if close_raw is None:
+                    continue
+                try:
+                    close_v = float(close_raw)
+                except (TypeError, ValueError):
+                    continue
+                prev_close = close_v
+
+                vol = source.get("volatility")
+                vol_v = None
+                if vol is not None:
+                    try:
+                        vol_v = float(vol)
+                    except (TypeError, ValueError):
+                        vol_v = None
+
+                up_down_raw = source.get("up_down")
+                up_down_v = 1 if vol_v is not None and vol_v > 0 else 0
+                if up_down_raw is not None:
+                    try:
+                        up_down_v = int(up_down_raw)
+                    except (TypeError, ValueError):
+                        pass
+
+                out.append(
+                    {
+                        "date": date,
+                        "close": round(close_v, 6),
+                        "volatility": None if vol_v is None else round(vol_v, 8),
+                        "up_down": 1 if up_down_v > 0 else 0,
+                        "market_status": status,
+                        "is_closed": status.startswith("休市"),
+                    }
+                )
+                continue
+
+            if status.startswith("休市") and prev_close is not None:
+                out.append(
+                    {
+                        "date": date,
+                        "close": round(prev_close, 6),
+                        "volatility": 0.0,
+                        "up_down": 0,
+                        "market_status": status,
+                        "is_closed": True,
+                    }
+                )
+
+        return out
+
+    def _load_real_index_curves(self, curves_file: str, calendar_news_file: str) -> None:
+        self._real_index_series = {}
+        self._real_curve_calendar = []
+
+        curves_path = self._resolve_repo_path(curves_file)
+        if not curves_path.exists():
+            _logger.info("Real index curves file not found: %s", curves_path)
+            return
+
+        curves_obj: dict[str, Any]
+        try:
+            curves_obj = json.loads(curves_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            _logger.warning("Failed to load real index curves from %s: %s", curves_path, exc)
+            return
+
+        indices = curves_obj.get("indices", {}) if isinstance(curves_obj, dict) else {}
+        if not isinstance(indices, dict):
+            _logger.warning("Invalid real index curves format in %s: missing 'indices' object", curves_path)
+            return
+
+        calendar: list[dict] = []
+        news_path = self._resolve_repo_path(calendar_news_file)
+        if news_path.exists():
+            try:
+                news_obj = json.loads(news_path.read_text(encoding="utf-8"))
+                news_items = news_obj.get("news", []) if isinstance(news_obj, dict) else []
+                if isinstance(news_items, list):
+                    calendar = self._build_calendar_from_news(news_items)
+            except Exception as exc:
+                _logger.warning("Failed to load real-curve calendar from %s: %s", news_path, exc)
+        else:
+            _logger.info("Real-curve calendar news file not found: %s", news_path)
+
+        for symbol, rows in indices.items():
+            if not isinstance(rows, list):
+                continue
+            row_dicts = [r for r in rows if isinstance(r, dict)]
+            if not row_dicts:
+                continue
+
+            normalized = self._normalize_real_rows(row_dicts)
+            if self._real_curve_include_closed_days and calendar:
+                expanded = self._expand_real_rows_with_calendar(normalized, calendar)
+                self._real_index_series[str(symbol)] = expanded if expanded else normalized
+            else:
+                self._real_index_series[str(symbol)] = normalized
+
+        if calendar:
+            self._real_curve_calendar = [
+                {
+                    "day": int(item.get("day", i + 1)),
+                    "date": str(item.get("date", "")),
+                    "market_status": str(item.get("market_status", "")),
+                }
+                for i, item in enumerate(calendar)
+                if str(item.get("date", ""))
+            ]
+        elif self._real_index_series:
+            # 无日历时退化为按真实曲线日期构建简单日序。
+            first_symbol = next(iter(self._real_index_series.keys()))
+            first_rows = self._real_index_series.get(first_symbol, [])
+            self._real_curve_calendar = [
+                {
+                    "day": i + 1,
+                    "date": str(row.get("date", "")),
+                    "market_status": str(row.get("market_status", "")),
+                }
+                for i, row in enumerate(first_rows)
+                if str(row.get("date", ""))
+            ]
+
+        _logger.info(
+            "Loaded real index curves: symbols=%d calendar_days=%d include_closed=%s",
+            len(self._real_index_series),
+            len(self._real_curve_calendar),
+            self._real_curve_include_closed_days,
+        )
+
+    @staticmethod
+    def _sim_row_to_day(sim_date: str, trading_day_seconds: float) -> int | None:
+        if not sim_date.startswith("SIM_"):
+            return None
+        if "_T" not in sim_date:
+            return None
+        try:
+            sim_time = float(sim_date.rsplit("_T", 1)[1])
+        except (TypeError, ValueError):
+            return None
+        return int(sim_time // max(1e-6, trading_day_seconds)) + 1
+
+    @staticmethod
+    def _sign(v: float, eps: float = 1e-12) -> int:
+        if v > eps:
+            return 1
+        if v < -eps:
+            return -1
+        return 0
+
+    @staticmethod
+    def _pearson_corr(xs: list[float], ys: list[float]) -> float | None:
+        n = min(len(xs), len(ys))
+        if n < 2:
+            return None
+        x = xs[:n]
+        y = ys[:n]
+        mx = sum(x) / n
+        my = sum(y) / n
+        num = sum((x[i] - mx) * (y[i] - my) for i in range(n))
+        den_x = sum((v - mx) ** 2 for v in x)
+        den_y = sum((v - my) ** 2 for v in y)
+        if den_x <= 0 or den_y <= 0:
+            return None
+        return num / ((den_x ** 0.5) * (den_y ** 0.5))
+
+    @staticmethod
+    def _mean(xs: list[float]) -> float | None:
+        if not xs:
+            return None
+        return sum(xs) / len(xs)
+
+    @staticmethod
+    def _qlike(
+        real_var: list[float],
+        sim_var: list[float],
+        eps: float = 1e-8,
+        upper_tail_quantile: float = 0.95,
+    ) -> float | None:
+        import math
+
+        n = min(len(real_var), len(sim_var))
+        if n < 2:
+            return None
+        losses: list[float] = []
+        for i in range(n):
+            rv = max(eps, float(real_var[i]))
+            hv = max(eps, float(sim_var[i]))
+            ratio = rv / hv
+            losses.append(ratio - math.log(ratio) - 1.0)
+
+        if len(losses) >= 5:
+            sorted_losses = sorted(losses)
+            q = max(0.5, min(0.999, float(upper_tail_quantile)))
+            cap_idx = int((len(sorted_losses) - 1) * q)
+            cap = sorted_losses[cap_idx]
+            losses = [min(v, cap) for v in losses]
+
+        return RealtimeDashboard._mean(losses)
+
+    @staticmethod
+    def _log_rmse(real_var: list[float], sim_var: list[float], eps: float = 1e-12) -> float | None:
+        import math
+
+        n = min(len(real_var), len(sim_var))
+        if n < 2:
+            return None
+        sq_err: list[float] = []
+        for i in range(n):
+            lr = math.log(max(eps, float(real_var[i])))
+            ls = math.log(max(eps, float(sim_var[i])))
+            e = lr - ls
+            sq_err.append(e * e)
+        mse = RealtimeDashboard._mean(sq_err)
+        return None if mse is None else math.sqrt(mse)
+
+    @staticmethod
+    def _mz_stats(real_var: list[float], sim_var: list[float]) -> dict[str, float | int | None]:
+        import math
+
+        n = min(len(real_var), len(sim_var))
+        if n < 3:
+            return {"alpha": None, "beta": None, "r2": None, "wald_chi2": None, "p_value": None, "n": n}
+
+        x = [float(v) for v in sim_var[:n]]
+        y = [float(v) for v in real_var[:n]]
+
+        sx = sum(x)
+        sy = sum(y)
+        sxx = sum(v * v for v in x)
+        sxy = sum(x[i] * y[i] for i in range(n))
+        den = n * sxx - sx * sx
+        if abs(den) <= 1e-18:
+            return {"alpha": None, "beta": None, "r2": None, "wald_chi2": None, "p_value": None, "n": n}
+
+        beta = (n * sxy - sx * sy) / den
+        alpha = (sy - beta * sx) / n
+
+        y_bar = sy / n
+        sse = 0.0
+        sst = 0.0
+        for i in range(n):
+            y_hat = alpha + beta * x[i]
+            e = y[i] - y_hat
+            sse += e * e
+            dy = y[i] - y_bar
+            sst += dy * dy
+        r2 = None if sst <= 1e-18 else (1.0 - sse / sst)
+
+        if n <= 2:
+            return {"alpha": alpha, "beta": beta, "r2": r2, "wald_chi2": None, "p_value": None, "n": n}
+
+        sigma2 = sse / (n - 2)
+        inv00 = sxx / den
+        inv01 = -sx / den
+        inv10 = -sx / den
+        inv11 = n / den
+
+        cov00 = sigma2 * inv00
+        cov01 = sigma2 * inv01
+        cov10 = sigma2 * inv10
+        cov11 = sigma2 * inv11
+
+        c0 = alpha
+        c1 = beta - 1.0
+        cov_det = cov00 * cov11 - cov01 * cov10
+        if abs(cov_det) <= 1e-24:
+            return {"alpha": alpha, "beta": beta, "r2": r2, "wald_chi2": None, "p_value": None, "n": n}
+
+        ic00 = cov11 / cov_det
+        ic01 = -cov01 / cov_det
+        ic10 = -cov10 / cov_det
+        ic11 = cov00 / cov_det
+        wald_chi2 = c0 * (ic00 * c0 + ic01 * c1) + c1 * (ic10 * c0 + ic11 * c1)
+        p_value = math.exp(-0.5 * wald_chi2) if wald_chi2 >= 0 else None
+        return {"alpha": alpha, "beta": beta, "r2": r2, "wald_chi2": wald_chi2, "p_value": p_value, "n": n}
+
+    def _compute_curve_realtime_metrics(self, index_series: dict[str, list[dict]], trading_day: int) -> dict:
+        if not self._real_index_series or not self._real_curve_calendar:
+            return {
+                "prediction_accuracy_pct": None,
+                "prediction_sample_count": 0,
+                "prediction_accuracy_same_day_pct": None,
+                "prediction_same_day_sample_count": 0,
+                "prediction_accuracy_forward1_pct": None,
+                "prediction_forward1_sample_count": 0,
+                "volatility_fit_pct": None,
+                "volatility_fit_sample_count": 0,
+            }
+
+        calendar_by_day: dict[int, dict] = {}
+        for item in self._real_curve_calendar:
+            try:
+                day = int(item.get("day", 0) or 0)
+            except (TypeError, ValueError):
+                continue
+            if day <= 0:
+                continue
+            status = str(item.get("market_status", "")).strip()
+            status_lower = status.lower()
+            is_closed = bool(item.get("is_closed", False)) or status.startswith("休市") or status_lower.startswith("closed")
+            calendar_by_day[day] = {
+                "date": str(item.get("date", "")),
+                "market_status": status,
+                "is_closed": is_closed,
+            }
+
+        if not calendar_by_day:
+            return {
+                "prediction_accuracy_pct": None,
+                "prediction_sample_count": 0,
+                "prediction_accuracy_same_day_pct": None,
+                "prediction_same_day_sample_count": 0,
+                "prediction_accuracy_forward1_pct": None,
+                "prediction_forward1_sample_count": 0,
+                "volatility_fit_pct": None,
+                "volatility_fit_sample_count": 0,
+            }
+
+        max_day = min(int(trading_day), max(calendar_by_day.keys()))
+        if max_day < 2:
+            return {
+                "prediction_accuracy_pct": None,
+                "prediction_sample_count": 0,
+                "prediction_accuracy_same_day_pct": None,
+                "prediction_same_day_sample_count": 0,
+                "prediction_accuracy_forward1_pct": None,
+                "prediction_forward1_sample_count": 0,
+                "volatility_fit_pct": None,
+                "volatility_fit_sample_count": 0,
+            }
+
+        pred_total_same_day = 0
+        pred_match_same_day = 0
+        pred_total_forward1 = 0
+        pred_match_forward1 = 0
+        fit_corr_weighted_sum = 0.0
+        fit_corr_weight_total = 0
+        pooled_real_var: list[float] = []
+        pooled_sim_var: list[float] = []
+
+        for symbol, real_rows in self._real_index_series.items():
+            sim_rows = index_series.get(symbol, [])
+            if not sim_rows:
+                continue
+
+            sim_by_day: dict[int, float] = {}
+            for row in sim_rows:
+                day = self._sim_row_to_day(str(row.get("date", "")), self.trading_day_seconds)
+                if day is None or day > max_day:
+                    continue
+                close = row.get("close")
+                if close is None:
+                    continue
+                try:
+                    sim_by_day[day] = float(close)
+                except (TypeError, ValueError):
+                    continue
+
+            if not sim_by_day:
+                continue
+
+            real_by_date: dict[str, float] = {}
+            for row in real_rows:
+                if not isinstance(row, dict):
+                    continue
+                date = str(row.get("date", "")).strip()
+                if not date:
+                    continue
+                close = row.get("close")
+                if close is None:
+                    continue
+                try:
+                    real_by_date[date] = float(close)
+                except (TypeError, ValueError):
+                    continue
+
+            aligned: list[tuple[int, float, float]] = []
+            for day in range(1, max_day + 1):
+                cal = calendar_by_day.get(day)
+                if not cal:
+                    continue
+                is_closed = bool(cal.get("is_closed", False))
+
+                # 严格交集口径：仅统计 real/sim 在同一交易日都存在的点。
+                if is_closed and (not self._metrics_include_closed_days):
+                    continue
+                sim_close = sim_by_day.get(day)
+                if sim_close is None:
+                    continue
+                date = str(cal.get("date", ""))
+                real_close = real_by_date.get(date)
+                if real_close is None:
+                    continue
+                aligned.append((day, real_close, sim_close))
+
+            if len(aligned) < 2:
+                continue
+
+            # 前瞻1日口径：使用上一日模拟变化方向预测当日真实变化方向。
+            for i in range(2, len(aligned)):
+                day_prev2, _, sim_prev2 = aligned[i - 2]
+                day_prev1, real_prev, sim_prev1 = aligned[i - 1]
+                day_cur, real_cur, _ = aligned[i]
+
+                if not (day_prev1 == day_prev2 + 1 and day_cur == day_prev1 + 1):
+                    continue
+
+                real_delta = real_cur - real_prev
+                sim_pred_delta = sim_prev1 - sim_prev2
+                real_dir = self._sign(real_delta)
+                sim_pred_dir = self._sign(sim_pred_delta)
+
+                # 双零表示双方都无方向信息，不计入样本。
+                if real_dir == 0 and sim_pred_dir == 0:
+                    continue
+                if real_dir == sim_pred_dir:
+                    pred_match_forward1 += 1
+                pred_total_forward1 += 1
+
+            real_returns: list[float] = []
+            sim_returns: list[float] = []
+            # 同日口径与拟合指标：用同一日的真实/模拟变化进行比较。
+            for i in range(1, len(aligned)):
+                day_prev, real_prev, sim_prev = aligned[i - 1]
+                day_cur, real_cur, sim_cur = aligned[i]
+
+                if day_cur != day_prev + 1:
+                    continue
+
+                real_delta = real_cur - real_prev
+                sim_delta = sim_cur - sim_prev
+
+                real_dir = self._sign(real_delta)
+                sim_dir = self._sign(sim_delta)
+                if not (real_dir == 0 and sim_dir == 0):
+                    if real_dir == sim_dir:
+                        pred_match_same_day += 1
+                    pred_total_same_day += 1
+
+                real_den = real_prev if abs(real_prev) > 1e-9 else 1.0
+                sim_den = sim_prev if abs(sim_prev) > 1e-9 else 1.0
+                real_returns.append(real_delta / real_den)
+                sim_returns.append(sim_delta / sim_den)
+
+            corr = self._pearson_corr(real_returns, sim_returns)
+            if corr is None:
+                if real_returns and all(abs(real_returns[i] - sim_returns[i]) <= 1e-12 for i in range(len(real_returns))):
+                    corr = 1.0
+                elif real_returns:
+                    corr = 0.0
+            if corr is not None and real_returns:
+                fit_corr_weighted_sum += corr * len(real_returns)
+                fit_corr_weight_total += len(real_returns)
+
+            for i in range(min(len(real_returns), len(sim_returns))):
+                pooled_real_var.append(real_returns[i] * real_returns[i])
+                pooled_sim_var.append(sim_returns[i] * sim_returns[i])
+
+        prediction_accuracy_same_day_pct = None
+        if pred_total_same_day > 0:
+            prediction_accuracy_same_day_pct = round(pred_match_same_day / pred_total_same_day * 100.0, 2)
+
+        prediction_accuracy_forward1_pct = None
+        if pred_total_forward1 > 0:
+            prediction_accuracy_forward1_pct = round(pred_match_forward1 / pred_total_forward1 * 100.0, 2)
+
+        volatility_fit_pct = None
+        if fit_corr_weight_total > 0:
+            avg_corr = fit_corr_weighted_sum / fit_corr_weight_total
+            avg_corr = max(-1.0, min(1.0, avg_corr))
+            volatility_fit_pct = round((avg_corr + 1.0) * 50.0, 2)
+
+        qlike = self._qlike(pooled_real_var, pooled_sim_var)
+        log_rmse = self._log_rmse(pooled_real_var, pooled_sim_var)
+        mz = self._mz_stats(pooled_real_var, pooled_sim_var)
+
+        return {
+            # 兼容旧字段：默认沿用前瞻1日口径。
+            "prediction_accuracy_pct": prediction_accuracy_forward1_pct,
+            "prediction_sample_count": pred_total_forward1,
+            "prediction_accuracy_same_day_pct": prediction_accuracy_same_day_pct,
+            "prediction_same_day_sample_count": pred_total_same_day,
+            "prediction_accuracy_forward1_pct": prediction_accuracy_forward1_pct,
+            "prediction_forward1_sample_count": pred_total_forward1,
+            "volatility_fit_pct": volatility_fit_pct,
+            "volatility_fit_sample_count": fit_corr_weight_total,
+            "volatility_qlike": None if qlike is None else round(qlike, 6),
+            "volatility_log_rmse": None if log_rmse is None else round(log_rmse, 6),
+            "mz_alpha": None if mz.get("alpha") is None else round(float(mz["alpha"]), 6),
+            "mz_beta": None if mz.get("beta") is None else round(float(mz["beta"]), 6),
+            "mz_r2": None if mz.get("r2") is None else round(float(mz["r2"]), 6),
+            "mz_wald_chi2": None if mz.get("wald_chi2") is None else round(float(mz["wald_chi2"]), 6),
+            "mz_p_value": None if mz.get("p_value") is None else round(float(mz["p_value"]), 6),
+            "mz_sample_count": int(mz.get("n", 0) or 0),
+            "include_closed_days_for_metrics": bool(self._metrics_include_closed_days),
+        }
 
     def _replay_record(self, name: str, record: dict) -> None:
         """回放单条历史记录，仅更新计数器，不推送 WebSocket。"""
@@ -924,8 +1557,10 @@ class RealtimeDashboard:
         if self.index_board is not None:
             max_sim_time = float(self.agent_manager.sim_config.get("max_sim_time", 1.0) or 1.0)
             index_snapshot = self.index_board.current_snapshot(float(sim_time), max_sim_time)
-            index_series = self.index_board.series_snapshot(lookback=self.index_lookback)
-            broad_index_series = self.index_board.broad_index_series(lookback=self.index_lookback)
+            # Frontend always consumes full available history and handles viewport locally
+            # (drag-to-history / back-to-today), no lookback tuning required.
+            index_series = self.index_board.series_snapshot_all()
+            broad_index_series = self.index_board.broad_index_series_all()
             broad_val = self.index_board.broad_index_value
             if index_snapshot:
                 pct_vals = [float(r.get("pct_chg", 0.0) or 0.0) for r in index_snapshot]
@@ -950,6 +1585,7 @@ class RealtimeDashboard:
                 }
 
         indicators = self._compute_indicators(index_series)
+        realtime_curve_metrics = self._compute_curve_realtime_metrics(index_series, trading_day)
 
         social_graph_stats: dict = {}
         graph = getattr(self.agent_manager.social_board, "social_graph", None)
@@ -1011,10 +1647,13 @@ class RealtimeDashboard:
                 "completed_trade_agents": completed_trade_agents,
                 "completed_decision_agents": completed_decision_agents,
                 "broad_market": broad_market,
+                **realtime_curve_metrics,
             },
             "index_snapshot": index_snapshot,
             "index_series": index_series,
             "broad_index_series": broad_index_series,
+            "real_index_series": self._real_index_series,
+            "real_curve_calendar": self._real_curve_calendar,
             "active": {
                 "thinking": list(self.thinking_agents.values()),
                 "scheduled": list(self.scheduled_agents.values()),

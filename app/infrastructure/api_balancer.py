@@ -107,12 +107,13 @@ class APIBalancer:
         for name, cfg in self.providers.items():
             self._semaphores[name] = asyncio.Semaphore(cfg.max_concurrency)
             self._counters[name] = 0
-            
-            model_kwargs: dict[str, Any] = {}
+
+            # 显式传参可避免 LangChain 对 model_kwargs 的参数归类告警。
+            chat_kwargs: dict[str, Any] = {}
             if cfg.extra_body:
-                model_kwargs["extra_body"] = dict(cfg.extra_body)
+                chat_kwargs["extra_body"] = dict(cfg.extra_body)
             if self.max_tokens > 0:
-                model_kwargs["max_tokens"] = self.max_tokens
+                chat_kwargs["max_tokens"] = self.max_tokens
             self._models[name] = ChatOpenAI(
                 model=cfg.model,
                 api_key=cfg.api_key,  # type: ignore
@@ -120,7 +121,7 @@ class APIBalancer:
                 temperature=self.temperature,
                 max_retries=1,
                 timeout=cfg.timeout,
-                model_kwargs=model_kwargs,
+                **chat_kwargs,
             )
 
     async def close(self):

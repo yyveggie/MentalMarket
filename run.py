@@ -152,14 +152,32 @@ def _kill_listeners_on_port(port: int) -> None:
 
 async def main():
     parser = argparse.ArgumentParser(description="MentalMarket: ToM-based CDA Simulation")
-    parser.add_argument("--config", default="config.yaml", help="配置文件路径")
+    parser.add_argument("--config", default="config.yaml", help="配置文件路径（resume 时显式指定可覆盖 run 目录配置）")
     parser.add_argument("--agents", type=int, default=None, help="覆盖Agent数量（快速测试用）")
     parser.add_argument("--time", type=float, default=None, help="覆盖仿真时长（秒）")
     parser.add_argument("--resume", default=None, help="从指定 run 目录的 checkpoint.pkl 恢复（如: runs/20260314_123456）")
     args = parser.parse_args()
 
     # 加载配置
-    config_path = Path(args.config)
+    # 断点续跑时：
+    #   - 默认使用 run 目录下保存的 config.yaml（保持原实验配置不变）
+    #   - 若显式指定了 --config（非默认值），则优先使用指定的配置文件
+    user_specified_config = args.config != parser.get_default("config")
+    if args.resume:
+        if user_specified_config:
+            config_path = Path(args.config)
+            logger.info("Resume mode: using explicitly specified config: %s (overrides run directory config)", config_path)
+        else:
+            resume_config_path = Path(args.resume) / "config.yaml"
+            if resume_config_path.exists():
+                config_path = resume_config_path
+                logger.info("Resume mode: loading config from run directory: %s", config_path)
+            else:
+                config_path = Path(args.config)
+                logger.warning("Resume mode: run directory config not found (%s), falling back to %s", resume_config_path, config_path)
+    else:
+        config_path = Path(args.config)
+
     if config_path.exists():
         config = load_config(str(config_path))
     else:
@@ -173,7 +191,16 @@ async def main():
     social_cfg = config.get("social", {})
     ob_cfg = config.get("orderbook", {})
     indices_cfg = config.get("market_indices", {})
-    dashboard_cfg = config.get("dashboard", {})
+    news_events_cfg = config.get("news_events_config", {})
+    dashboard_cfg = dict(config.get("dashboard", {}))
+    dashboard_cfg.setdefault(
+        "metrics_include_closed_days",
+        bool(news_events_cfg.get("reopen_include_closed_days", False)),
+    )
+    dashboard_cfg.setdefault(
+        "experimental_daily_title_mode",
+        bool(news_events_cfg.get("experimental_daily_title_mode", False)),
+    )
     prompt_cfg = config.get("prompt", {})
     evolution_enabled = bool(evo_cfg.get("enabled", False))
     dashboard_enabled = bool(dashboard_cfg.get("enabled", True))
@@ -288,9 +315,42 @@ async def main():
             configured_symbol = sorted(tradable_symbols)[0]
     else:
         tradable_symbols = {configured_symbol}
+
+    # 实时模式：用 realtime.symbols 替换 tradable_symbols，为实时标的创建 OrderBook
+    _rt_cfg_early = config.get("realtime", {})
+    _rt_real_prices: dict[str, float] = {}
+    _rt_symbol_names: dict[str, str] = {}
+    if bool(_rt_cfg_early.get("enabled", False)):
+        _rt_syms = [str(s).upper() for s in _rt_cfg_early.get("symbols", [])]
+        if _rt_syms:
+            tradable_symbols = set(_rt_syms)
+            configured_symbol = sorted(tradable_symbols)[0]
+            # 启动时拉取真实价格和名称，用于播种 OrderBook & 行情表
+            try:
+                import akshare as ak
+                for _sym in _rt_syms:
+                    _df = ak.stock_individual_spot_xq(symbol=_sym)
+                    if _df is not None and not _df.empty:
+                        _row_map = {}
+                        for _, _row in _df.iterrows():
+                            _row_map[str(_row.iloc[0]).strip()] = _row.iloc[1]
+                        _px = float(_row_map.get("现价", 0))
+                        if _px > 0:
+                            _rt_real_prices[_sym] = _px
+                        _name = str(_row_map.get("股票名称", ""))
+                        if _name:
+                            _rt_symbol_names[_sym] = _name
+                logger.info("Realtime mode: fetched real prices %s, names %s", _rt_real_prices, _rt_symbol_names)
+            except Exception as _e:
+                logger.warning("Realtime mode: failed to fetch real prices, using initial_price: %s", _e)
+            logger.info("Realtime mode: tradable_symbols overridden to %s", sorted(tradable_symbols))
+
     sim_cfg["symbol"] = configured_symbol
     sim_cfg["_ob_cfg"] = ob_cfg
     latest_close_map = index_board.latest_close_map() if index_board is not None else {}
+    # 实时模式：用真实价格覆盖 latest_close_map
+    if _rt_real_prices:
+        latest_close_map.update(_rt_real_prices)
     # 预估 Agent 每标的平均持仓量，用于自动缩放 seed 深度
     avg_stock_ratio = (float(agent_cfg.get("stock_ratio_min", 0.3)) + float(agent_cfg.get("stock_ratio_max", 0.7))) / 2.0
     if str(agent_cfg.get("cash_mode", "power_law")) == "equal":
@@ -342,6 +402,14 @@ async def main():
         index_board=index_board,
         prompt_config=prompt_cfg,
     )
+
+    # 实时模式：清空预计算持仓，注入股票名称映射
+    _rt_cfg = config.get("realtime", {})
+    if bool(_rt_cfg.get("enabled", False)):
+        agent_mgr._precomputed_holdings = {}
+        if _rt_symbol_names:
+            agent_mgr._rt_symbol_names = _rt_symbol_names
+
     agent_mgr.init_agents(n_agents=n_agents, tom_distribution=tom_dist, initial_price=initial_price)
 
     # 初始化社交图谱（在 Agent 初始化之后）
@@ -383,13 +451,18 @@ async def main():
             port=int(dashboard_cfg.get("port", 8765)),
             l2_depth=int(dashboard_cfg.get("l2_depth", l2_depth)),
             l2_quote_orders=int(dashboard_cfg.get("l2_quote_orders", 6)),
-            index_lookback=int(dashboard_cfg.get("index_lookback", 240)),
             trading_day_seconds=float(dashboard_cfg.get("trading_day_seconds", snapshot_interval)),
             max_recent_events=int(dashboard_cfg.get("max_recent_events", 200)),
             dashboard_config=dashboard_cfg,
         )
         await dashboard.start()
         logger.info("Realtime dashboard at http://%s:%d", dashboard.host, dashboard.port)
+
+    # 实时模式：计算节拍数（sim_seconds / real_second）
+    _rt_pacing = 0.0
+    _rt_cfg_pacing = config.get("realtime", {})
+    if bool(_rt_cfg_pacing.get("enabled", False)):
+        _rt_pacing = float(_rt_cfg_pacing.get("pacing", 60.0))  # 默认 60 sim秒/真实秒
 
     engine = SimulationEngine(
         agent_manager=agent_mgr,
@@ -406,6 +479,7 @@ async def main():
         evolution_win_rate_threshold=evo_cfg.get("win_rate_threshold", -0.05) if evolution_enabled else -0.05,
         evolution_consecutive_rounds=evo_cfg.get("consecutive_rounds", 3) if evolution_enabled else 3,
         evolution_max_upgrade_per_round=evo_cfg.get("max_upgrade_per_round", 50) if evolution_enabled else 50,
+        realtime_pacing=_rt_pacing,
     )
     engine._checkpoint_interval = float(storage_cfg.get("checkpoint_interval", snapshot_interval))
     engine._ckpt_l2_keep = int(storage_cfg.get("checkpoint_l2_keep", 200))
@@ -413,17 +487,28 @@ async def main():
     engine._ckpt_snapshot_keep = int(storage_cfg.get("checkpoint_snapshot_keep", 20))
     engine._ckpt_trade_log_limit = int(storage_cfg.get("checkpoint_trade_log_limit", 2000))
 
-    # 安排新闻事件（从 news.json 文件加载）
-    # 每个交易日随机选取 news_per_day 条不同指数的新闻，
-    # 尽量保证每 coverage_cycle 个交易日内所有指数至少出现一次。
-    news_events_cfg = config.get("news_events_config", {})
+    # 实时模式：设置心跳间隔（等于 polling_interval），确保引擎定期唤醒处理实时数据
+    if _rt_pacing > 0:
+        _rt_heartbeat = float(_rt_cfg_pacing.get("polling_interval", 60))
+        engine._realtime_heartbeat_interval = _rt_heartbeat
+        _rt_decision_interval = float(_rt_cfg_pacing.get("decision_interval", 0))
+        engine._realtime_decision_interval = _rt_decision_interval
+        if _rt_decision_interval > 0:
+            logger.info("Realtime round mode: decision_interval=%.0fs, heartbeat=%.0fs",
+                         _rt_decision_interval, _rt_heartbeat)
+        else:
+            logger.info("Realtime Poisson mode: heartbeat interval=%.0fs (sim-time, = %.1f real seconds)",
+                         _rt_heartbeat, _rt_heartbeat / _rt_pacing)
+
+    # 安排新闻事件（默认模式：按指数随机抽样；实验模式：按日全量标题推送）
     if bool(news_events_cfg.get("enabled", True)):
-        news_file = Path(str(news_events_cfg.get("news_file", "data/news.json")))
+        experimental_daily_title_mode = bool(news_events_cfg.get("experimental_daily_title_mode", False))
+        news_file_key = "experimental_news_file" if experimental_daily_title_mode else "news_file"
+        default_news_file = "data/news2.json" if experimental_daily_title_mode else "data/news.json"
+        news_file = Path(str(news_events_cfg.get(news_file_key, default_news_file)))
         if news_file.exists():
             with open(news_file, "r", encoding="utf-8") as nf:
                 news_data = json.load(nf)
-            news_per_day = int(news_events_cfg.get("news_per_day", 4))
-            coverage_cycle = int(news_events_cfg.get("coverage_cycle", 3))
             news_day_offset_pct = float(news_events_cfg.get("news_day_offset_pct", 0.25))
 
             by_day: dict[int, list[dict]] = {}
@@ -433,60 +518,155 @@ async def main():
                     continue
                 by_day.setdefault(day, []).append(item)
 
-            recent_indices: list[set[str]] = []
             news_count = 0
-            for day in sorted(by_day.keys()):
-                sim_time = (day - 1) * snapshot_interval + snapshot_interval * news_day_offset_pct
-                if sim_time >= max_time:
-                    break
+            if experimental_daily_title_mode:
+                monday_include_weekend = bool(news_events_cfg.get("monday_include_weekend", True))
+                reopen_include_closed_days = bool(news_events_cfg.get("reopen_include_closed_days", True))
 
-                pool = by_day[day]
-                by_index: dict[str, list[dict]] = {}
-                for item in pool:
-                    idx = item.get("primary", [""])[0] if item.get("primary") else ""
-                    by_index.setdefault(idx, []).append(item)
+                def _day_meta(items: list[dict]) -> dict[str, str]:
+                    for it in items:
+                        d = str(it.get("date", "")).strip()
+                        w = str(it.get("weekday", "")).strip()
+                        m = str(it.get("market_status", "")).strip()
+                        if d or w or m:
+                            return {"date": d, "weekday": w, "market_status": m}
+                    return {"date": "", "weekday": "", "market_status": ""}
 
-                covered_recently = set()
-                for s in recent_indices[-(coverage_cycle - 1):]:
-                    covered_recently |= s
+                day_meta: dict[int, dict[str, str]] = {d: _day_meta(items) for d, items in by_day.items()}
 
-                uncovered = [idx for idx in by_index if idx and idx not in covered_recently]
-                random.shuffle(uncovered)
-                covered_today = [idx for idx in by_index if idx and idx in covered_recently]
-                random.shuffle(covered_today)
-                priority_order = uncovered + covered_today
-
-                selected: list[dict] = []
-                used_indices: set[str] = set()
-                for idx in priority_order:
-                    if len(selected) >= news_per_day:
+                for day in sorted(by_day.keys()):
+                    sim_time = (day - 1) * snapshot_interval + snapshot_interval * news_day_offset_pct
+                    if sim_time >= max_time:
                         break
-                    if idx in used_indices:
-                        continue
-                    candidates = by_index[idx]
-                    selected.append(random.choice(candidates))
-                    used_indices.add(idx)
 
-                if len(selected) < news_per_day:
-                    remaining = [it for it in pool if it not in selected]
-                    random.shuffle(remaining)
-                    for it in remaining:
+                    today_meta = day_meta.get(day, {"date": "", "weekday": "", "market_status": ""})
+                    include_days = [day]
+                    today_status = str(today_meta.get("market_status", ""))
+
+                    # 复市日（含春节/元旦后开市）自动合并前序连续休市日的新闻。
+                    if reopen_include_closed_days and today_status == "开市":
+                        prev_day = day - 1
+                        while prev_day in by_day:
+                            prev_status = str(day_meta.get(prev_day, {}).get("market_status", ""))
+                            if not prev_status.startswith("休市"):
+                                break
+                            include_days.insert(0, prev_day)
+                            prev_day -= 1
+                    # 回退兼容：若无 market_status 但周几可用，周一仍回捞周末。
+                    elif monday_include_weekend and today_meta.get("weekday") == "周一":
+                        for prev_day in (day - 2, day - 1):
+                            if prev_day in by_day:
+                                include_days.insert(0, prev_day)
+
+                    today_head_parts = [
+                        f"【今日日期】{today_meta.get('date', '')}".strip(),
+                        today_meta.get("weekday", ""),
+                        today_meta.get("market_status", ""),
+                    ]
+                    today_head = " ".join([p for p in today_head_parts if p]).strip()
+
+                    seq = 0
+                    for src_day in include_days:
+                        src_meta = day_meta.get(src_day, {"date": "", "weekday": "", "market_status": ""})
+                        src_parts = [
+                            src_meta.get("date", "") or f"day={src_day}",
+                            src_meta.get("weekday", ""),
+                            src_meta.get("market_status", ""),
+                        ]
+                        src_day_label = " ".join([p for p in src_parts if p]).strip()
+
+                        titles: list[str] = []
+                        for it in by_day.get(src_day, []):
+                            title = str(it.get("title", "")).strip()
+                            if title:
+                                titles.append(f"• {title}")
+
+                        if not titles:
+                            continue
+
+                        lines = [today_head, "【新闻标题】"]
+                        if src_day == day:
+                            lines.append("这一天发生以下新闻：")
+                        else:
+                            lines.append(f"[发生日] {src_day_label}")
+                            lines.append("这一天发生以下新闻：")
+                        lines.extend(titles)
+
+                        news_text = "\n".join([ln for ln in lines if ln])
+                        engine.schedule_news(time=sim_time + seq * 1e-3, content=news_text, symbol="")
+                        seq += 1
+                        news_count += len(titles)
+
+                logger.info(
+                    "Loaded %d titles (grouped by day) from %s (experimental_daily_title_mode=%s, reopen_include_closed_days=%s, monday_include_weekend=%s)",
+                    news_count,
+                    news_file,
+                    experimental_daily_title_mode,
+                    reopen_include_closed_days,
+                    monday_include_weekend,
+                )
+            else:
+                news_per_day = int(news_events_cfg.get("news_per_day", 4))
+                coverage_cycle = int(news_events_cfg.get("coverage_cycle", 3))
+
+                recent_indices: list[set[str]] = []
+                for day in sorted(by_day.keys()):
+                    sim_time = (day - 1) * snapshot_interval + snapshot_interval * news_day_offset_pct
+                    if sim_time >= max_time:
+                        break
+
+                    pool = by_day[day]
+                    by_index: dict[str, list[dict]] = {}
+                    for item in pool:
+                        idx = item.get("primary", [""])[0] if item.get("primary") else ""
+                        by_index.setdefault(idx, []).append(item)
+
+                    covered_recently = set()
+                    for s in recent_indices[-(coverage_cycle - 1):]:
+                        covered_recently |= s
+
+                    uncovered = [idx for idx in by_index if idx and idx not in covered_recently]
+                    random.shuffle(uncovered)
+                    covered_today = [idx for idx in by_index if idx and idx in covered_recently]
+                    random.shuffle(covered_today)
+                    priority_order = uncovered + covered_today
+
+                    selected: list[dict] = []
+                    used_indices: set[str] = set()
+                    for idx in priority_order:
                         if len(selected) >= news_per_day:
                             break
-                        idx = it.get("primary", [""])[0] if it.get("primary") else ""
-                        if idx not in used_indices:
-                            selected.append(it)
-                            used_indices.add(idx)
+                        if idx in used_indices:
+                            continue
+                        candidates = by_index[idx]
+                        selected.append(random.choice(candidates))
+                        used_indices.add(idx)
 
-                recent_indices.append(used_indices)
-                for item in selected:
-                    primary_symbols = item.get("primary", [])
-                    news_symbol = str(primary_symbols[0]) if primary_symbols else ""
-                    engine.schedule_news(time=sim_time, content=item["title"], symbol=news_symbol)
-                    news_count += 1
+                    if len(selected) < news_per_day:
+                        remaining = [it for it in pool if it not in selected]
+                        random.shuffle(remaining)
+                        for it in remaining:
+                            if len(selected) >= news_per_day:
+                                break
+                            idx = it.get("primary", [""])[0] if it.get("primary") else ""
+                            if idx not in used_indices:
+                                selected.append(it)
+                                used_indices.add(idx)
 
-            logger.info("Loaded %d news events from %s (%d per day, coverage cycle=%d)",
-                        news_count, news_file, news_per_day, coverage_cycle)
+                    recent_indices.append(used_indices)
+                    for item in selected:
+                        primary_symbols = item.get("primary", [])
+                        news_symbol = str(primary_symbols[0]) if primary_symbols else ""
+                        engine.schedule_news(time=sim_time, content=item["title"], symbol=news_symbol)
+                        news_count += 1
+
+                logger.info(
+                    "Loaded %d news events from %s (%d per day, coverage cycle=%d)",
+                    news_count,
+                    news_file,
+                    news_per_day,
+                    coverage_cycle,
+                )
 
     # 断点续跑：从 checkpoint 恢复
     if args.resume:
@@ -512,6 +692,128 @@ async def main():
     if hasattr(signal, "SIGTSTP"):
         signal.signal(signal.SIGTSTP, _graceful_shutdown)
 
+    # 实时数据拉取协程（仅 realtime.enabled=true 时启动）
+    realtime_cfg = config.get("realtime", {})
+    realtime_task: asyncio.Task | None = None
+    if bool(realtime_cfg.get("enabled", False)):
+        from realtime.news_fetcher import SinaRealtimeNews
+        from realtime.quote_fetcher import AkshareQuoteFetcher
+        from realtime.market_hours import is_market_open, seconds_until_next_open
+
+        rt_interval = int(realtime_cfg.get("polling_interval", 60))
+        rt_market_hours_only = bool(realtime_cfg.get("market_hours_only", False))
+        rt_news_cfg = realtime_cfg.get("news", {})
+        rt_quote_cfg = realtime_cfg.get("quote", {})
+        rt_symbols = list(realtime_cfg.get("symbols", []))
+        rt_output_cfg = realtime_cfg.get("output", {})
+        rt_log_name = str(rt_output_cfg.get("log_file", "realtime_predictions.jsonl"))
+        rt_log_path = Path(data_logger.run_dir) / rt_log_name if data_logger else Path(rt_log_name)
+        rt_print = bool(rt_output_cfg.get("print_to_console", True))
+
+        rt_news_fetcher = SinaRealtimeNews(
+            page_size=int(rt_news_cfg.get("page_size", 20)),
+            max_history=int(rt_news_cfg.get("max_history", 100)),
+            dedup=bool(rt_news_cfg.get("dedup", True)),
+        ) if rt_news_cfg.get("enabled", True) else None
+
+        rt_quote_fetcher = AkshareQuoteFetcher(
+            symbols=rt_symbols,
+            max_history=int(rt_quote_cfg.get("max_history", 200)),
+        ) if rt_quote_cfg.get("enabled", True) else None
+
+        async def _realtime_data_loop():
+            """后台协程：定期拉取实时新闻/行情并注入仿真引擎。"""
+            # 等待引擎启动（engine.run() 内部设置 _running=True）
+            while not engine._running:
+                await asyncio.sleep(0.1)
+
+            # 轮次制：数据拉取+决策的间隔取 decision_interval；否则取 polling_interval
+            _decision_interval = float(realtime_cfg.get("decision_interval", 0))
+            loop_interval = _decision_interval if _decision_interval > 0 else rt_interval
+
+            round_idx = 0
+            while engine._running:
+                # market_hours_only 模式：盘外休眠等待
+                if rt_market_hours_only and not is_market_open():
+                    wait_secs = seconds_until_next_open()
+                    if wait_secs > 0:
+                        import datetime as _dt
+                        next_open = _dt.datetime.now() + _dt.timedelta(seconds=wait_secs)
+                        logger.info("[实时调度] 当前非交易时段，休眠至 %s（%.0f秒后）",
+                                    next_open.strftime("%Y-%m-%d %H:%M:%S"), wait_secs)
+                        # 分段休眠，每 60 秒检查一次是否被终止
+                        slept = 0.0
+                        while slept < wait_secs and engine._running:
+                            chunk = min(60.0, wait_secs - slept)
+                            await asyncio.sleep(chunk)
+                            slept += chunk
+                        if not engine._running:
+                            break
+                        logger.info("[实时调度] 交易时段开始，恢复运行")
+                    continue
+
+                round_idx += 1
+                new_items: list = []
+                quotes: dict = {}
+                try:
+                    # 拉取新闻（同步 I/O，放入线程池避免阻塞事件循环）
+                    if rt_news_fetcher:
+                        new_items = await asyncio.to_thread(rt_news_fetcher.fetch)
+                        for item in new_items:
+                            content = item["content"]
+                            engine.schedule_news(
+                                time=engine._sim_time + 0.001,
+                                content=content,
+                                symbol="",
+                            )
+                        if new_items and rt_print:
+                            logger.info("[实时新闻] 第%d轮拉取 %d 条新闻", round_idx, len(new_items))
+
+                    # 拉取行情（同步 I/O，放入线程池避免阻塞事件循环）
+                    if rt_quote_fetcher:
+                        quotes = await asyncio.to_thread(rt_quote_fetcher.fetch)
+                        if quotes and rt_print:
+                            quote_text = rt_quote_fetcher.format_quote_text(quotes)
+                            logger.info("[实时行情] 第%d轮:\n%s", round_idx, quote_text)
+
+                        # 将实时行情作为新闻注入，让 Agent 能在 prompt 中看到
+                        if quotes:
+                            quote_summary = rt_quote_fetcher.format_quote_text(quotes)
+                            engine.schedule_news(
+                                time=engine._sim_time + 0.002,
+                                content=f"【实时行情快讯】\n{quote_summary}",
+                                symbol="",
+                            )
+
+                    # 轮次制模式：数据拉取后立即触发所有 Agent 做决策
+                    if _decision_interval > 0:
+                        engine.trigger_all_agent_wakeups()
+
+                    # 持久化拉取记录
+                    if rt_news_fetcher or rt_quote_fetcher:
+                        import json as _json
+                        record = {
+                            "round": round_idx,
+                            "sim_time": round(engine._sim_time, 2),
+                            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                            "new_news_count": len(new_items) if rt_news_fetcher else 0,
+                            "quotes_count": len(quotes) if rt_quote_fetcher else 0,
+                        }
+                        with open(rt_log_path, "a", encoding="utf-8") as f:
+                            f.write(_json.dumps(record, ensure_ascii=False) + "\n")
+
+                except Exception as rt_err:
+                    logger.warning("[实时数据] 第%d轮拉取失败: %s", round_idx, rt_err)
+
+                await asyncio.sleep(loop_interval)
+
+        realtime_task = asyncio.create_task(_realtime_data_loop())
+        logger.info("实时数据拉取已启动 — 间隔=%ds, 新闻=%s, 行情=%s, 标的=%s",
+                     rt_interval,
+                     "开启" if rt_news_fetcher else "关闭",
+                     "开启" if rt_quote_fetcher else "关闭",
+                     rt_symbols)
+
     # 运行仿真
     results = None
     try:
@@ -521,6 +823,14 @@ async def main():
         import traceback
         traceback.print_exc()
     finally:
+        # 停止实时数据拉取
+        if realtime_task is not None and not realtime_task.done():
+            realtime_task.cancel()
+            try:
+                await realtime_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("实时数据拉取已停止")
         # 保存最终 checkpoint
         if data_logger:
             try:

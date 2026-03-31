@@ -12,10 +12,8 @@ const currentTradingDay = computed(() => Math.max(1, Number(store.tradingDay || 
 const includeClosedDaysForMetrics = computed(() => Boolean(store.metrics?.include_closed_days_for_metrics))
 
 type SortKey = 'symbol' | 'pctChg' | 'price' | 'volume'
-type ChartMode = 'normalized' | 'dualAxis'
 const sortKey = ref<SortKey>('pctChg')
 const sortAsc = ref(false)
-const chartMode = ref<ChartMode>('normalized')
 const selectedSymbol = ref<string | null>(null)
 const broadViewMode = ref<'today' | 'history'>('today')
 const broadViewOffset = ref(0)
@@ -617,8 +615,8 @@ function renderCenterChart() {
     broadVisibleStartDate.value = selected.firstDate ?? null
     broadVisibleEndDate.value = selected.lastDate ?? null
 
-    const realSeries = chartMode.value === 'normalized' ? selected.normRealSparkline : selected.realSparklineRaw
-    const simSeries = chartMode.value === 'normalized' ? selected.normSimSparkline : selected.simSparklineRaw
+    const realSeries = selected.normRealSparkline
+    const simSeries = selected.normSimSparkline
     const n = Math.max(realSeries.length, simSeries.length)
       const values = [...realSeries, ...simSeries].filter((v): v is number => v !== null && Number.isFinite(v))
     if (n < 2 || values.length < 2) return
@@ -789,7 +787,7 @@ watch(indexData, (items) => {
   renderCenterChart()
 }, { deep: true })
 watch(() => store.broadIndexSeries, renderCenterChart, { deep: true })
-watch([chartMode, selectedSymbol], renderCenterChart)
+watch(selectedSymbol, renderCenterChart)
 watch(currentTradingDay, () => {
   if (broadViewMode.value === 'today') {
     broadViewOffset.value = 0
@@ -829,18 +827,7 @@ watch(currentTradingDay, () => {
         </span>
       </div>
       <div class="panel-actions">
-        <div class="mode-switch" role="group" aria-label="图表模式">
-          <button
-            class="sort-btn"
-            :class="{ active: chartMode === 'normalized' }"
-            @click="chartMode = 'normalized'"
-          >归一化</button>
-          <button
-            class="sort-btn"
-            :class="{ active: chartMode === 'dualAxis' }"
-            @click="chartMode = 'dualAxis'"
-          >双轴</button>
-        </div>
+
         <button
           v-if="!selectedIndexData"
           class="sort-btn"
@@ -888,18 +875,14 @@ watch(currentTradingDay, () => {
             <svg v-if="idx.normRealSparkline.length > 1 || idx.simSparklineRaw.length > 1" class="sparkline" :viewBox="`0 0 80 24`" preserveAspectRatio="none">
               <polyline
                 v-if="idx.normRealSparkline.length > 1"
-                :points="chartMode === 'normalized'
-                  ? sparklinePoints(idx.normRealSparkline, idx.normLow, idx.normHigh)
-                  : sparklinePoints(idx.realSparklineRaw, idx.realLow, idx.realHigh)"
+                :points="sparklinePoints(idx.normRealSparkline, idx.normLow, idx.normHigh)"
                 fill="none"
                 stroke="#64748b"
                 stroke-width="1.2"
                 stroke-opacity="0.95"
               />
               <polyline
-                :points="chartMode === 'normalized'
-                  ? sparklinePoints(idx.normSimSparkline, idx.normLow, idx.normHigh)
-                  : sparklinePoints(idx.simSparklineRaw, idx.simLow, idx.simHigh)"
+                :points="sparklinePoints(idx.normSimSparkline, idx.normLow, idx.normHigh)"
                 fill="none"
                 :stroke="idx.normRealSparkline.length > 1 ? '#ef5350' : (idx.pctChg >= 0 ? '#ef5350' : '#26a69a')"
                 stroke-width="1.5"
@@ -1005,18 +988,14 @@ watch(currentTradingDay, () => {
             <svg v-if="idx.normRealSparkline.length > 1 || idx.simSparklineRaw.length > 1" class="sparkline" :viewBox="`0 0 80 24`" preserveAspectRatio="none">
               <polyline
                 v-if="idx.normRealSparkline.length > 1"
-                :points="chartMode === 'normalized'
-                  ? sparklinePoints(idx.normRealSparkline, idx.normLow, idx.normHigh)
-                  : sparklinePoints(idx.realSparklineRaw, idx.realLow, idx.realHigh)"
+                :points="sparklinePoints(idx.normRealSparkline, idx.normLow, idx.normHigh)"
                 fill="none"
                 stroke="#64748b"
                 stroke-width="1.2"
                 stroke-opacity="0.95"
               />
               <polyline
-                :points="chartMode === 'normalized'
-                  ? sparklinePoints(idx.normSimSparkline, idx.normLow, idx.normHigh)
-                  : sparklinePoints(idx.simSparklineRaw, idx.simLow, idx.simHigh)"
+                :points="sparklinePoints(idx.normSimSparkline, idx.normLow, idx.normHigh)"
                 fill="none"
                 :stroke="idx.normRealSparkline.length > 1 ? '#ef5350' : (idx.pctChg >= 0 ? '#ef5350' : '#26a69a')"
                 stroke-width="1.5"

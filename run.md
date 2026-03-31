@@ -6,6 +6,7 @@
 |------|------|
 | `config.yaml` | 完整实验（1000 Agent，100 交易日） |
 | `config_100.yaml` | 快速测试（100 Agent，参数已按比例调整） |
+| `config_realtime.yaml` | 实时预测模式（10 Agent，接入真实行情与新闻） |
 
 Docker 默认使用 `config_100.yaml`（在 `docker-compose.yaml` 的 `command` 中指定）。
 
@@ -75,15 +76,36 @@ docker compose down && docker compose up --build
 
 ## 断点续跑
 
+断点续跑时，程序**默认使用 run 目录下保存的 `config.yaml`**（即原始实验配置），而非根目录的全局配置文件。这样可以确保续跑时实验条件与原始运行保持一致。
+
+如果需要用新配置覆盖续跑，可以显式指定 `--config`。
+
+### Docker 方式
+
 ```bash
 # 1. 查看已有运行记录
 ls runs/
 
 # 2. 修改 docker-compose.yaml 的 command
+
+# 使用原始实验配置续跑（推荐）
+command: ["--resume", "runs/20260318_070402"]
+
+# 使用新配置覆盖续跑
 command: ["--config", "config_100.yaml", "--resume", "runs/20260318_070402"]
 
 # 3. 启动（自动从 checkpoint 恢复）
 docker compose up
+```
+
+### 本地方式
+
+```bash
+# 使用原始实验配置续跑（推荐）
+python run.py --resume runs/20260318_070402
+
+# 使用新配置覆盖续跑
+python run.py --config config_100.yaml --resume runs/20260318_070402
 ```
 
 ---
@@ -114,7 +136,8 @@ pip install -r requirements.txt
 python run.py                                    # 默认配置（config.yaml）
 python run.py --config config_100.yaml           # 快速测试
 python run.py --agents 50 --time 7200            # 自定义参数
-python run.py --config config_100.yaml --resume runs/20260319_223957      # 断点续跑
+python run.py --resume runs/20260319_223957                                # 断点续跑（使用原始实验配置）
+python run.py --config config_100.yaml --resume runs/20260319_223957      # 断点续跑（用新配置覆盖）
 
 # 看板
 open http://127.0.0.1:8765
@@ -178,3 +201,72 @@ docker compose up --build
 | `broad_index.jsonl` | 大盘指数 |
 | `checkpoint.pkl` | 断点续跑文件 |
 | `results.json` | 仿真结果摘要 |
+
+---
+
+## 实时预测模式
+
+实时模式让 Agent 在仿真运行期间**定期拉取真实市场数据**（新闻 + 行情），以新闻事件形式注入引擎，Agent 基于真实信息做出交易决策。
+
+### 核心组件
+
+| 模块 | 路径 | 说明 |
+|------|------|------|
+| 新闻拉取 | `realtime/news_fetcher.py` | 从新浪财经直播流抓取实时新闻，自动去重 |
+| 行情拉取 | `realtime/quote_fetcher.py` | 通过 akshare（雪球源）获取个股实时报价 |
+| 引擎集成 | `run.py` | 后台协程 `_realtime_data_loop` 定时拉取并注入 |
+| 配置文件 | `config_realtime.yaml` | 完整 12 段配置，第 12 段为实时数据源 |
+
+### 运行
+
+```bash
+# 本地
+python run.py --config config_realtime.yaml
+
+# Docker（修改 docker-compose.yaml 的 command）
+command: ["--config", "config_realtime.yaml"]
+```
+
+### 工作流程
+
+1. 引擎启动后，读取 `realtime` 配置段
+2. 启动后台协程，按 `polling_interval`（默认 60 秒）周期性拉取
+3. 新闻 → `engine.schedule_news()` 注入为 `NEWS_SHOCK` 事件
+4. 行情 → 格式化为 `【实时行情快讯】` 文本，同样作为新闻注入
+5. Agent 使用与主实验相同的 Prompt / ToM / 工具链做出决策
+6. 拉取日志持久化到 `realtime_predictions.jsonl`
+
+### 持仓分配
+
+实时模式下 **不依赖** `index_holding_file`（预计算持仓文件）。每个 Agent 的初始持仓从 `realtime.symbols` 列表中**随机采样**分配，主实验逻辑不受影响。
+
+### 关键配置项（`config_realtime.yaml` 第 12 段）
+
+```yaml
+realtime:
+  enabled: true                # 启用实时拉取（false 退化为离线仿真）
+  polling_interval: 60         # 拉取间隔（秒）
+  market_hours_only: false     # 是否仅在 A 股交易时间运行
+  symbols:                     # 实时行情标的（akshare 雪球格式）
+    - SH600000                 # 浦发银行
+    - SH601318                 # 中国平安
+    - SZ000001                 # 平安银行
+  news:
+    enabled: true
+    source: sina
+    page_size: 20
+  quote:
+    enabled: true
+    source: akshare
+  output:
+    log_file: realtime_predictions.jsonl
+```
+
+### 依赖
+
+```bash
+pip install akshare   # 行情拉取（雪球源）
+pip install requests  # 新闻拉取（已在 requirements.txt 中）
+```
+
+> **注意**：实时模式需要网络访问，akshare 雪球接口在非交易时段返回上一交易日收盘数据。
