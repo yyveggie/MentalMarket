@@ -1,0 +1,134 @@
+{
+  "run_dir": "runs/20260330_211929_tom06_tom13_tom21_预测拟合",
+  "real_curve_file": "data/index_volatility_curves.json",
+  "max_day_used": 65,
+  "alignment_policy": {
+    "calendar_source": "union of all real-index dates (include closed days)",
+    "pairing": "strict real/sim intersection on all-day index",
+    "closed_day_excluded": false,
+    "include_closed_days": true,
+    "closed_dates_hint_count": 0,
+    "calendar_news_file": "data/news2.json",
+    "forward_fill_sim_on_missing_day": false,
+    "return_pair_rule": "only consecutive day pairs (d and d-1)",
+    "forward1_rule": "proxy sign(sim_return_{t-1}) vs sign(real_return_t) on consecutive d-2,d-1,d"
+  },
+  "curve_scope": {
+    "fit_accuracy_curves_png": "aggregated over selected symbols",
+    "fit_accuracy_curves_by_symbol_png": "per symbol fit curves + synthetic broad index curve",
+    "broad_curve_enabled": true,
+    "broad_curve_definition": "market-cap weighted composite from stock_profile.csv (fallback: equal-weight)"
+  },
+  "overall": {
+    "same_day_acc": 56.25,
+    "same_day_n": 640,
+    "forward1_acc": 51.58730158730159,
+    "forward1_n": 630,
+    "fit_pct": 18.82235978957661,
+    "fit_n": 640,
+    "rmse": 0.025721745712081273,
+    "r_squared": 0.30165202933610763
+  },
+  "per_symbol": {
+    "CGEI": {
+      "same_day_acc": 57.8125,
+      "same_day_n": 64,
+      "forward1_acc": 58.73015873015873,
+      "forward1_n": 63,
+      "fit_pct": 0.0,
+      "fit_n": 64,
+      "rmse": 0.02832114812132337,
+      "r_squared": 0.08771974932260428
+    },
+    "CPEI": {
+      "same_day_acc": 56.25,
+      "same_day_n": 64,
+      "forward1_acc": 46.03174603174603,
+      "forward1_n": 63,
+      "fit_pct": 33.508622739800856,
+      "fit_n": 64,
+      "rmse": 0.020580162933734183,
+      "r_squared": 0.2731835288961633
+    },
+    "EREI": {
+      "same_day_acc": 59.375,
+      "same_day_n": 64,
+      "forward1_acc": 58.73015873015873,
+      "forward1_n": 63,
+      "fit_pct": 0.0,
+      "fit_n": 64,
+      "rmse": 0.027954653981229687,
+      "r_squared": 0.4662009486858159
+    },
+    "FSEI": {
+      "same_day_acc": 56.25,
+      "same_day_n": 64,
+      "forward1_acc": 58.73015873015873,
+      "forward1_n": 63,
+      "fit_pct": 30.883149331342263,
+      "fit_n": 64,
+      "rmse": 0.014567866114243285,
+      "r_squared": 0.7983420049995279
+    },
+    "IEEI": {
+      "same_day_acc": 54.6875,
+      "same_day_n": 64,
+      "forward1_acc": 49.20634920634921,
+      "forward1_n": 63,
+      "fit_pct": 33.00372377755602,
+      "fit_n": 64,
+      "rmse": 0.017822787226725142,
+      "r_squared": 0.04213855187473859
+    },
+    "MEI": {
+      "same_day_acc": 56.25,
+      "same_day_n": 64,
+      "forward1_acc": 49.20634920634921,
+      "forward1_n": 63,
+      "fit_pct": 3.6787050564052874,
+      "fit_n": 64,
+      "rmse": 0.028045074330250757,
+      "r_squared": 0.4764859135360875
+    },
+    "REEI": {
+      "same_day_acc": 54.6875,
+      "same_day_n": 64,
+      "forward1_acc": 50.79365079365079,
+      "forward1_n": 63,
+      "fit_pct": 13.389580913720167,
+      "fit_n": 64,
+      "rmse": 0.026146405880588086,
+      "r_squared": 0.013116808709525772
+    },
+    "TLEI": {
+      "same_day_acc": 56.25,
+      "same_day_n": 64,
+      "forward1_acc": 46.03174603174603,
+      "forward1_n": 63,
+      "fit_pct": 6.135347160514193,
+      "fit_n": 64,
+      "rmse": 0.022490077042317657,
+      "r_squared": 0.1507513814060932
+    },
+    "TSEI": {
+      "same_day_acc": 53.125,
+      "same_day_n": 64,
+      "forward1_acc": 58.73015873015873,
+      "forward1_n": 63,
+      "fit_pct": 34.04182378697616,
+      "fit_n": 64,
+      "rmse": 0.035004105034486394,
+      "r_squared": 0.7061602515135668
+    },
+    "TTEI": {
+      "same_day_acc": 57.8125,
+      "same_day_n": 64,
+      "forward1_acc": 39.682539682539684,
+      "forward1_n": 63,
+      "fit_pct": 33.58264512945116,
+      "fit_n": 64,
+      "rmse": 0.02962874738024427,
+      "r_squared": 0.002421154416953329
+    }
+  }
+}

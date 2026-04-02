@@ -45,7 +45,7 @@ from metric_fit_accuracy import (
     DailyCurves,
     aligned_real_sim_with_day,
     build_daily_metric_curves,
-    build_equal_weight_close_by_day,
+    build_weighted_close_by_day,
     build_per_symbol_fit_curves,
     compute_overall,
     compute_symbol_metrics,
@@ -53,6 +53,95 @@ from metric_fit_accuracy import (
 from metrics_plot_common import configure_chinese_font, ensure_output_dir, read_jsonl
 
 configure_chinese_font()
+
+
+def plot_real_vs_sim_curves(
+    symbols: list[str],
+    real_close_by_symbol_day: dict[str, dict[int, float]],
+    sim_close: dict[str, dict[int, float]],
+    max_day: int,
+    output_path: Path,
+    run_label: str = "",
+) -> None:
+    """为每只指数画真实 vs 模拟的归一化价格曲线（2×5 子图布局）。"""
+    n = len(symbols)
+    if n == 0:
+        return
+    ncols = min(5, n)
+    nrows = (n + ncols - 1) // ncols
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.2 * ncols, 3.5 * nrows), dpi=140)
+    if nrows == 1 and ncols == 1:
+        axes = [[axes]]
+    elif nrows == 1:
+        axes = [list(axes)]
+    elif ncols == 1:
+        axes = [[ax] for ax in axes]
+    else:
+        axes = [list(row) for row in axes]
+
+    for idx, symbol in enumerate(sorted(symbols)):
+        r, c = divmod(idx, ncols)
+        ax = axes[r][c]
+
+        aligned = aligned_real_sim_with_day(symbol, real_close_by_symbol_day, sim_close, max_day)
+        if len(aligned) < 2:
+            ax.set_title(symbol)
+            ax.text(0.5, 0.5, "No Data", ha="center", va="center", transform=ax.transAxes)
+            continue
+
+        days = [a[0] for a in aligned]
+        real_prices = [a[1] for a in aligned]
+        sim_prices = [a[2] for a in aligned]
+
+        # 归一化为首日=100
+        base_r = real_prices[0] if abs(real_prices[0]) > 1e-9 else 1.0
+        base_s = sim_prices[0] if abs(sim_prices[0]) > 1e-9 else 1.0
+        norm_r = [100.0 * p / base_r for p in real_prices]
+        norm_s = [100.0 * p / base_s for p in sim_prices]
+
+        ax.plot(days, norm_r, color="#888888", linewidth=1.5, label="Real")
+        ax.plot(days, norm_s, color="#e6550d", linewidth=1.5, label="Sim", alpha=0.85)
+        ax.set_title(symbol, fontsize=10)
+        ax.grid(alpha=0.15)
+        if idx == 0:
+            ax.legend(fontsize=7, loc="best")
+
+    # 隐藏多余子图
+    for r in range(nrows):
+        for c in range(ncols):
+            if r * ncols + c >= n:
+                axes[r][c].set_visible(False)
+
+    title = "真实 vs 模拟 归一化价格曲线（首日=100）"
+    if run_label:
+        title += f"\n{run_label}"
+    fig.suptitle(title, fontsize=12, y=1.02)
+    fig.tight_layout()
+    fig.savefig(output_path, bbox_inches="tight")
+    plt.close(fig)
+
+
+def _load_profile_weights(profile_csv_path: Path) -> dict[str, float] | None:
+    """从 stock_profile.csv 加载市值权重并归一化，与 index_board 同口径。"""
+    import csv
+
+    if not profile_csv_path.exists():
+        return None
+    weights: dict[str, float] = {}
+    try:
+        with open(profile_csv_path, encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                symbol = str(row.get("stock_id", "")).strip()
+                w = float(row.get("weight", 0))
+                if symbol and w > 0:
+                    weights[symbol] = w
+    except Exception:
+        return None
+    if not weights:
+        return None
+    total = sum(weights.values())
+    return {s: w / total for s, w in weights.items()}
 
 
 def plot_symbol_bars(symbol_metrics: dict[str, dict[str, Any]], output_path: Path) -> None:
@@ -63,15 +152,18 @@ def plot_symbol_bars(symbol_metrics: dict[str, dict[str, Any]], output_path: Pat
     same_vals = [symbol_metrics[s].get("same_day_acc") or 0.0 for s in labels]
     fwd_vals = [symbol_metrics[s].get("forward1_acc") or 0.0 for s in labels]
     fit_vals = [symbol_metrics[s].get("fit_pct") or 0.0 for s in labels]
+    rmse_vals = [symbol_metrics[s].get("rmse") or 0.0 for s in labels]
+    r2_vals = [symbol_metrics[s].get("r_squared") or 0.0 for s in labels]
 
     x = list(range(len(labels)))
     w = 0.26
 
-    fig, ax = plt.subplots(figsize=(12, 5.8), dpi=140)
+    fig, axes = plt.subplots(2, 1, figsize=(12, 10), dpi=140, gridspec_kw={"height_ratios": [3, 2]})
+
+    ax = axes[0]
     ax.bar([i - w for i in x], same_vals, width=w, label="同日方向准确率", color="#3182bd")
     ax.bar(x, fwd_vals, width=w, label="前瞻1日方向代理准确率", color="#31a354")
-    ax.bar([i + w for i in x], fit_vals, width=w, label="拟合度", color="#e6550d")
-
+    ax.bar([i + w for i in x], fit_vals, width=w, label="拟合度 (Pearson×100)", color="#e6550d")
     ax.set_ylim(0, 100)
     ax.set_ylabel("百分比")
     ax.set_title("各指数拟合度与准确率（严格口径）")
@@ -79,6 +171,19 @@ def plot_symbol_bars(symbol_metrics: dict[str, dict[str, Any]], output_path: Pat
     ax.set_xticklabels(labels, rotation=30, ha="right")
     ax.grid(alpha=0.2, axis="y")
     ax.legend()
+
+    ax2 = axes[1]
+    w2 = 0.35
+    bars_rmse = ax2.bar([i - w2 / 2 for i in x], rmse_vals, width=w2, label="RMSE", color="#756bb1")
+    ax2_r2 = ax2.twinx()
+    bars_r2 = ax2_r2.bar([i + w2 / 2 for i in x], r2_vals, width=w2, label="R2", color="#e7969c", alpha=0.85)
+    ax2.set_ylabel("RMSE")
+    ax2_r2.set_ylabel("R2 (Pearson r2)")
+    ax2.set_title("各指数 RMSE 与 R2")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(labels, rotation=30, ha="right")
+    ax2.grid(alpha=0.2, axis="y")
+    ax2.legend(handles=[bars_rmse, bars_r2], labels=["RMSE", "R2"], loc="upper right")
 
     fig.tight_layout()
     fig.savefig(output_path, bbox_inches="tight")
@@ -106,7 +211,7 @@ def plot_fit_curves_by_symbol(
         fit_vals = [float("nan") if x is None else float(x) for x in fit_raw]
 
         if symbol == BROAD_EQW_SYMBOL:
-            ax.plot(days, fit_vals, label="大盘（等权合成）", color="#111111", linewidth=2.7)
+            ax.plot(days, fit_vals, label="大盘（加权合成）", color="#111111", linewidth=2.7)
         else:
             ax.plot(days, fit_vals, label=symbol, linewidth=1.15, alpha=0.82)
 
@@ -176,6 +281,12 @@ def main() -> None:
         help="Whether closed days participate in metrics; auto reads run_dir/config.yaml news_events_config.reopen_include_closed_days",
     )
     parser.add_argument("--exclude-seed", action="store_true", help="Exclude market-maker (seed) trades from close prices")
+    parser.add_argument(
+        "--profile-csv",
+        type=str,
+        default="data/stock_profile.csv",
+        help="stock_profile.csv for market-cap weights (used in broad index)",
+    )
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir)
@@ -230,12 +341,9 @@ def main() -> None:
     overall = compute_overall(symbol_metrics)
 
     out_dir = ensure_output_dir(run_dir, args.output_dir or None)
-    report_path = out_dir / "fit_accuracy_report.json"
-    chart_path = out_dir / "fit_accuracy_by_symbol.png"
-    curves_path = out_dir / "fit_accuracy_curves.png"
-    curves_json_path = out_dir / "fit_accuracy_curves.json"
-    curves_by_symbol_path = out_dir / "fit_accuracy_curves_by_symbol.png"
-    curves_by_symbol_json_path = out_dir / "fit_accuracy_curves_by_symbol.json"
+    run_label = run_dir.name  # e.g. 20260329_005147_tom07_tom12_tom21_预测拟合
+    report_path = out_dir / f"拟合度报告_{run_label}.json"
+    chart_path = out_dir / f"拟合度与准确率_{run_label}.png"
 
     curve_real_close_by_symbol_day = dict(real_close_by_symbol_day)
     curve_sim_close = dict(sim_close)
@@ -243,8 +351,13 @@ def main() -> None:
     broad_curve_enabled = False
 
     if len(symbols) >= 2:
-        broad_real = build_equal_weight_close_by_day(real_close_by_symbol_day, symbols, max_day)
-        broad_sim = build_equal_weight_close_by_day(sim_close, symbols, max_day)
+        profile_weights: dict[str, float] | None = None
+        try:
+            profile_weights = _load_profile_weights(resolve_existing_path(args.profile_csv, run_dir))
+        except FileNotFoundError:
+            pass
+        broad_real = build_weighted_close_by_day(real_close_by_symbol_day, symbols, max_day, weights=profile_weights)
+        broad_sim = build_weighted_close_by_day(sim_close, symbols, max_day, weights=profile_weights)
         if broad_real and broad_sim:
             curve_real_close_by_symbol_day[BROAD_EQW_SYMBOL] = broad_real
             curve_sim_close[BROAD_EQW_SYMBOL] = broad_sim
@@ -259,6 +372,7 @@ def main() -> None:
         rolling_window=max(5, int(args.rolling_window)),
     )
 
+    # curves 和 curves_by_symbol 图已不再生成，只保留 JSON 用于下游分析
     curves_by_symbol = build_per_symbol_fit_curves(
         symbols=curve_symbols,
         real_close_by_symbol_day=curve_real_close_by_symbol_day,
@@ -267,8 +381,8 @@ def main() -> None:
         rolling_window=max(5, int(args.rolling_window)),
     )
 
-    plot_metric_curves(curves, curves_path)
-    plot_fit_curves_by_symbol(curves_by_symbol, curves_by_symbol_path, overall_curve=curves)
+    curves_json_path = out_dir / f"拟合度曲线数据_{run_label}.json"
+    curves_by_symbol_json_path = out_dir / f"拟合度分指数曲线数据_{run_label}.json"
     curves_json_path.write_text(json.dumps(curves, ensure_ascii=False, indent=2), encoding="utf-8")
     curves_by_symbol_json_path.write_text(json.dumps(curves_by_symbol, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -299,7 +413,7 @@ def main() -> None:
             "fit_accuracy_curves_png": "aggregated over selected symbols",
             "fit_accuracy_curves_by_symbol_png": "per symbol fit curves + synthetic broad index curve",
             "broad_curve_enabled": broad_curve_enabled,
-            "broad_curve_definition": "equal-weight composite from selected symbols in real and simulation",
+            "broad_curve_definition": "market-cap weighted composite from stock_profile.csv (fallback: equal-weight)",
         },
         "overall": overall,
         "per_symbol": symbol_metrics,
@@ -309,13 +423,23 @@ def main() -> None:
     if len(symbol_metrics) > 1:
         plot_symbol_bars(symbol_metrics, chart_path)
 
+    # 真实 vs 模拟价格曲线对比图
+    price_curves_path = out_dir / f"真实vs模拟价格曲线_{run_label}.png"
+    plot_real_vs_sim_curves(
+        symbols=symbols,
+        real_close_by_symbol_day=real_close_by_symbol_day,
+        sim_close=sim_close,
+        max_day=max_day,
+        output_path=price_curves_path,
+        run_label=run_label,
+    )
+
     print(json.dumps({
         "overall": overall,
         "report": str(report_path),
         "chart": str(chart_path) if len(symbol_metrics) > 1 else None,
-        "curves_chart": str(curves_path),
+        "price_curves": str(price_curves_path),
         "curves_json": str(curves_json_path),
-        "curves_by_symbol_chart": str(curves_by_symbol_path),
         "curves_by_symbol_json": str(curves_by_symbol_json_path),
     }, ensure_ascii=False, indent=2))
 

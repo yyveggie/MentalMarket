@@ -1,0 +1,134 @@
+{
+  "run_dir": "runs/20260325_095857_tom07_tom12_tom21_资金均等幂律分布",
+  "real_curve_file": "data/index_volatility_curves.json",
+  "max_day_used": 65,
+  "alignment_policy": {
+    "calendar_source": "union of all real-index dates -> trading-day calendar (closed days removed)",
+    "pairing": "strict real/sim intersection on trading-day index",
+    "closed_day_excluded": true,
+    "include_closed_days": false,
+    "closed_dates_hint_count": 0,
+    "calendar_news_file": "data/news.json",
+    "forward_fill_sim_on_missing_day": false,
+    "return_pair_rule": "only consecutive day pairs (d and d-1)",
+    "forward1_rule": "proxy sign(sim_return_{t-1}) vs sign(real_return_t) on consecutive d-2,d-1,d"
+  },
+  "curve_scope": {
+    "fit_accuracy_curves_png": "aggregated over selected symbols",
+    "fit_accuracy_curves_by_symbol_png": "per symbol fit curves + synthetic broad index curve",
+    "broad_curve_enabled": true,
+    "broad_curve_definition": "market-cap weighted composite from stock_profile.csv (fallback: equal-weight)"
+  },
+  "overall": {
+    "same_day_acc": 48.62068965517241,
+    "same_day_n": 580,
+    "forward1_acc": 49.25925925925926,
+    "forward1_n": 540,
+    "fit_pct": 4.7164832024141505,
+    "fit_n": 580,
+    "rmse": 0.02594971816465092,
+    "r_squared": 0.29673940003796906
+  },
+  "per_symbol": {
+    "CGEI": {
+      "same_day_acc": 41.37931034482759,
+      "same_day_n": 58,
+      "forward1_acc": 55.55555555555556,
+      "forward1_n": 54,
+      "fit_pct": 14.712216618051885,
+      "fit_n": 58,
+      "rmse": 0.020004321738148704,
+      "r_squared": 0.00281551113909573
+    },
+    "CPEI": {
+      "same_day_acc": 46.55172413793103,
+      "same_day_n": 58,
+      "forward1_acc": 38.888888888888886,
+      "forward1_n": 54,
+      "fit_pct": 0.0,
+      "fit_n": 58,
+      "rmse": 0.023593091008137078,
+      "r_squared": 0.3310738149590221
+    },
+    "EREI": {
+      "same_day_acc": 56.89655172413793,
+      "same_day_n": 58,
+      "forward1_acc": 48.148148148148145,
+      "forward1_n": 54,
+      "fit_pct": 0.0,
+      "fit_n": 58,
+      "rmse": 0.02120829958917425,
+      "r_squared": 0.6011739804270543
+    },
+    "FSEI": {
+      "same_day_acc": 48.275862068965516,
+      "same_day_n": 58,
+      "forward1_acc": 51.851851851851855,
+      "forward1_n": 54,
+      "fit_pct": 1.2088483132410077,
+      "fit_n": 58,
+      "rmse": 0.021675960677945538,
+      "r_squared": 0.5949123021640123
+    },
+    "IEEI": {
+      "same_day_acc": 56.89655172413793,
+      "same_day_n": 58,
+      "forward1_acc": 61.111111111111114,
+      "forward1_n": 54,
+      "fit_pct": 14.54980047763402,
+      "fit_n": 58,
+      "rmse": 0.02453589179658585,
+      "r_squared": 0.17544719427680933
+    },
+    "MEI": {
+      "same_day_acc": 41.37931034482759,
+      "same_day_n": 58,
+      "forward1_acc": 44.44444444444444,
+      "forward1_n": 54,
+      "fit_pct": 0.0,
+      "fit_n": 58,
+      "rmse": 0.02676882620314248,
+      "r_squared": 0.3533934210260001
+    },
+    "REEI": {
+      "same_day_acc": 37.93103448275862,
+      "same_day_n": 58,
+      "forward1_acc": 46.2962962962963,
+      "forward1_n": 54,
+      "fit_pct": 0.0,
+      "fit_n": 58,
+      "rmse": 0.026489932635780346,
+      "r_squared": 0.08228604985384146
+    },
+    "TLEI": {
+      "same_day_acc": 56.89655172413793,
+      "same_day_n": 58,
+      "forward1_acc": 44.44444444444444,
+      "forward1_n": 54,
+      "fit_pct": 13.258169401426267,
+      "fit_n": 58,
+      "rmse": 0.02232791130967604,
+      "r_squared": 0.08815228777875457
+    },
+    "TSEI": {
+      "same_day_acc": 50.0,
+      "same_day_n": 58,
+      "forward1_acc": 51.851851851851855,
+      "forward1_n": 54,
+      "fit_pct": 0.0,
+      "fit_n": 58,
+      "rmse": 0.03778935352967794,
+      "r_squared": 0.18945164485544236
+    },
+    "TTEI": {
+      "same_day_acc": 50.0,
+      "same_day_n": 58,
+      "forward1_acc": 50.0,
+      "forward1_n": 54,
+      "fit_pct": 3.4357972137883226,
+      "fit_n": 58,
+      "rmse": 0.030175573179490434,
+      "r_squared": 0.5486877938996584
+    }
+  }
+}

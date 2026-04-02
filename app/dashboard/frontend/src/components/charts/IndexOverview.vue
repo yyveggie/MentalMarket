@@ -300,7 +300,7 @@ const indexData = computed(() => {
   }
   const currentDay = currentTradingDay.value
 
-  const symbols = Array.from(new Set([...Object.keys(store.realIndexSeries), ...Object.keys(store.indexSeries)]))
+  const symbols = Array.from(new Set([...Object.keys(store.realIndexSeries), ...Object.keys(store.indexSeries)])).filter(s => s !== '__BROAD__')
   const items = symbols.map((symbol) => {
     const simRows = store.indexSeries[symbol] ?? []
     const realRows = store.realIndexSeries[symbol] ?? []
@@ -665,6 +665,25 @@ function renderCenterChart() {
     return
   }
 
+  // --- 真实大盘曲线（__BROAD__）对齐 ---
+  const realBroadRows = store.realIndexSeries['__BROAD__'] ?? []
+  const calendarByDay = new Map<number, { date: string }>()
+  for (const item of store.realCurveCalendar) {
+    if (item.day > 0 && item.date) calendarByDay.set(item.day, { date: item.date })
+  }
+  const dayByDate = new Map<string, number>()
+  for (const [day, item] of calendarByDay.entries()) {
+    if (item.date) dayByDate.set(item.date, day)
+  }
+  const realCloseByDay = new Map<number, number>()
+  for (const r of realBroadRows) {
+    const date = String(r.date ?? '')
+    const day = dayByDate.get(date)
+    const close = Number(r.close)
+    if (day != null && Number.isFinite(close)) realCloseByDay.set(day, close)
+  }
+  const hasRealBroad = realCloseByDay.size > 0
+
   const prices = data.map((d) => Number(d.close))
   const dateLabels = data.map((d) => resolveDisplayDate(String(d.date ?? '')))
   const dayTags = data.map((d) => simDateToTradingDay(String(d.date ?? ''), store.tradingDaySeconds))
@@ -711,21 +730,51 @@ function renderCenterChart() {
 
   if (viewPrices.length < 2) return
 
-  const x = d3.scaleLinear().domain([0, viewPrices.length - 1]).range([0, iW])
-  const ext = d3.extent(viewPrices) as [number, number]
-  const pad = (ext[1] - ext[0]) * 0.1 || 1
-  const y = d3.scaleLinear().domain([ext[0] - pad, ext[1] + pad]).range([iH, 0])
+  if (hasRealBroad) {
+    // 双线模式：归一化真实+模拟大盘
+    const viewDayTags = dayTags.slice(startIdx, endIdx + 1)
+    const simBase = firstNonNull(viewPrices)
+    const normSim = normalizeSeries(viewPrices.map(v => v as number | null), simBase)
 
-  const isUp = viewPrices[viewPrices.length - 1] >= viewPrices[0]
-  const color = isUp ? '#ef5350' : '#26a69a'
+    const realPricesRaw: Array<number | null> = viewDayTags.map(d => d !== null ? (realCloseByDay.get(d) ?? null) : null)
+    const realBase = firstNonNull(realPricesRaw)
+    const normReal = normalizeSeries(realPricesRaw, realBase)
 
-  const area = d3.area<number>()
-    .x((_, i) => x(i)).y0(iH).y1((d) => y(d)).curve(d3.curveMonotoneX)
-  const line = d3.line<number>()
-    .x((_, i) => x(i)).y((d) => y(d)).curve(d3.curveMonotoneX)
+    const allVals = [...normSim, ...normReal].filter((v): v is number => v !== null && Number.isFinite(v))
+    if (allVals.length < 2) return
 
-  g.append('path').datum(viewPrices).attr('fill', color).attr('opacity', 0.08).attr('d', area)
-  g.append('path').datum(viewPrices).attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2).attr('d', line)
+    const x = d3.scaleLinear().domain([0, viewPrices.length - 1]).range([0, iW])
+    const ext = d3.extent(allVals) as [number, number]
+    const pad = (ext[1] - ext[0]) * 0.08 || 1
+    const y = d3.scaleLinear().domain([ext[0] - pad, ext[1] + pad]).range([iH, 0])
+
+    const lineReal = d3.line<number | null>()
+      .defined(d => d !== null && Number.isFinite(d as number))
+      .x((_, i) => x(i)).y(d => y(d as number)).curve(d3.curveLinear)
+    const lineSim = d3.line<number | null>()
+      .defined(d => d !== null && Number.isFinite(d as number))
+      .x((_, i) => x(i)).y(d => y(d as number)).curve(d3.curveLinear)
+
+    g.append('path').datum(normReal).attr('fill', 'none').attr('stroke', '#64748b').attr('stroke-width', 2).attr('d', lineReal)
+    g.append('path').datum(normSim).attr('fill', 'none').attr('stroke', '#ef5350').attr('stroke-width', 2.4).attr('d', lineSim)
+  } else {
+    // 单线模式（无真实曲线）
+    const x = d3.scaleLinear().domain([0, viewPrices.length - 1]).range([0, iW])
+    const ext = d3.extent(viewPrices) as [number, number]
+    const pad = (ext[1] - ext[0]) * 0.1 || 1
+    const y = d3.scaleLinear().domain([ext[0] - pad, ext[1] + pad]).range([iH, 0])
+
+    const isUp = viewPrices[viewPrices.length - 1] >= viewPrices[0]
+    const color = isUp ? '#ef5350' : '#26a69a'
+
+    const area = d3.area<number>()
+      .x((_, i) => x(i)).y0(iH).y1((d) => y(d)).curve(d3.curveMonotoneX)
+    const line = d3.line<number>()
+      .x((_, i) => x(i)).y((d) => y(d)).curve(d3.curveMonotoneX)
+
+    g.append('path').datum(viewPrices).attr('fill', color).attr('opacity', 0.08).attr('d', area)
+    g.append('path').datum(viewPrices).attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2).attr('d', line)
+  }
 
   const dragLayer = g.append('rect')
     .attr('x', 0)

@@ -315,6 +315,7 @@ onUnmounted(() => disconnect())
           </div>
         </CollapseTransition>
       </section>
+
     </main>
 
     <SidePanel

@@ -134,7 +134,7 @@ npm run build
 pip install -r requirements.txt
 
 python run.py                                    # 默认配置（config.yaml）
-python run.py --config config_100.yaml           # 快速测试
+python run.py --config config_100.yaml           # 100个智能体配置
 python run.py --agents 50 --time 7200            # 自定义参数
 python run.py --resume runs/20260319_223957                                # 断点续跑（使用原始实验配置）
 python run.py --config config_100.yaml --resume runs/20260319_223957      # 断点续跑（用新配置覆盖）

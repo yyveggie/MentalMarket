@@ -1,0 +1,134 @@
+{
+  "run_dir": "../runs/20260322_231352_tom1",
+  "real_curve_file": "../data/index_volatility_curves.json",
+  "max_day_used": 65,
+  "alignment_policy": {
+    "calendar_source": "union of all real-index dates -> trading-day calendar (closed days removed)",
+    "pairing": "strict real/sim intersection on trading-day index",
+    "closed_day_excluded": true,
+    "include_closed_days": false,
+    "closed_dates_hint_count": 0,
+    "calendar_news_file": "../data/news.json",
+    "forward_fill_sim_on_missing_day": false,
+    "return_pair_rule": "only consecutive day pairs (d and d-1)",
+    "forward1_rule": "proxy sign(sim_return_{t-1}) vs sign(real_return_t) on consecutive d-2,d-1,d"
+  },
+  "curve_scope": {
+    "fit_accuracy_curves_png": "aggregated over selected symbols",
+    "fit_accuracy_curves_by_symbol_png": "per symbol fit curves + synthetic broad index curve",
+    "broad_curve_enabled": true,
+    "broad_curve_definition": "market-cap weighted composite from stock_profile.csv (fallback: equal-weight)"
+  },
+  "overall": {
+    "same_day_acc": 45.32258064516129,
+    "same_day_n": 620,
+    "forward1_acc": 44.0,
+    "forward1_n": 600,
+    "fit_pct": 3.9726699548473254,
+    "fit_n": 620,
+    "rmse": 0.02393185081784706,
+    "r_squared": 0.2130765710690324
+  },
+  "per_symbol": {
+    "CGEI": {
+      "same_day_acc": 53.225806451612904,
+      "same_day_n": 62,
+      "forward1_acc": 51.666666666666664,
+      "forward1_n": 60,
+      "fit_pct": 14.243521115045052,
+      "fit_n": 62,
+      "rmse": 0.019554112209750778,
+      "r_squared": 0.048809898147833305
+    },
+    "CPEI": {
+      "same_day_acc": 35.483870967741936,
+      "same_day_n": 62,
+      "forward1_acc": 46.666666666666664,
+      "forward1_n": 60,
+      "fit_pct": 0.0,
+      "fit_n": 62,
+      "rmse": 0.02247697961949288,
+      "r_squared": 0.09149289756861138
+    },
+    "EREI": {
+      "same_day_acc": 58.064516129032256,
+      "same_day_n": 62,
+      "forward1_acc": 36.666666666666664,
+      "forward1_n": 60,
+      "fit_pct": 0.0,
+      "fit_n": 62,
+      "rmse": 0.02009794346787516,
+      "r_squared": 0.5300943883386913
+    },
+    "FSEI": {
+      "same_day_acc": 41.935483870967744,
+      "same_day_n": 62,
+      "forward1_acc": 38.333333333333336,
+      "forward1_n": 60,
+      "fit_pct": 5.930523091936046,
+      "fit_n": 62,
+      "rmse": 0.020362906357468936,
+      "r_squared": 0.18474107954338206
+    },
+    "IEEI": {
+      "same_day_acc": 48.38709677419355,
+      "same_day_n": 62,
+      "forward1_acc": 48.333333333333336,
+      "forward1_n": 60,
+      "fit_pct": 7.025559128948271,
+      "fit_n": 62,
+      "rmse": 0.01873281242856912,
+      "r_squared": 0.08753329159798756
+    },
+    "MEI": {
+      "same_day_acc": 43.54838709677419,
+      "same_day_n": 62,
+      "forward1_acc": 41.666666666666664,
+      "forward1_n": 60,
+      "fit_pct": 0.0,
+      "fit_n": 62,
+      "rmse": 0.025391634221068528,
+      "r_squared": 0.22111923957919413
+    },
+    "REEI": {
+      "same_day_acc": 46.774193548387096,
+      "same_day_n": 62,
+      "forward1_acc": 46.666666666666664,
+      "forward1_n": 60,
+      "fit_pct": 2.9413287122770972,
+      "fit_n": 62,
+      "rmse": 0.023403074059232972,
+      "r_squared": 0.42718709565106716
+    },
+    "TLEI": {
+      "same_day_acc": 40.32258064516129,
+      "same_day_n": 62,
+      "forward1_acc": 46.666666666666664,
+      "forward1_n": 60,
+      "fit_pct": 0.0,
+      "fit_n": 62,
+      "rmse": 0.02001691531440293,
+      "r_squared": 0.11609063219593252
+    },
+    "TSEI": {
+      "same_day_acc": 43.54838709677419,
+      "same_day_n": 62,
+      "forward1_acc": 43.333333333333336,
+      "forward1_n": 60,
+      "fit_pct": 7.985418805520629,
+      "fit_n": 62,
+      "rmse": 0.033823629764794645,
+      "r_squared": 0.15620036654289773
+    },
+    "TTEI": {
+      "same_day_acc": 41.935483870967744,
+      "same_day_n": 62,
+      "forward1_acc": 40.0,
+      "forward1_n": 60,
+      "fit_pct": 1.600348694746153,
+      "fit_n": 62,
+      "rmse": 0.030546842342490593,
+      "r_squared": 0.2674968215247273
+    }
+  }
+}

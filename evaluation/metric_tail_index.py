@@ -10,7 +10,7 @@ def hill_tail_index(samples: list[float], k: int | None = None) -> tuple[float |
     """Hill estimator alpha for positive-tail samples."""
     xs = sorted((x for x in samples if x > 0), reverse=True)
     n = len(xs)
-    if n < 20:
+    if n < 10:
         return None, 0
 
     if k is None:
@@ -58,7 +58,7 @@ def rolling_hill(
         alpha_pos, k_pos = hill_tail_index(pos_tail)
         alpha_neg, k_neg = hill_tail_index(neg_tail)
 
-        out_days.append(days[i + 1])
+        out_days.append(days[i])
         alpha_pos_curve.append(alpha_pos if alpha_pos is not None else float('nan'))
         alpha_neg_curve.append(alpha_neg if alpha_neg is not None else float('nan'))
         k_pos_curve.append(k_pos)

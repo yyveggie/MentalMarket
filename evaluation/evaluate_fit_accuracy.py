@@ -21,6 +21,7 @@ from metric_fit_accuracy import (  # noqa: F401
     build_daily_fit_curve_for_symbol,
     build_daily_metric_curves,
     build_equal_weight_close_by_day,
+    build_weighted_close_by_day,
     build_per_symbol_fit_curves,
     compute_overall,
     compute_symbol_metrics,

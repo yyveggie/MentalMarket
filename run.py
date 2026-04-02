@@ -207,6 +207,12 @@ async def main():
 
     n_agents = args.agents or sim_cfg.get("n_agents", 1000)
     max_time = args.time or sim_cfg.get("max_sim_time", 3600)
+
+    # 将命令行覆盖值回写到 config 字典，确保 save_config 持久化的是实际运行参数
+    if args.agents:
+        sim_cfg["n_agents"] = n_agents
+    if args.time:
+        sim_cfg["max_sim_time"] = max_time
     initial_price = sim_cfg.get("initial_price", 100.0)
     batch_size = sim_cfg.get("batch_size", 50)
     snapshot_interval = sim_cfg.get("snapshot_interval", 60)

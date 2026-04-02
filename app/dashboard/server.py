@@ -227,8 +227,8 @@ class RealtimeDashboard:
         total += self._replay_market_snapshot_trends(run_dir)
 
         tail_replay = [
-            ("trades", self.recent_trades.maxlen),
-            ("decisions", self.recent_decisions.maxlen),
+            ("trades", self.recent_trades.maxlen or 200),
+            ("decisions", self.recent_decisions.maxlen or 200),
         ]
         for name, keep in tail_replay:
             jsonl_path = run_dir / f"{name}.jsonl"
@@ -596,12 +596,102 @@ class RealtimeDashboard:
                 if str(row.get("date", ""))
             ]
 
+        # --- 合成真实大盘加权曲线（与仿真 index_board 同口径）---
+        self._build_real_broad_index_series()
+
         _logger.info(
-            "Loaded real index curves: symbols=%d calendar_days=%d include_closed=%s",
+            "Loaded real index curves: symbols=%d calendar_days=%d include_closed=%s broad=%s",
             len(self._real_index_series),
             len(self._real_curve_calendar),
             self._real_curve_include_closed_days,
+            "__BROAD__" in self._real_index_series,
         )
+
+    def _build_real_broad_index_series(self) -> None:
+        """从已加载的真实行业指数曲线合成大盘加权曲线（权重同 index_board）"""
+        weights: dict[str, float] = {}
+        if self.index_board is not None:
+            weights = dict(getattr(self.index_board, "_broad_weights", {}))
+        if not weights:
+            return
+
+        # 按日期收集各指数收盘价
+        by_date: dict[str, dict[str, float]] = {}
+        all_dates_set: set[str] = set()
+        for symbol, w in weights.items():
+            rows = self._real_index_series.get(symbol, [])
+            for row in rows:
+                date = str(row.get("date", ""))
+                close = row.get("close")
+                if not date or close is None:
+                    continue
+                if date not in by_date:
+                    by_date[date] = {}
+                by_date[date][symbol] = float(close)
+                all_dates_set.add(date)
+
+        if not by_date:
+            return
+
+        # 用第一个可用日期的收盘价作为各指数基准价
+        sorted_dates = sorted(all_dates_set)
+        base_prices: dict[str, float] = {}
+        for date in sorted_dates:
+            for symbol in weights:
+                if symbol not in base_prices and symbol in by_date.get(date, {}):
+                    base_prices[symbol] = by_date[date][symbol]
+            if len(base_prices) == len(weights):
+                break
+
+        if not base_prices:
+            return
+
+        base_value = 100.0
+        broad_rows: list[dict] = []
+        prev_close: float | None = None
+
+        # 从 real_index_series 中获取一个参考系列以保留 market_status / is_closed 等字段
+        ref_series: dict[str, dict] = {}
+        for symbol in weights:
+            for row in self._real_index_series.get(symbol, []):
+                date = str(row.get("date", ""))
+                if date and date not in ref_series:
+                    ref_series[date] = row
+
+        for date in sorted_dates:
+            day_data = by_date.get(date, {})
+            weighted_sum = 0.0
+            used_weight = 0.0
+            for symbol, w in weights.items():
+                if symbol not in day_data or symbol not in base_prices:
+                    continue
+                bp = base_prices[symbol]
+                if bp <= 0:
+                    continue
+                weighted_sum += w * (day_data[symbol] / bp)
+                used_weight += w
+
+            if used_weight <= 0:
+                continue
+
+            close = base_value * (weighted_sum / used_weight)
+            pct_chg = 0.0
+            if prev_close is not None and prev_close > 0:
+                pct_chg = (close - prev_close) / prev_close * 100.0
+
+            ref = ref_series.get(date, {})
+            broad_rows.append({
+                "date": date,
+                "close": round(close, 6),
+                "volatility": None,
+                "up_down": 1 if pct_chg > 0 else 0,
+                "market_status": str(ref.get("market_status", "")),
+                "is_closed": bool(ref.get("is_closed", False)),
+            })
+            prev_close = close
+
+        if broad_rows:
+            self._real_index_series["__BROAD__"] = broad_rows
 
     @staticmethod
     def _sim_row_to_day(sim_date: str, trading_day_seconds: float) -> int | None:

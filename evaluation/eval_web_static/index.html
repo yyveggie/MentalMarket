@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MentalMarket 评估面板</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root {
+  --bg: #f6f8fa; --card: #ffffff; --border: #d0d7de; --text: #1f2328;
+  --text2: #656d76; --accent: #0969da; --accent2: #1a7f37; --red: #cf222e;
+  --yellow: #9a6700; --purple: #8250df;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+/* 左侧面板 */
+.sidebar { width: 320px; min-width: 320px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-header { padding: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-header h1 { font-size: 16px; color: var(--accent); margin-bottom: 4px; }
+.sidebar-header p { font-size: 12px; color: var(--text2); }
+.sidebar-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.sidebar-section h3 { font-size: 13px; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.runs-list { flex: 1; overflow-y: auto; padding: 8px; }
+.run-item { padding: 8px 12px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; transition: background 0.15s; }
+.run-item:hover { background: rgba(88,166,255,0.1); }
+.run-item.selected { background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3); }
+.run-item input[type="checkbox"] { accent-color: var(--accent); flex-shrink: 0; }
+.run-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-meta { font-size: 11px; color: var(--text2); }
+.run-badge { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: rgba(88,166,255,0.15); color: var(--accent); }
+
+/* 主区域 */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.toolbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.toolbar select, .toolbar button { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.toolbar select:focus, .toolbar button:focus { outline: none; border-color: var(--accent); }
+.toolbar button { background: var(--accent); color: #fff; border: none; font-weight: 600; }
+.toolbar button:hover { opacity: 0.9; }
+.toolbar button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.toolbar label { font-size: 13px; color: var(--text2); }
+
+/* 指标选择 */
+.metrics-panel { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--border); }
+.metric-tag { font-size: 12px; padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; user-select: none; position: relative; }
+.metric-tag:hover { border-color: var(--accent); }
+.metric-tag.active { background: rgba(88,166,255,0.2); border-color: var(--accent); color: var(--accent); }
+
+/* 指标说明面板 */
+.desc-panel { padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); line-height: 1.6; display: none; }
+.desc-panel.show { display: block; }
+.desc-toggle { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: transparent; border: 1px solid var(--border); color: var(--text2); cursor: pointer; margin-left: 8px; transition: all 0.15s; }
+.desc-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.desc-toggle.active { background: rgba(88,166,255,0.1); border-color: var(--accent); color: var(--accent); }
+.desc-list { margin: 0; padding: 0; list-style: none; }
+.desc-list li { padding: 3px 0; display: flex; gap: 8px; }
+.desc-list .desc-name { color: var(--accent); font-weight: 600; white-space: nowrap; min-width: 120px; }
+.desc-list .desc-text { color: var(--text2); }
+
+/* 分组筛选 */
+.group-panel { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border); align-items: center; }
+.group-tag { font-size: 12px; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+.group-tag:hover { border-color: var(--accent2); }
+.group-tag.active { background: rgba(63,185,80,0.2); border-color: var(--accent2); color: var(--accent2); }
+
+/* 图表区域 */
+.chart-area { flex: 1; padding: 16px; overflow-y: auto; }
+.chart-container { background: var(--card); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px; }
+.chart-title { padding: 12px 16px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.chart-title .title-text { cursor: pointer; border-bottom: 1px dashed transparent; transition: border-color 0.2s; }
+.chart-title .title-text:hover { border-bottom-color: var(--accent); }
+.chart-title .title-edit { background: var(--bg); color: var(--text); border: 1px solid var(--accent); border-radius: 4px; font-size: 14px; font-weight: 600; padding: 2px 8px; width: 60%; }
+.alias-input { background: transparent; color: var(--accent); border: none; border-bottom: 1px dashed var(--border); font-size: 11px; width: 80px; padding: 1px 2px; outline: none; margin-left: 4px; }
+.alias-input:focus { border-bottom-color: var(--accent); }
+.alias-input::placeholder { color: var(--text2); opacity: 0.6; }
+.custom-title-input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 13px; width: 180px; }
+.custom-title-input:focus { outline: none; border-color: var(--accent); }
+.custom-title-input::placeholder { color: var(--text2); }
+.chart-box { width: 100%; height: 420px; }
+
+/* 配置对比弹窗 */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--card); border-radius: 12px; border: 1px solid var(--border); width: 80%; max-width: 900px; max-height: 80vh; overflow: auto; }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { font-size: 16px; }
+.modal-close { cursor: pointer; font-size: 20px; color: var(--text2); background: none; border: none; }
+.modal-body { padding: 16px 20px; }
+.diff-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.diff-table th, .diff-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+.diff-table th { color: var(--text2); font-weight: 600; position: sticky; top: 0; background: var(--card); }
+.diff-val-changed { color: var(--yellow); }
+.diff-val-missing { color: var(--text2); font-style: italic; }
+
+/* 空状态 */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text2); gap: 8px; }
+.empty-state .icon { font-size: 48px; opacity: 0.3; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+
+/* 加载指示器 */
+.loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text2); }
+
+/* 图表操作按钮 */
+.chart-actions { display: flex; gap: 6px; align-items: center; }
+.chart-act-btn { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: transparent; border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.chart-act-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.08); }
+.chart-act-btn.remove-btn:hover { border-color: var(--red); color: var(--red); background: rgba(248,81,73,0.08); }
+.chart-act-btn.save-btn.saved { color: var(--accent2); border-color: var(--accent2); }
+
+/* 已保存图表画廊 */
+.saved-section { margin-top: 16px; }
+.saved-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.saved-header h3 { font-size: 14px; color: var(--text2); }
+.saved-header button { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: transparent; border: 1px solid var(--border); color: var(--text2); cursor: pointer; }
+.saved-header button:hover { border-color: var(--red); color: var(--red); }
+.saved-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.saved-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+.saved-card:hover { border-color: var(--accent); }
+.saved-card img { width: 100%; height: 150px; object-fit: contain; background: #f6f8fa; }
+.saved-card-footer { padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text2); }
+.saved-card-footer .saved-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-card-footer .saved-actions { display: flex; gap: 4px; }
+.saved-card-footer button { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: transparent; border: 1px solid var(--border); color: var(--text2); cursor: pointer; }
+.saved-card-footer button:hover { border-color: var(--accent); color: var(--accent); }
+.saved-card-footer button.del-btn:hover { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- 左侧面板 -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>MentalMarket 评估面板</h1>
+    <p>选择实验 → 选择指标 → 生成图表</p>
+  </div>
+  <div class="sidebar-section">
+    <h3>实验列表</h3>
+    <div style="display:flex; gap:6px; margin-top:4px;">
+      <button class="secondary" style="font-size:11px; padding:3px 8px; border-radius:4px; background:transparent; border:1px solid var(--border); color:var(--text2); cursor:pointer;" onclick="selectAllRuns()">全选</button>
+      <button class="secondary" style="font-size:11px; padding:3px 8px; border-radius:4px; background:transparent; border:1px solid var(--border); color:var(--text2); cursor:pointer;" onclick="deselectAllRuns()">全不选</button>
+    </div>
+  </div>
+  <div class="runs-list" id="runsList"></div>
+</div>
+
+<!-- 主区域 -->
+<div class="main">
+  <div class="toolbar">
+    <label>数据类别:</label>
+    <select id="categorySelect" onchange="onCategoryChange()"></select>
+    <label>图表类型:</label>
+    <select id="chartTypeSelect">
+      <option value="line">折线图</option>
+      <option value="line_smooth">平滑折线图</option>
+      <option value="bar">柱状图</option>
+      <option value="area">面积图</option>
+      <option value="scatter">散点图</option>
+    </select>
+    <label>X轴模式:</label>
+    <select id="xModeSelect">
+      <option value="timeseries">时间序列（交易日）</option>
+      <option value="mean">聚合均值</option>
+      <option value="sum">聚合总和</option>
+      <option value="last">最终值</option>
+      <option value="max">最大值</option>
+      <option value="min">最小值</option>
+    </select>
+    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="gridLineToggle" checked onchange="toggleGridLines()">网格线</label>
+    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="windowToggle" onchange="document.getElementById('windowSelect').disabled=!this.checked">自定义窗口</label>
+    <select id="windowSelect" disabled>
+      <option value="10">10天</option>
+      <option value="20">20天</option>
+      <option value="30" selected>30天</option>
+      <option value="50">50天</option>
+      <option value="60">60天</option>
+    </select>
+    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;" id="subplotLabel" title="按分组键拆分为独立子图"><input type="checkbox" id="subplotToggle">子图分离</label>
+    <button onclick="generateChart()">生成图表</button>
+    <input type="text" id="customTitleInput" class="custom-title-input" placeholder="自定义图表标题（可选）">
+    <button class="secondary" onclick="showConfigDiff()">配置对比</button>
+    <button class="secondary" onclick="clearCharts()">清空图表</button>
+    <button class="secondary" onclick="scrollToSaved()">已保存 (<span id="savedCount">0</span>)</button>
+  </div>
+  <div class="metrics-panel" id="metricsPanel"></div>
+  <div class="desc-panel" id="descPanel"></div>
+  <div class="group-panel" id="groupPanel" style="display:none;"></div>
+  <div class="chart-area" id="chartArea">
+    <div class="empty-state">
+      <div class="icon">📊</div>
+      <div>选择左侧的实验，再选择数据类别和指标，点击「生成图表」</div>
+    </div>
+    <!-- 已保存图表画廊 -->
+    <div class="saved-section" id="savedSection" style="display:none;">
+      <div class="saved-header">
+        <h3>💾 已保存的图表</h3>
+        <button onclick="clearAllSaved()">清空全部</button>
+      </div>
+      <div class="saved-grid" id="savedGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 配置对比弹窗 -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>配置对比</h2>
+      <button class="modal-close" onclick="closeConfigModal()">×</button>
+    </div>
+    <div class="modal-body" id="configModalBody"></div>
+  </div>
+</div>
+
+<script>
+// ──────── 全局状态 ────────
+let allRuns = [];
+let selectedRuns = new Set();
+let categories = {};
+let selectedMetrics = new Set();
+let selectedGroups = new Set();
+let availableGroups = [];
+let chartInstances = [];
+const runAliases = {};  // {runName: alias}
+const COLORS = ['#0969da','#1a7f37','#cf222e','#9a6700','#8250df','#bf3989','#0550ae','#116329','#953800','#a40e26',
+                '#7d4e00','#6639ba','#99286a','#218bff','#2da44e','#fa4549','#bf8700','#a475f9','#d961a2','#fb8f44'];
+
+// ──────── 初始化 ────────
+async function init() {
+  const [runsRes, catRes] = await Promise.all([
+    fetch('/api/runs').then(r => r.json()),
+    fetch('/api/categories').then(r => r.json()),
+  ]);
+  allRuns = runsRes;
+  categories = catRes;
+  renderRunsList();
+  renderCategorySelect();
+}
+
+function renderRunsList() {
+  const el = document.getElementById('runsList');
+  el.innerHTML = allRuns.map(run => {
+    const tom = run.config_summary?.tom_distribution || {};
+    const tomStr = Object.entries(tom).map(([k,v]) => `T${k}:${v}`).join(' ');
+    const alias = runAliases[run.name] || '';
+    const escapedName = run.name.replace(/'/g, "\\'");
+    return `
+      <div class="run-item ${selectedRuns.has(run.name) ? 'selected' : ''}" onclick="toggleRun('${escapedName}', this)">
+        <input type="checkbox" ${selectedRuns.has(run.name) ? 'checked' : ''} onclick="event.stopPropagation(); toggleRun('${escapedName}', this.parentElement)">
+        <div style="flex:1;min-width:0;">
+          <div class="run-name" title="${run.name}">${run.name}</div>
+          <div class="run-meta">
+            ${run.trading_days}天 · ${run.config_summary?.n_agents || '?'}人
+            ${tomStr ? ' · ' + tomStr : ''}
+            · ${run.config_summary?.cash_mode || '?'}
+            <input class="alias-input" type="text" placeholder="别名" value="${alias}" onclick="event.stopPropagation()" onchange="setRunAlias('${escapedName}', this.value)">
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCategorySelect() {
+  const sel = document.getElementById('categorySelect');
+  // 区分原始数据与计算型类别
+  const rawCats = [];
+  const computedCats = [];
+  for (const [key, cat] of Object.entries(categories)) {
+    if (cat.computed) {
+      computedCats.push([key, cat]);
+    } else {
+      rawCats.push([key, cat]);
+    }
+  }
+  let html = '<optgroup label="原始数据">';
+  html += rawCats.map(([key, cat]) => `<option value="${key}">${cat.label}</option>`).join('');
+  html += '</optgroup>';
+  if (computedCats.length > 0) {
+    html += '<optgroup label="学术指标（动态计算）">';
+    html += computedCats.map(([key, cat]) => `<option value="${key}">${cat.label}</option>`).join('');
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
+  onCategoryChange();
+}
+
+// ──────── 交互逻辑 ────────
+function toggleRun(name, el) {
+  if (selectedRuns.has(name)) {
+    selectedRuns.delete(name);
+  } else {
+    selectedRuns.add(name);
+  }
+  renderRunsList();
+}
+
+function selectAllRuns() {
+  allRuns.forEach(r => selectedRuns.add(r.name));
+  renderRunsList();
+}
+
+function deselectAllRuns() {
+  selectedRuns.clear();
+  renderRunsList();
+}
+
+function onCategoryChange() {
+  const catKey = document.getElementById('categorySelect').value;
+  const cat = categories[catKey];
+  if (!cat) return;
+
+  // 渲染指标标签（带 tooltip）
+  const panel = document.getElementById('metricsPanel');
+  selectedMetrics.clear();
+  const metricEntries = Object.entries(cat.metrics);
+  const descs = cat.desc || {};
+  // 默认选中第一个
+  if (metricEntries.length > 0) selectedMetrics.add(metricEntries[0][0]);
+  panel.innerHTML = metricEntries.map(([key, label]) => {
+    const tip = '';
+    return `<span class="metric-tag ${selectedMetrics.has(key) ? 'active' : ''}" data-key="${key}" onclick="toggleMetric('${key}', this)">${label}</span>`;
+  }).join('') + `<button class="desc-toggle" onclick="toggleDescPanel(this)">❓ 指标说明</button>`;
+
+  // 渲染说明面板
+  const descPanel = document.getElementById('descPanel');
+  if (Object.keys(descs).length > 0) {
+    const items = metricEntries.map(([key, label]) => {
+      const d = descs[key] || '';
+      return `<li><span class="desc-name">${label}</span><span class="desc-text">${d}</span></li>`;
+    }).join('');
+    descPanel.innerHTML = `<ul class="desc-list">${items}</ul>`;
+  } else {
+    descPanel.innerHTML = '<span>暂无说明</span>';
+  }
+  descPanel.classList.remove('show');
+
+  // 分组面板
+  const groupPanel = document.getElementById('groupPanel');
+  const subplotLabel = document.getElementById('subplotLabel');
+  const subplotToggle = document.getElementById('subplotToggle');
+  if (cat.group_key) {
+    groupPanel.style.display = 'flex';
+    groupPanel.innerHTML = `<label style="font-size:12px; color:var(--text2);">按 ${cat.group_key} 筛选:</label><span style="font-size:11px; color:var(--text2);">（加载数据后显示可用选项）</span>`;
+    selectedGroups.clear();
+    availableGroups = [];
+    subplotToggle.disabled = false;
+    subplotLabel.style.opacity = '1';
+    subplotLabel.title = `按 ${cat.group_key} 拆分为独立子图`;
+  } else {
+    groupPanel.style.display = 'none';
+    selectedGroups.clear();
+    availableGroups = [];
+    subplotToggle.disabled = true;
+    subplotToggle.checked = false;
+    subplotLabel.style.opacity = '0.4';
+    subplotLabel.title = '当前类别无分组键，不支持子图分离';
+  }
+}
+
+function toggleMetric(key, el) {
+  if (selectedMetrics.has(key)) {
+    selectedMetrics.delete(key);
+    el.classList.remove('active');
+  } else {
+    selectedMetrics.add(key);
+    el.classList.add('active');
+  }
+}
+
+function toggleDescPanel(btn) {
+  const panel = document.getElementById('descPanel');
+  panel.classList.toggle('show');
+  btn.classList.toggle('active');
+}
+
+function toggleGroup(val, el) {
+  if (selectedGroups.has(val)) {
+    selectedGroups.delete(val);
+    el.classList.remove('active');
+  } else {
+    selectedGroups.add(val);
+    el.classList.add('active');
+  }
+}
+
+// ──────── 图表生成 ────────
+async function generateChart() {
+  if (selectedRuns.size === 0) {
+    alert('请先选择至少一个实验');
+    return;
+  }
+  if (selectedMetrics.size === 0) {
+    alert('请先选择至少一个指标');
+    return;
+  }
+
+  const catKey = document.getElementById('categorySelect').value;
+  const cat = categories[catKey];
+  let chartType = document.getElementById('chartTypeSelect').value;
+  const xMode = document.getElementById('xModeSelect').value;
+  const isAgg = xMode !== 'timeseries';
+  // 离散 x 轴或聚合模式自动切换为柱状图
+  if ((cat.x_type === 'category' || isAgg) && (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area')) chartType = 'bar';
+  const runs = Array.from(selectedRuns).join(',');
+  const metrics = Array.from(selectedMetrics).join(',');
+  const groupFilter = Array.from(selectedGroups).join(',');
+
+  // 计算型类别显示加载提示
+  const genBtn = document.querySelector('.toolbar button:first-of-type');
+  const origText = genBtn.textContent;
+  if (cat.computed) {
+    genBtn.textContent = '⏳ 计算中...';
+    genBtn.disabled = true;
+  }
+
+  const windowEnabled = document.getElementById('windowToggle').checked;
+  const windowVal = windowEnabled ? document.getElementById('windowSelect').value : '';
+  const url = `/api/data?runs=${encodeURIComponent(runs)}&category=${catKey}&metrics=${metrics}&group_filter=${groupFilter}` + (windowVal ? `&window=${windowVal}` : '');
+
+  let data;
+  try {
+    const res = await fetch(url);
+    data = await res.json();
+  } finally {
+    genBtn.textContent = origText;
+    genBtn.disabled = false;
+  }
+
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+
+  // 更新分组面板
+  if (data.available_groups && data.available_groups.length > 0) {
+    availableGroups = data.available_groups;
+    const groupPanel = document.getElementById('groupPanel');
+    groupPanel.innerHTML = `
+      <label style="font-size:12px; color:var(--text2);">按 ${data.group_key} 筛选:</label>
+      ${availableGroups.map(g =>
+        `<span class="group-tag ${selectedGroups.has(g) ? 'active' : ''}" onclick="toggleGroup('${g}', this)">${g}</span>`
+      ).join('')}
+      <span style="font-size:11px; color:var(--text2); margin-left:8px;">（不选则显示全部）</span>
+    `;
+  }
+
+  // 为每个选中的指标生成一个图表
+  const chartArea = document.getElementById('chartArea');
+
+  // 清掉空状态
+  const emptyState = chartArea.querySelector('.empty-state');
+  if (emptyState) emptyState.remove();
+
+  const showGrid = document.getElementById('gridLineToggle').checked;
+  const subplotMode = document.getElementById('subplotToggle').checked && !!cat.group_key;
+
+  // ──────── 子图分离模式 ────────
+  if (subplotMode) {
+    for (const metricKey of selectedMetrics) {
+      const metricLabel = cat.metrics[metricKey] || metricKey;
+      const aggLabel = isAgg ? ({mean:'均值', sum:'总和', last:'最终值', max:'最大值', min:'最小值'}[xMode]) : null;
+
+      // 收集所有分组值
+      const allGroups = new Set();
+      for (const runSeries of Object.values(data.series)) {
+        for (const sLabel of Object.keys(runSeries)) {
+          if (!sLabel.endsWith('_' + metricLabel)) continue;
+          const gv = sLabel.slice(0, -(metricLabel.length + 1));
+          if (gv) allGroups.add(gv);
+        }
+      }
+      const groupList = Array.from(allGroups).sort();
+      if (groupList.length === 0) continue;
+
+      const runNames = Object.keys(data.series);
+      const nCols = Math.min(5, groupList.length);
+      const nRows = Math.ceil(groupList.length / nCols);
+      const rowH = 250;
+      const totalH = nRows * rowH + 30;
+      const containerId = `chart_sub_${Date.now()}_${metricKey}`;
+      const customTitle = document.getElementById('customTitleInput').value.trim();
+      const chartTitle = customTitle || `${cat.label} — ${metricLabel}${aggLabel ? '（' + aggLabel + '）' : ''} [按${cat.group_key}子图分离]`;
+
+      const container = document.createElement('div');
+      container.className = 'chart-container';
+      container.innerHTML = `
+        <div class="chart-title">
+          <span class="title-text" onclick="editChartTitle(this)" title="点击编辑标题">${escapeHtml(chartTitle)}</span>
+          <span class="chart-actions">
+            <button class="chart-act-btn" title="导出 PNG" onclick="exportChartPng(this)">📥 PNG</button>
+            <button class="chart-act-btn" title="导出 PDF（打印）" onclick="exportChartPdf(this)">🖨 PDF</button>
+            <button class="chart-act-btn save-btn" title="保存快照" onclick="saveChartSnapshot(this)">💾 保存</button>
+            <button class="chart-act-btn remove-btn" onclick="removeChart(this)">✕</button>
+          </span>
+        </div>
+        <div id="${containerId}" class="chart-box" style="height:${totalH}px;"></div>
+      `;
+      chartArea.insertBefore(container, chartArea.firstChild);
+      const chart = echarts.init(document.getElementById(containerId));
+      chartInstances.push(chart);
+
+      const grids = [], xAxes = [], yAxes = [], seriesList = [], titles = [];
+      const gapX = 3, gapY = 12, marginL = 5, marginR = 1, marginT = 1;
+      const plotW = (100 - marginL - marginR - gapX * (nCols - 1)) / nCols;
+      const plotH = (100 - marginT - gapY * nRows) / nRows;
+
+      groupList.forEach((gv, i) => {
+        const col = i % nCols;
+        const row = Math.floor(i / nCols);
+        const left = `${marginL + col * (plotW + gapX)}%`;
+        const top = `${marginT + row * (plotH + gapY) + 4}%`;
+
+        grids.push({ left, top, width: `${plotW}%`, height: `${plotH}%` });
+        titles.push({
+          text: gv,
+          left: `${marginL + col * (plotW + gapX) + plotW / 2}%`,
+          top: `${marginT + row * (plotH + gapY)}%`,
+          textAlign: 'center',
+          textStyle: { fontSize: 13, color: '#1f2328', fontWeight: 'bold' },
+        });
+
+        if (isAgg) {
+          // 聚合：每个子图一个柱状图，x轴=run，y轴=聚合值
+          const runLabels = runNames.map(rn => getRunDisplayName(rn));
+          xAxes.push({ type: 'category', gridIndex: i, data: runLabels,
+            axisLabel: { show: row === nRows - 1, color: '#656d76', fontSize: 9, rotate: runLabels.length > 3 ? 20 : 0 },
+            axisLine: { lineStyle: { color: '#d0d7de' } }, splitLine: { show: false } });
+          yAxes.push({ type: 'value', gridIndex: i, scale: true,
+            axisLabel: { color: '#656d76', fontSize: 9 },
+            axisLine: { lineStyle: { color: '#d0d7de' } },
+            splitLine: { show: showGrid, lineStyle: { color: '#eaeef2' } } });
+
+          const barData = runNames.map((rn, ri) => {
+            const sKey = gv + '_' + metricLabel;
+            const pts = (data.series[rn] || {})[sKey] || [];
+            const yVals = pts.map(p => p.y);
+            if (yVals.length === 0) return null;
+            let v;
+            if (xMode === 'mean') v = yVals.reduce((a,b)=>a+b,0)/yVals.length;
+            else if (xMode === 'sum') v = yVals.reduce((a,b)=>a+b,0);
+            else if (xMode === 'last') v = yVals[yVals.length-1];
+            else if (xMode === 'max') v = Math.max(...yVals);
+            else if (xMode === 'min') v = Math.min(...yVals);
+            return Math.round(v * 10000) / 10000;
+          });
+          seriesList.push({
+            type: 'bar', xAxisIndex: i, yAxisIndex: i,
+            data: barData.map((v, ri) => ({ value: v, itemStyle: { color: COLORS[ri % COLORS.length] } })),
+            label: { show: barData.length <= 6, position: 'top', color: '#656d76', fontSize: 9,
+              formatter: p => p.value != null ? p.value.toFixed(2) : '' },
+          });
+        } else {
+          // 时间序列：每个子图按run画线
+          xAxes.push({ type: 'value', gridIndex: i, minInterval: 1,
+            axisLabel: { show: row === nRows - 1, color: '#656d76', fontSize: 9 },
+            axisLine: { lineStyle: { color: '#d0d7de' } }, splitLine: { show: false } });
+          yAxes.push({ type: 'value', gridIndex: i, scale: true,
+            axisLabel: { color: '#656d76', fontSize: 9 },
+            axisLine: { lineStyle: { color: '#d0d7de' } },
+            splitLine: { show: showGrid, lineStyle: { color: '#eaeef2' } } });
+
+          runNames.forEach((rn, ri) => {
+            const sKey = gv + '_' + metricLabel;
+            const pts = (data.series[rn] || {})[sKey];
+            if (!pts || pts.length === 0) return;
+            seriesList.push({
+              name: getRunDisplayName(rn), type: 'line', symbol: 'none',
+              xAxisIndex: i, yAxisIndex: i,
+              lineStyle: { width: 1.5, color: COLORS[ri % COLORS.length] },
+              itemStyle: { color: COLORS[ri % COLORS.length] },
+              data: pts.map(p => [p.x, p.y]),
+            });
+          });
+        }
+      });
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        title: titles,
+        tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de',
+          textStyle: { color: '#1f2328', fontSize: 11 }, confine: true },
+        legend: runNames.length > 1 ? {
+          type: 'scroll', top: 0, right: 20,
+          data: runNames.map(rn => getRunDisplayName(rn)),
+          textStyle: { color: '#656d76', fontSize: 10 }
+        } : undefined,
+        grid: grids, xAxis: xAxes, yAxis: yAxes, series: seriesList,
+      });
+    }
+    return; // 子图模式结束
+  }
+
+  // ──────── 聚合模式处理 ────────
+  if (isAgg) {
+    for (const metricKey of selectedMetrics) {
+      const metricLabel = cat.metrics[metricKey] || metricKey;
+      const containerId = `chart_${Date.now()}_${metricKey}`;
+      const aggLabel = {mean:'均值', sum:'总和', last:'最终值', max:'最大值', min:'最小值'}[xMode];
+      const customTitle = document.getElementById('customTitleInput').value.trim();
+      const chartTitle = customTitle || `${cat.label} — ${metricLabel}（${aggLabel}）`;
+
+      // 收集所有 x 轴分类标签和对应值
+      // 如果有 group_key: x 轴 = group values, 每个 run 一组柱
+      // 如果无 group_key: x 轴 = run names, 单组柱
+      const hasGroup = !!cat.group_key;
+      const xLabels = [];
+      const runSeriesMap = {}; // {displayRunName: {xLabel: aggValue}}
+
+      for (const [runName, runSeries] of Object.entries(data.series)) {
+        const runDisplay = getRunDisplayName(runName);
+        runSeriesMap[runDisplay] = {};
+        for (const [seriesLabel, points] of Object.entries(runSeries)) {
+          if (!seriesLabel.includes(metricLabel) && !seriesLabel.endsWith(metricLabel)) continue;
+          const yVals = points.map(p => p.y);
+          if (yVals.length === 0) continue;
+          let aggVal;
+          if (xMode === 'mean') aggVal = yVals.reduce((a,b) => a+b, 0) / yVals.length;
+          else if (xMode === 'sum') aggVal = yVals.reduce((a,b) => a+b, 0);
+          else if (xMode === 'last') aggVal = yVals[yVals.length - 1];
+          else if (xMode === 'max') aggVal = Math.max(...yVals);
+          else if (xMode === 'min') aggVal = Math.min(...yVals);
+          aggVal = Math.round(aggVal * 10000) / 10000;
+
+          // 提取 group label（去掉尾部的 _metricLabel）
+          let xLabel;
+          if (hasGroup) {
+            xLabel = seriesLabel.replace(`_${metricLabel}`, '').replace(new RegExp(`_${metricLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`), '');
+            if (xLabel === seriesLabel) xLabel = seriesLabel; // fallback
+          } else {
+            xLabel = runDisplay;
+          }
+          if (!xLabels.includes(xLabel)) xLabels.push(xLabel);
+          runSeriesMap[runDisplay][xLabel] = aggVal;
+        }
+      }
+
+      // 构建 ECharts 配置
+      const container = document.createElement('div');
+      container.className = 'chart-container';
+      container.innerHTML = `
+        <div class="chart-title">
+          <span class="title-text" onclick="editChartTitle(this)" title="点击编辑标题">${escapeHtml(chartTitle)}</span>
+          <span class="chart-actions">
+            <button class="chart-act-btn" title="导出 PNG" onclick="exportChartPng(this)">📥 PNG</button>
+            <button class="chart-act-btn" title="导出 PDF（打印）" onclick="exportChartPdf(this)">🖨 PDF</button>
+            <button class="chart-act-btn save-btn" title="保存快照" onclick="saveChartSnapshot(this)">💾 保存</button>
+            <button class="chart-act-btn remove-btn" onclick="removeChart(this)">✕</button>
+          </span>
+        </div>
+        <div id="${containerId}" class="chart-box"></div>
+      `;
+      chartArea.insertBefore(container, chartArea.firstChild);
+      const chart = echarts.init(document.getElementById(containerId));
+      chartInstances.push(chart);
+
+      const seriesList = [];
+      let colorIdx = 0;
+      if (hasGroup) {
+        // 每个 run 一组柱
+        for (const [runDisplay, vals] of Object.entries(runSeriesMap)) {
+          seriesList.push({
+            name: runDisplay,
+            type: 'bar',
+            data: xLabels.map(xl => vals[xl] ?? null),
+            itemStyle: { color: COLORS[colorIdx % COLORS.length] },
+            label: { show: xLabels.length <= 10, position: 'top', color: '#656d76', fontSize: 10, formatter: p => p.value != null ? p.value.toFixed(2) : '' },
+          });
+          colorIdx++;
+        }
+      } else {
+        // 无 group: 每个 run 一个柱
+        const vals = xLabels.map(xl => {
+          for (const rMap of Object.values(runSeriesMap)) {
+            if (rMap[xl] != null) return rMap[xl];
+          }
+          return null;
+        });
+        seriesList.push({
+          name: metricLabel,
+          type: 'bar',
+          data: vals,
+          itemStyle: { color: function(params) { return COLORS[params.dataIndex % COLORS.length]; } },
+          label: { show: true, position: 'top', color: '#656d76', fontSize: 10, formatter: p => p.value != null ? p.value.toFixed(2) : '' },
+        });
+      }
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 } },
+        legend: { type: 'scroll', top: 8, textStyle: { color: '#656d76', fontSize: 11 } },
+        grid: { top: 50, right: 20, bottom: 60, left: 60, containLabel: true },
+        xAxis: { type: 'category', data: xLabels, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabels.length > 6 ? 25 : 0, fontSize: 11 } },
+        yAxis: { type: 'value', name: `${metricLabel}（${aggLabel}）`, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
+        series: seriesList,
+      });
+    }
+    return; // 聚合模式结束
+  }
+
+  for (const metricKey of selectedMetrics) {
+    const metricLabel = cat.metrics[metricKey] || metricKey;
+    const containerId = `chart_${Date.now()}_${metricKey}`;
+
+    const customTitle = document.getElementById('customTitleInput').value.trim();
+    const chartTitle = customTitle || `${cat.label} — ${metricLabel}`;
+
+    const container = document.createElement('div');
+    container.className = 'chart-container';
+    container.innerHTML = `
+      <div class="chart-title">
+        <span class="title-text" onclick="editChartTitle(this)" title="点击编辑标题">${escapeHtml(chartTitle)}</span>
+        <span class="chart-actions">
+          <button class="chart-act-btn" title="导出 PNG" onclick="exportChartPng(this)">📥 PNG</button>
+          <button class="chart-act-btn" title="导出 PDF（打印）" onclick="exportChartPdf(this)">🖨 PDF</button>
+          <button class="chart-act-btn save-btn" title="保存快照" onclick="saveChartSnapshot(this)">💾 保存</button>
+          <button class="chart-act-btn remove-btn" onclick="removeChart(this)">✕</button>
+        </span>
+      </div>
+      <div id="${containerId}" class="chart-box"></div>
+    `;
+    chartArea.insertBefore(container, chartArea.firstChild);
+
+    const chart = echarts.init(document.getElementById(containerId));
+    chartInstances.push(chart);
+
+    // 构建系列
+    const seriesList = [];
+    let colorIdx = 0;
+
+    for (const [runName, runSeries] of Object.entries(data.series)) {
+      for (const [seriesLabel, points] of Object.entries(runSeries)) {
+        // 只取当前指标对应的系列
+        if (!seriesLabel.includes(metricLabel) && Object.keys(data.series).length > 1) {
+          if (!seriesLabel.endsWith(metricLabel)) continue;
+        }
+
+        const displayName = Object.keys(data.series).length > 1
+          ? `${getRunDisplayName(runName)} · ${seriesLabel}`
+          : seriesLabel;
+
+        const xyData = points.map(p => [p.x, p.y]);
+
+        // 排名图配色: Top10=绿, Bottom10=红
+        let itemColor = COLORS[colorIdx % COLORS.length];
+        if (seriesLabel.includes('Top10')) itemColor = '#1a7f37';
+        else if (seriesLabel.includes('Bottom10')) itemColor = '#cf222e';
+
+        const seriesOpt = {
+          name: displayName,
+          type: chartType === 'area' ? 'line' : chartType === 'line_smooth' ? 'line' : chartType,
+          data: xyData,
+          smooth: chartType === 'line_smooth',
+          areaStyle: chartType === 'area' ? { opacity: 0.15 } : undefined,
+          symbol: chartType === 'scatter' ? 'circle' : 'none',
+          symbolSize: chartType === 'scatter' ? 4 : 0,
+          lineStyle: { width: 2 },
+          itemStyle: { color: itemColor },
+        };
+        seriesList.push(seriesOpt);
+        colorIdx++;
+      }
+    }
+
+    const option = {
+      backgroundColor: 'transparent',
+      tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true },
+      legend: { type: 'scroll', top: 8, textStyle: { color: '#656d76', fontSize: 11 }, pageTextStyle: { color: '#656d76' } },
+      grid: { top: 50, right: 20, bottom: cat.x_type === 'category' ? 80 : 40, left: 60, containLabel: true },
+      xAxis: cat.x_type === 'category'
+        ? { type: 'category', axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: 35, fontSize: 10, interval: 0 } }
+        : { type: 'value', name: data.x_label, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, minInterval: 1 },
+      yAxis: { type: 'value', name: metricLabel, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
+      dataZoom: cat.x_type === 'category' ? [] : [
+        { type: 'inside', xAxisIndex: 0 },
+        { type: 'slider', xAxisIndex: 0, height: 20, bottom: 5, borderColor: '#d0d7de', backgroundColor: '#ffffff', fillerColor: 'rgba(9,105,218,0.1)', handleStyle: { color: '#0969da' }, textStyle: { color: '#656d76' } }
+      ],
+      series: seriesList,
+    };
+
+    chart.setOption(option);
+  }
+}
+
+function setRunAlias(name, alias) {
+  alias = alias.trim();
+  if (alias) {
+    runAliases[name] = alias;
+  } else {
+    delete runAliases[name];
+  }
+}
+
+function getRunDisplayName(name) {
+  if (runAliases[name]) return runAliases[name];
+  return shortRunName(name);
+}
+
+function shortRunName(name) {
+  // 截取前 20 字符 + 尾部标识
+  if (name.length <= 30) return name;
+  return name.substring(0, 15) + '..' + name.substring(name.length - 12);
+}
+
+function removeChart(btn) {
+  const container = btn.closest('.chart-container');
+  const chartDiv = container.querySelector('.chart-box');
+  const idx = chartInstances.findIndex(c => c.getDom() === chartDiv);
+  if (idx >= 0) {
+    chartInstances[idx].dispose();
+    chartInstances.splice(idx, 1);
+  }
+  container.remove();
+}
+
+function editChartTitle(span) {
+  const oldText = span.textContent;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'title-edit';
+  input.value = oldText;
+  span.replaceWith(input);
+  input.focus();
+  input.select();
+  const finish = () => {
+    const newText = input.value.trim() || oldText;
+    const newSpan = document.createElement('span');
+    newSpan.className = 'title-text';
+    newSpan.textContent = newText;
+    newSpan.title = '点击编辑标题';
+    newSpan.onclick = () => editChartTitle(newSpan);
+    input.replaceWith(newSpan);
+  };
+  input.addEventListener('blur', finish);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = oldText; input.blur(); }
+  });
+}
+
+function clearCharts() {
+  chartInstances.forEach(c => c.dispose());
+  chartInstances = [];
+  const area = document.getElementById('chartArea');
+  area.innerHTML = `
+    <div class="empty-state">
+      <div class="icon">📊</div>
+      <div>选择左侧的实验，再选择数据类别和指标，点击「生成图表」</div>
+    </div>
+  `;
+}
+
+// ──────── 配置对比 ────────
+async function showConfigDiff() {
+  const runs = Array.from(selectedRuns);
+  if (runs.length < 2) {
+    alert('请选择至少 2 个实验进行配置对比');
+    return;
+  }
+  const res = await fetch(`/api/config_diff?runs=${encodeURIComponent(runs.join(','))}`);
+  const data = await res.json();
+
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+
+  const body = document.getElementById('configModalBody');
+  if (data.diffs.length === 0) {
+    body.innerHTML = '<p style="color:var(--text2);">选中的实验配置完全相同。</p>';
+  } else {
+    const header = data.runs.map(r => `<th>${shortRunName(r)}</th>`).join('');
+    const rows = data.diffs.map(d => {
+      const cells = data.runs.map(r => {
+        const v = d.values[r];
+        if (v === null || v === undefined) return '<td class="diff-val-missing">N/A</td>';
+        const formatted = typeof v === 'object' ? JSON.stringify(v) : String(v);
+        return `<td class="diff-val-changed">${escapeHtml(formatted)}</td>`;
+      }).join('');
+      return `<tr><td style="color:var(--accent);font-family:monospace;">${escapeHtml(d.path)}</td>${cells}</tr>`;
+    }).join('');
+    body.innerHTML = `
+      <table class="diff-table">
+        <thead><tr><th>配置路径</th>${header}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  document.getElementById('configModal').classList.add('show');
+}
+
+function closeConfigModal() {
+  document.getElementById('configModal').classList.remove('show');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ──────── 窗口自适应 ────────
+window.addEventListener('resize', () => {
+  chartInstances.forEach(c => c.resize());
+
+function toggleGridLines() {
+  const show = document.getElementById('gridLineToggle').checked;
+  chartInstances.forEach(c => {
+    c.setOption({ yAxis: { splitLine: { show } } });
+  });
+}
+});
+
+// ──────── 导出 PNG ────────
+function _getChartFromBtn(btn) {
+  const container = btn.closest('.chart-container');
+  const chartDiv = container.querySelector('.chart-box');
+  return chartInstances.find(c => c.getDom() === chartDiv);
+}
+
+function _getChartTitle(btn) {
+  const container = btn.closest('.chart-container');
+  const span = container.querySelector('.chart-title > span');
+  return span ? span.textContent.trim() : 'chart';
+}
+
+function exportChartPng(btn) {
+  const chart = _getChartFromBtn(btn);
+  if (!chart) return;
+  const url = chart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = _getChartTitle(btn).replace(/[\/\\:*?"<>|]/g, '_') + '.png';
+  a.click();
+}
+
+// ──────── 导出 PDF（打印）────────
+function exportChartPdf(btn) {
+  const chart = _getChartFromBtn(btn);
+  if (!chart) return;
+  const url = chart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+  const title = _getChartTitle(btn);
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html><html><head><title>${escapeHtml(title)}</title>
+    <style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fff;}
+    img{max-width:95%;max-height:80vh;} h2{margin:16px 0 8px;font-family:sans-serif;color:#333;}
+    button{margin-top:12px;padding:8px 24px;font-size:14px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#f5f5f5;}
+    button:hover{background:#e0e0e0;} @media print{button{display:none;}}</style></head>
+    <body><h2>${escapeHtml(title)}</h2><img src="${url}"><button onclick="window.print()">打印 / 保存为 PDF</button></body></html>
+  `);
+  win.document.close();
+}
+
+// ──────── 保存快照到 localStorage ────────
+const SAVED_KEY = 'mentalmarket_eval_saved_charts';
+const MAX_SAVED = 30;
+
+function _loadSaved() {
+  try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch { return []; }
+}
+
+function _persistSaved(arr) {
+  localStorage.setItem(SAVED_KEY, JSON.stringify(arr));
+  renderSavedGallery();
+}
+
+function saveChartSnapshot(btn) {
+  const chart = _getChartFromBtn(btn);
+  if (!chart) return;
+  const dataUrl = chart.getDataURL({ type: 'png', pixelRatio: 1.5, backgroundColor: '#ffffff' });
+  const title = _getChartTitle(btn);
+  const saved = _loadSaved();
+  saved.unshift({ title, dataUrl, time: new Date().toLocaleString('zh-CN') });
+  if (saved.length > MAX_SAVED) saved.length = MAX_SAVED;
+  _persistSaved(saved);
+  btn.textContent = '✅ 已保存';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = '💾 保存'; btn.classList.remove('saved'); }, 2000);
+}
+
+function renderSavedGallery() {
+  const saved = _loadSaved();
+  const section = document.getElementById('savedSection');
+  const grid = document.getElementById('savedGrid');
+  const countEl = document.getElementById('savedCount');
+  countEl.textContent = saved.length;
+  if (saved.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  grid.innerHTML = saved.map((item, idx) => `
+    <div class="saved-card" onclick="previewSaved(${idx})">
+      <img src="${item.dataUrl}" alt="${escapeHtml(item.title)}">
+      <div class="saved-card-footer">
+        <span class="saved-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
+        <span class="saved-actions">
+          <button onclick="event.stopPropagation(); downloadSaved(${idx})">下载</button>
+          <button class="del-btn" onclick="event.stopPropagation(); removeSaved(${idx})">删除</button>
+        </span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function previewSaved(idx) {
+  const saved = _loadSaved();
+  const item = saved[idx];
+  if (!item) return;
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html><html><head><title>${escapeHtml(item.title)}</title>
+    <style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#ffffff;}
+    img{max-width:95%;max-height:85vh;} h2{margin:16px 0;font-family:sans-serif;color:#1f2328;} p{color:#656d76;font-size:12px;}</style></head>
+    <body><h2>${escapeHtml(item.title)}</h2><img src="${item.dataUrl}"><p>保存时间: ${escapeHtml(item.time)}</p></body></html>
+  `);
+  win.document.close();
+}
+
+function downloadSaved(idx) {
+  const saved = _loadSaved();
+  const item = saved[idx];
+  if (!item) return;
+  const a = document.createElement('a');
+  a.href = item.dataUrl;
+  a.download = item.title.replace(/[\/\\:*?"<>|]/g, '_') + '.png';
+  a.click();
+}
+
+function removeSaved(idx) {
+  const saved = _loadSaved();
+  saved.splice(idx, 1);
+  _persistSaved(saved);
+}
+
+function clearAllSaved() {
+  if (!confirm('确定清空所有已保存的图表？')) return;
+  _persistSaved([]);
+}
+
+function scrollToSaved() {
+  const section = document.getElementById('savedSection');
+  if (section) section.scrollIntoView({ behavior: 'smooth' });
+}
+
+// 启动
+init();
+renderSavedGallery();
+</script>
+</body>
+</html>

@@ -129,6 +129,26 @@ def compute_symbol_metrics(aligned: list[tuple[int, float, float]]) -> dict[str,
         corr = max(-1.0, min(1.0, corr))
         fit_pct = max(0.0, corr) * 100.0
 
+    # RMSE (基于收益率) & R² (基于归一化价格水平)
+    rmse = None
+    r_squared = None
+    if real_returns and sim_returns and len(real_returns) >= 2:
+        n = len(real_returns)
+        ss_res = sum((real_returns[i] - sim_returns[i]) ** 2 for i in range(n))
+        rmse = sqrt(ss_res / n)
+
+    # R²: 归一化价格序列的 Pearson r²，衡量曲线形状相似度
+    # 不受尺度/偏移影响，即使微弱信号也能给出正值
+    if len(aligned) >= 3:
+        base_real = aligned[0][1]
+        base_sim = aligned[0][2]
+        if abs(base_real) > 1e-9 and abs(base_sim) > 1e-9:
+            norm_real = [100.0 * a[1] / base_real for a in aligned]
+            norm_sim = [100.0 * a[2] / base_sim for a in aligned]
+            pc = pearson_corr(norm_real, norm_sim)
+            if pc is not None:
+                r_squared = pc ** 2
+
     return {
         "same_day_acc": (100.0 * same_match / same_total) if same_total else None,
         "same_day_n": same_total,
@@ -136,6 +156,8 @@ def compute_symbol_metrics(aligned: list[tuple[int, float, float]]) -> dict[str,
         "forward1_n": fwd_total,
         "fit_pct": fit_pct,
         "fit_n": len(real_returns),
+        "rmse": rmse,
+        "r_squared": r_squared,
     }
 
 
@@ -173,7 +195,39 @@ def compute_overall(symbol_metrics: dict[str, dict[str, Any]]) -> dict[str, Any]
         "forward1_n": fwd_n_total,
         "fit_pct": (fit_weighted_sum / fit_n_total) if fit_n_total else None,
         "fit_n": fit_n_total,
+        "rmse": _aggregate_rmse(symbol_metrics),
+        "r_squared": _aggregate_r_squared(symbol_metrics),
     }
+
+
+def _aggregate_rmse(symbol_metrics: dict[str, dict[str, Any]]) -> float | None:
+    """加权聚合 RMSE：sqrt(加权 MSE)。"""
+    mse_wsum = 0.0
+    n_total = 0
+    for m in symbol_metrics.values():
+        rmse = m.get("rmse")
+        n = int(m.get("fit_n", 0) or 0)
+        if rmse is not None and n > 0:
+            mse_wsum += (rmse ** 2) * n
+            n_total += n
+    if n_total == 0:
+        return None
+    return sqrt(mse_wsum / n_total)
+
+
+def _aggregate_r_squared(symbol_metrics: dict[str, dict[str, Any]]) -> float | None:
+    """加权聚合 R²。"""
+    r2_wsum = 0.0
+    n_total = 0
+    for m in symbol_metrics.values():
+        r2 = m.get("r_squared")
+        n = int(m.get("fit_n", 0) or 0)
+        if r2 is not None and n > 0:
+            r2_wsum += r2 * n
+            n_total += n
+    if n_total == 0:
+        return None
+    return r2_wsum / n_total
 
 
 def _nan_to_none(v: float) -> float | None:
@@ -285,17 +339,35 @@ def build_daily_metric_curves(
     }
 
 
+def build_weighted_close_by_day(
+    close_by_symbol_day: dict[str, dict[int, float]],
+    symbols: list[str],
+    max_day: int,
+    weights: dict[str, float] | None = None,
+) -> dict[int, float]:
+    """构建加权合成收盘价序列。weights=None 时退化为等权。"""
+    out: dict[int, float] = {}
+    for day in range(1, max_day + 1):
+        available = [(s, close_by_symbol_day[s][day]) for s in symbols if day in close_by_symbol_day.get(s, {})]
+        if not available:
+            continue
+        if weights is None:
+            out[day] = sum(v for _, v in available) / len(available)
+        else:
+            w_sum = sum(weights.get(s, 0.0) for s, _ in available)
+            if w_sum <= 0:
+                out[day] = sum(v for _, v in available) / len(available)
+            else:
+                out[day] = sum(weights.get(s, 0.0) * v for s, v in available) / w_sum
+    return out
+
+
 def build_equal_weight_close_by_day(
     close_by_symbol_day: dict[str, dict[int, float]],
     symbols: list[str],
     max_day: int,
 ) -> dict[int, float]:
-    out: dict[int, float] = {}
-    for day in range(1, max_day + 1):
-        vals = [close_by_symbol_day[s][day] for s in symbols if day in close_by_symbol_day.get(s, {})]
-        if vals:
-            out[day] = sum(vals) / len(vals)
-    return out
+    return build_weighted_close_by_day(close_by_symbol_day, symbols, max_day, weights=None)
 
 
 def build_daily_fit_curve_for_symbol(

@@ -136,6 +136,8 @@ def ensure_output_dir(run_dir: Path, output_dir: str | None) -> Path:
     if output_dir:
         out = Path(output_dir)
     else:
-        out = run_dir / "figures"
+        # 默认输出到项目根目录下的 output/
+        project_root = Path(__file__).resolve().parent.parent
+        out = project_root / "output"
     out.mkdir(parents=True, exist_ok=True)
     return out
