@@ -209,7 +209,7 @@ DATA_CATEGORIES = {
 
 COMPUTED_CATEGORIES: dict[str, dict] = {
     "kyle_lambda": {
-        "label": "📐 Kyle Lambda（价格冲击）",
+        "label": "Kyle Lambda（价格冲击）",
         "x_key": "trading_day",
         "metrics": {
             "kyle_lambda": "Kyle λ",
@@ -225,7 +225,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "tail_index": {
-        "label": "📊 厚尾指数（Hill）",
+        "label": "厚尾指数（Hill）",
         "x_key": "trading_day",
         "metrics": {
             "alpha_pos": "正尾 α",
@@ -243,7 +243,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "volatility_clustering": {
-        "label": "📈 波动聚集（ACF）",
+        "label": "波动聚集（ACF）",
         "x_key": "trading_day",
         "metrics": {
             "acf_abs_lag1": "ACF(|r|, lag1)",
@@ -257,7 +257,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "wealth_inequality": {
-        "label": "💰 财富不平等",
+        "label": "财富不平等",
         "x_key": "trading_day",
         "metrics": {
             "gini": "Gini 系数",
@@ -275,7 +275,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "behavioral_agg": {
-        "label": "🧠 行为偏差（占比指标）",
+        "label": "行为偏差（占比指标）",
         "x_key": "trading_day",
         "metrics": {
             "disposition_pct": "处置效应(%)",
@@ -305,7 +305,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "behavioral_continuous": {
-        "label": "🧠 行为偏差（连续指标）",
+        "label": "行为偏差（连续指标）",
         "x_key": "trading_day",
         "metrics": {
             "avg_turnover": "平均换手率",
@@ -327,7 +327,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "behavioral_performance": {
-        "label": "📊 行为绩效",
+        "label": "行为绩效",
         "x_key": "trading_day",
         "metrics": {
             "avg_cumulative_return": "平均累计收益率(%)",
@@ -353,13 +353,13 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "avg_pgr": "盈利实现比例：卖出盈利头寸的频率/可卖出盈利头寸数。↑急于落袋为安",
             "avg_plr": "亏损实现比例：卖出亏损头寸的频率/可卖出亏损头寸数。↑愿意止损 ↓扛单",
             "avg_lambda": "群体平均 λ 损失厌恶系数。>1 厌恶损失，≈1 风险中性，<1 风险寻求",
-            "realized_gain_pct": "当日已实现盈利的平均幅度总和。反映获利了结的力度",
-            "realized_loss_pct": "当日已实现亏损的平均幅度总和。反映割肉力度",
+            "realized_gain_pct": "当日已实现盈利的平均幅度(%)。反映获利了结的力度",
+            "realized_loss_pct": "当日已实现亏损的平均幅度(%)。反映割肉力度",
             "agent_count": "当日有数据的智能体数量",
         },
     },
     "fit_accuracy": {
-        "label": "🎯 拟合精度（expanding window）",
+        "label": "拟合精度（expanding window）",
         "x_key": "trading_day",
         "metrics": {
             "same_day_acc": "同日方向准确率(%)",
@@ -377,11 +377,11 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "fit_volatility": {
-        "label": "📐 波动率拟合（QLIKE & Log-RMSE）",
+        "label": "波动率拟合（QLIKE & Log-RMSE）",
         "x_key": "trading_day",
         "metrics": {
             "qlike": "QLIKE",
-            "log_rmse": "Log-RMSE",
+            "log_var_dev": "Log-方差偏差",
             "real_var": "真实方差",
             "sim_var": "模拟方差",
         },
@@ -389,13 +389,13 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "computed": True,
         "desc": {
             "qlike": "QLIKE 损失函数：衡量模拟方差 vs 真实方差的偏差。↓越小拟合越好，=0 完美匹配",
-            "log_rmse": "对数方差 RMSE：对波动率取对数后的均方根误差。↓越小拟合越好",
+            "log_var_dev": "对数方差偏差：|log(真实方差) - log(模拟方差)|，衡量波动率在对数尺度上的偏离。↓越小拟合越好",
             "real_var": "当日真实收益率方差（基于指数收益率平方）",
             "sim_var": "当日模拟收益率方差（基于指数收益率平方）",
         },
     },
     "wealth_inequality_by_tom": {
-        "label": "💰 财富不平等（按 ToM 分组）",
+        "label": "财富不平等（按 ToM 分组）",
         "x_key": "trading_day",
         "metrics": {
             "gini": "Gini 系数",
@@ -413,7 +413,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "return_extremes": {
-        "label": "🏆 Top/Bottom 10 收益率",
+        "label": "Top/Bottom 10 收益率",
         "x_key": "trading_day",
         "metrics": {
             "top10_avg_return": "Top10 平均收益率(%)",
@@ -435,7 +435,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "trade_count_stats": {
-        "label": "📈 交易次数统计",
+        "label": "交易次数统计",
         "x_key": "trading_day",
         "metrics": {
             "total_trades": "总交易次数",
@@ -457,7 +457,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "final_return_ranking": {
-        "label": "🏅 最终收益排名（Top/Bottom 10）",
+        "label": "最终收益排名（Top/Bottom 10）",
         "x_key": "label",
         "x_type": "category",
         "metrics": {
@@ -470,7 +470,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "plan_adherence": {
-        "label": "📋 计划执行率（预测拟合实验）",
+        "label": "计划执行率（预测拟合实验）",
         "x_key": "trading_day",
         "metrics": {
             "adherence_rate": "执行率(%)",
@@ -485,12 +485,275 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "adherent_decisions": "当天实际遵守计划的决策次数",
         },
     },
+    "emh_weak": {
+        "label": "有效市场假说（弱式检验）",
+        "x_key": "trading_day",
+        "metrics": {
+            "acf_lag1": "ACF(r, lag1)",
+            "acf_lag2": "ACF(r, lag2)",
+            "acf_lag3": "ACF(r, lag3)",
+            "acf_lag4": "ACF(r, lag4)",
+            "acf_lag5": "ACF(r, lag5)",
+            "vr_2": "VR(2)",
+            "vr_5": "VR(5)",
+            "vr_10": "VR(10)",
+            "hurst": "Hurst 指数",
+            "runs_z": "Runs Test Z",
+            "runs_count": "游程数",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "acf_lag1": "收益率滞后1期自相关。EMH下应≈0。显著正值→动量/趋势，负值→均值回复",
+            "acf_lag2": "收益率滞后2期自相关。EMH下应≈0",
+            "acf_lag3": "收益率滞后3期自相关。EMH下应≈0",
+            "acf_lag4": "收益率滞后4期自相关。EMH下应≈0",
+            "acf_lag5": "收益率滞后5期自相关。EMH下应≈0",
+            "vr_2": "Lo-MacKinlay方差比(k=2)。=1→随机游走(EMH)，>1→正自相关/动量，<1→均值回复",
+            "vr_5": "方差比(k=5)。中期随机游走检验。=1→EMH成立",
+            "vr_10": "方差比(k=10)。长期随机游走检验。=1→EMH成立",
+            "hurst": "Hurst指数(R/S法)。=0.5→随机游走(EMH)，>0.5→趋势持续/长记忆，<0.5→均值回复",
+            "runs_z": "游程检验Z统计量。|Z|<1.96→不能拒绝随机性(95%置信)。Z>0→过多反转，Z<0→趋势持续",
+            "runs_count": "滚动窗口内正/负收益交替次数。过多或过少都暗示非随机",
+        },
+    },
+    "emh_semi_strong": {
+        "label": "有效市场假说（半强式检验）",
+        "x_key": "trading_day",
+        "metrics": {
+            "avg_car_1": "CAR(0,1) %",
+            "avg_car_3": "CAR(0,3) %",
+            "avg_car_5": "CAR(0,5) %",
+            "avg_abs_car_1": "|CAR|(0,1) %",
+            "avg_abs_car_3": "|CAR|(0,3) %",
+            "avg_abs_car_5": "|CAR|(0,5) %",
+            "event_count": "当日事件数",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "avg_car_1": "新闻后1日累积异常收益(%)。EMH下应迅速→0。持续偏离→市场反应不足或过度",
+            "avg_car_3": "新闻后3日CAR(%)。如果CAR从1日到3日持续扩大→信息反应迟缓(反应不足)",
+            "avg_car_5": "新闻后5日CAR(%)。如果5日后CAR反转→过度反应；如果继续漂移→反应不足",
+            "avg_abs_car_1": "1日|CAR|(%)。衡量新闻冲击力度（不论方向），EMH下应在1日内完成调整",
+            "avg_abs_car_3": "3日|CAR|(%)。如果远大于1日→价格调整缓慢，半强EMH不成立",
+            "avg_abs_car_5": "5日|CAR|(%)。长窗口异常收益，反映信息充分消化所需时间",
+            "event_count": "当日注入的新闻事件数量。事件密集时CAR的统计意义更强",
+        },
+    },
+    "social_activity": {
+        "label": "社交网络活跃度",
+        "x_key": "trading_day",
+        "metrics": {
+            "like_events": "点赞事件数",
+            "follow_events": "新增关注数",
+            "unique_likers": "独立点赞人数",
+            "avg_likes_given": "人均点赞数",
+            "like_targets_unique": "被赞独立人数",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "like_events": "当日该 ToM 层级 Agent 发出的点赞总数。↑社交活跃、信息流通快 ↓社交沉寂",
+            "follow_events": "当日新增关注事件数。↑网络扩张/意见领袖涌现 ↓网络稳定",
+            "unique_likers": "当日至少点赞一次的独立 Agent 数。反映社交参与面的广度",
+            "avg_likes_given": "活跃 Agent 的人均点赞次数。↑深度参与互动 ↓浅层浏览",
+            "like_targets_unique": "当日被至少一次点赞的独立 Agent 数。反映注意力分布——少则集中于KOL，多则分散",
+        },
+    },
+    "sentiment_dynamics": {
+        "label": "情绪传导与共识",
+        "x_key": "trading_day",
+        "metrics": {
+            "sentiment_mean": "市场平均情绪",
+            "sentiment_std": "情绪标准差",
+            "sentiment_consensus": "情绪共识度",
+            "cross_tom_divergence": "跨ToM分歧度",
+            "extreme_ratio": "极端化率(%)",
+            "sentiment_acf1": "情绪持续性(ACF1)",
+            "sentiment_return_corr": "情绪-收益相关",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "sentiment_mean": "当日全市场平均情绪值(-1~1)。>0 偏看多 <0 偏看空",
+            "sentiment_std": "情绪标准差。越大表示市场意见分裂",
+            "sentiment_consensus": "1 - 情绪标准差。越大表示市场形成一致看法",
+            "cross_tom_divergence": "各ToM层级平均情绪的标准差。越大说明不同认知层级对市场判断差异大",
+            "extreme_ratio": "|sentiment|>0.7 的Agent占比(%)。越高→极端观点蔓延、泡沫/恐慌风险",
+            "sentiment_acf1": "滚动30天平均情绪的自相关(lag1)。>0→情绪有惯性 <0→频繁反转",
+            "sentiment_return_corr": "滚动30天平均情绪与指数收益率的Pearson相关。>0→情绪追涨 <0→逆市场",
+        },
+    },
+    "reputation_system": {
+        "label": "声誉系统",
+        "x_key": "trading_day",
+        "metrics": {
+            "avg_reputation": "平均声誉",
+            "reputation_std": "声誉标准差",
+            "reputation_gini": "声誉基尼系数",
+            "high_rep_ratio": "高声誉占比(%)",
+            "avg_accuracy": "平均预测准确率",
+            "update_count": "当日声誉更新次数",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "avg_reputation": "全市场平均声誉分(0~1)。越高→市场整体预测准确度越高",
+            "reputation_std": "声誉分布的标准差。越大→声誉分化严重",
+            "reputation_gini": "声誉的基尼系数(0~1)。↑表示声誉集中在少数人手中",
+            "high_rep_ratio": "声誉>=0.7 的Agent占比(%)。反映市场可信赖的“专家”比例",
+            "avg_accuracy": "全市场平均近期预测准确率。反映集体某种程度的市场有效性",
+            "update_count": "当日发生声誉更新的次数。越高→市场交易越活跃",
+        },
+    },
+    "kol_market_impact": {
+        "label": "KOL市场冲击",
+        "x_key": "trading_day",
+        "metrics": {
+            "kol_post_count": "KOL发帖数",
+            "non_kol_post_count": "非KOL发帖数",
+            "kol_sentiment_mean": "KOL平均情绪",
+            "non_kol_sentiment_mean": "非KOL平均情绪",
+            "kol_sentiment_lead": "KOL情绪领先度",
+            "kol_like_share": "KOL获赞占比(%)",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "kol_post_count": "KOL(累计获赞 Top20%)当日发帖数(含转发)",
+            "non_kol_post_count": "非KOL当日发帖数",
+            "kol_sentiment_mean": "KOL当日平均情绪(-1~1)。反映意见领袖的市场判断",
+            "non_kol_sentiment_mean": "非KOL当日平均情绪。与KOL对比可见情绪传导方向",
+            "kol_sentiment_lead": "KOL平均情绪 - 非KOL平均情绪。>0→KOL更乐观 <0→KOL更悲观",
+            "kol_like_share": "KOL当日获赞占全市场总赞的比例(%)。反映注意力集中度",
+        },
+    },
+    "tool_usage": {
+        "label": "工具调用分布",
+        "x_key": "trading_day",
+        "metrics": {
+            "total_decisions": "总决策数",
+            "total_tool_calls": "总工具调用数",
+            "avg_tools_per_decision": "平均每决策工具数",
+            "cancel_orders_pct": "cancel_orders(%)",
+            "social_action_pct": "social_action(%)",
+            "set_trade_plan_pct": "set_trade_plan(%)",
+            "social_post_pct": "发帖占比(%)",
+            "social_retweet_pct": "转发占比(%)",
+            "social_like_pct": "点赞占比(%)",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "total_decisions": "当日该ToM层级Agent的总决策次数",
+            "total_tool_calls": "当日总工具调用次数",
+            "avg_tools_per_decision": "每次决策平均调用的工具数。越高→Agent操作越复杂",
+            "cancel_orders_pct": "cancel_orders占所有工具调用的百分比。反映撤单频率",
+            "social_action_pct": "social_action(含发帖/转发/点赞/关注)占总工具的百分比",
+            "set_trade_plan_pct": "set_trade_plan占比。反映计划制定频率",
+            "social_post_pct": "社交行为中发帖占比(细分口径，基数为总工具数)",
+            "social_retweet_pct": "社交行为中转发占比",
+            "social_like_pct": "社交行为中点赞占比",
+        },
+    },
+    "social_trading_nexus": {
+        "label": "社交-交易因果",
+        "x_key": "trading_day",
+        "metrics": {
+            "social_trade_ratio": "社交驱动交易率(%)",
+            "feed_conversion_rate": "信息流转化率(%)",
+            "avg_perceived_posts": "平均感知帖数",
+            "avg_engagement": "平均互动感知量",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "social_trade_ratio": "感知>=1帖的Agent中做出买/卖的比例。越高→社交信息对交易行为影响越大",
+            "feed_conversion_rate": "关注者动态中有帖子的Agent做出买/卖的比例。衡量社交关系对交易的传导效率",
+            "avg_perceived_posts": "每个Agent平均感知到的帖子数。反映信息触达密度",
+            "avg_engagement": "每个Agent平均感知到的互动(点赞)总量。反映社交信号的强度",
+        },
+    },
+    "info_diffusion": {
+        "label": "信息传播与参与度",
+        "x_key": "trading_day",
+        "metrics": {
+            "total_posts": "总帖数",
+            "agent_posts": "Agent 原创帖数",
+            "retweet_posts": "转发帖数",
+            "news_posts": "新闻注入帖数",
+            "retweet_ratio": "转发/原创比率",
+            "avg_likes_per_post": "每帖平均获赞",
+            "max_post_likes": "最热帖获赞",
+            "unique_posters": "独立发帖人数",
+            "posting_rate": "发帖率(%)",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "total_posts": "当日全市场帖子总数（含 Agent 原创、转发、新闻注入）。↑市场讨论热度高 ↓信息产出低迷",
+            "agent_posts": "Agent 主动发布的原创观点帖数。反映市场参与者的表达意愿",
+            "retweet_posts": "转发帖数。↑信息二次传播活跃、存在级联扩散 ↓原创为主",
+            "news_posts": "系统注入的新闻帖数。作为外生信息冲击的强度度量",
+            "retweet_ratio": "转发帖 / 原创帖。>1 表示转发主导（病毒式传播），<0.3 表示原创主导",
+            "avg_likes_per_post": "每帖平均获赞数。衡量帖子质量/共鸣度。↑内容有价值 ↓信息过载或质量低",
+            "max_post_likes": "当日获赞最多的单帖。反映是否存在爆款信息吸引集中注意力",
+            "unique_posters": "当日至少发帖一次的独立 Agent 数。↑参与面广 ↓少数活跃分子主导",
+            "posting_rate": "发帖 Agent / 总 Agent 的百分比。↑全民热议 ↓关注者少",
+        },
+    },
+    "bubble_rd_rad": {
+        "label": "泡沫度量 RD/RAD",
+        "x_key": "trading_day",
+        "metrics": {
+            "rd": "相对偏差 RD(%)",
+            "rad": "绝对相对偏差 RAD(%)",
+            "rolling_rd": "滚动RD(20日)",
+            "rolling_rad": "滚动RAD(20日)",
+            "max_deviation": "最大偏离(%)",
+            "min_deviation": "最小偏离(%)",
+            "n_overpriced": "高估股票数(>5%)",
+            "n_underpriced": "低估股票数(<-5%)",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "rd": "Stöckl et al.(2010) 相对偏差: 全市场股票偏离基本面的带符号平均(%)。>0→整体高估 <0→整体低估",
+            "rad": "Stöckl et al.(2010) 绝对相对偏差: 全市场|偏离|平均(%)。越大→定价偏差越严重",
+            "rolling_rd": "近20日RD滑动平均。平滑后的趋势性高估/低估方向",
+            "rolling_rad": "近20日RAD滑动平均。平滑后的错误定价持续性",
+            "max_deviation": "当日偏离最大的单只股票(%)。识别局部过热标的",
+            "min_deviation": "当日偏离最小(最负)的单只股票(%)。识别被低估标的",
+            "n_overpriced": "偏离>5%的股票数量。越多→泡沫面越广",
+            "n_underpriced": "偏离<-5%的股票数量。越多→恐慌面越广",
+        },
+    },
+    "bubble_gsadf": {
+        "label": "泡沫检测 GSADF",
+        "x_key": "trading_day",
+        "metrics": {
+            "bsadf_stat": "BSADF统计量",
+            "cv_95": "95%临界值",
+            "bubble_signal": "泡沫信号(0/1)",
+            "log_price": "对数价格",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "bsadf_stat": "Phillips, Shi & Yu(2015) BSADF统计量。超过临界值→存在爆发性行为(泡沫)",
+            "cv_95": "BSADF的95%右尾临界值(PSY 2015 Monte Carlo表, 保守近似)",
+            "bubble_signal": "1=当日检测到泡沫(BSADF>CV), 0=正常。连续为1→泡沫持续期",
+            "log_price": "broad_index对数价格。用于观察价格走势与泡沫信号的对应关系",
+        },
+    },
 }
 
 DATA_CATEGORIES.update(COMPUTED_CATEGORIES)
 
-# 简单内存缓存: (run_name, category) -> rows
-_COMPUTE_CACHE: dict[tuple[str, str], list[dict]] = {}
+# 带 TTL 的内存缓存: cache_key -> (timestamp, rows)
+_COMPUTE_CACHE: dict[tuple, tuple[float, list[dict]]] = {}
+_CACHE_TTL_SECONDS: float = 300.0  # 缓存有效期 5 分钟
 
 
 def _compute_kyle_lambda(run_dir: Path) -> list[dict]:
@@ -742,7 +1005,7 @@ def _compute_behavioral_performance(run_dir: Path) -> list[dict]:
     # 结构: {(day, tom): {agent_id: (sim_time, row_data)}}
     by_day_tom_agent: dict[tuple[int, int], dict[int, tuple[float, dict]]] = defaultdict(dict)
     by_day_tom_realized: dict[tuple[int, int], dict[str, float]] = defaultdict(
-        lambda: {"gain_pct_sum": 0.0, "loss_pct_sum": 0.0}
+        lambda: {"gain_pct_sum": 0.0, "loss_pct_sum": 0.0, "gain_count": 0, "loss_count": 0}
     )
     for row in _iter_jsonl(fpath):
         day = safe_int(row.get("trading_day"))
@@ -767,8 +1030,10 @@ def _compute_behavioral_performance(run_dir: Path) -> list[dict]:
             slot = by_day_tom_realized[key]
             if target > avg_buy:
                 slot["gain_pct_sum"] += pnl_pct
+                slot["gain_count"] += 1
             elif target < avg_buy:
                 slot["loss_pct_sum"] += pnl_pct
+                slot["loss_count"] += 1
 
     result = []
     for (day, tom), agents in sorted(by_day_tom_agent.items()):
@@ -802,10 +1067,10 @@ def _compute_behavioral_performance(run_dir: Path) -> list[dict]:
             vals = [v for v in vals if v is not None]
             row[dst] = round(sum(vals) / len(vals), 4) if vals else None
 
-        # 已实现盈亏幅度和
-        evt = by_day_tom_realized.get((day, tom), {"gain_pct_sum": 0.0, "loss_pct_sum": 0.0})
-        row["realized_gain_pct"] = round(evt["gain_pct_sum"], 2)
-        row["realized_loss_pct"] = round(evt["loss_pct_sum"], 2)
+        # 已实现盈亏平均幅度（按卖出事件数归一化）
+        evt = by_day_tom_realized.get((day, tom), {"gain_pct_sum": 0.0, "loss_pct_sum": 0.0, "gain_count": 0, "loss_count": 0})
+        row["realized_gain_pct"] = round(evt["gain_pct_sum"] / evt["gain_count"], 2) if evt["gain_count"] > 0 else 0.0
+        row["realized_loss_pct"] = round(evt["loss_pct_sum"] / evt["loss_count"], 2) if evt["loss_count"] > 0 else 0.0
 
         result.append(row)
     return result
@@ -828,8 +1093,9 @@ def _compute_fit_accuracy(run_dir: Path) -> list[dict]:
     except ImportError:
         return []
 
-    real_path = resolve_existing_path("data/index_volatility_curves.json", run_dir)
-    if real_path is None:
+    try:
+        real_path = resolve_existing_path("data/index_volatility_curves.json", run_dir)
+    except FileNotFoundError:
         return []
 
     include_closed = resolve_include_closed_days(run_dir, mode="auto")
@@ -902,8 +1168,9 @@ def _compute_fit_volatility(run_dir: Path) -> list[dict]:
     except ImportError:
         return []
 
-    real_path = resolve_existing_path("data/index_volatility_curves.json", run_dir)
-    if real_path is None:
+    try:
+        real_path = resolve_existing_path("data/index_volatility_curves.json", run_dir)
+    except FileNotFoundError:
         return []
     include_closed = resolve_include_closed_days(run_dir, mode="auto")
     calendar_news_file = resolve_calendar_news_file(run_dir)
@@ -945,23 +1212,33 @@ def _compute_fit_volatility(run_dir: Path) -> list[dict]:
     result = []
     for day in range(2, max_day + 1):
         for sym in symbols:
-            rr = sym_real_ret.get(sym, {}).get(day)
-            sr = sym_sim_ret.get(sym, {}).get(day)
-            if rr is None or sr is None:
+            rr_val = sym_real_ret.get(sym, {}).get(day)
+            sr_val = sym_sim_ret.get(sym, {}).get(day)
+            if rr_val is None or sr_val is None:
                 continue
-            rv = max(eps, rr ** 2)
-            hv = max(eps, sr ** 2)
+            rv = max(eps, rr_val ** 2)
+            hv = max(eps, sr_val ** 2)
             ratio = rv / hv
             qlike = ratio - math.log(ratio) - 1.0
-            log_rmse = abs(math.log(rv) - math.log(hv))
+            log_var_dev = abs(math.log(rv) - math.log(hv))
             result.append({
                 "trading_day": day,
                 "symbol": sym,
                 "qlike": round(qlike, 6),
-                "log_rmse": round(log_rmse, 6),
-                "real_var": round(rr ** 2, 8),
-                "sim_var": round(sr ** 2, 8),
+                "log_var_dev": round(log_var_dev, 6),
+                "real_var": round(rr_val ** 2, 8),
+                "sim_var": round(sr_val ** 2, 8),
             })
+
+    # Winsorize QLIKE/log_var_dev：95 分位截尾，防止极端值污染展示
+    for field in ("qlike", "log_var_dev"):
+        vals = sorted(r[field] for r in result if r.get(field) is not None)
+        if len(vals) >= 5:
+            cap = vals[int(len(vals) * 0.95)]
+            for r in result:
+                if r.get(field) is not None and r[field] > cap:
+                    r[field] = cap
+
     return result
 
 
@@ -1069,7 +1346,7 @@ def _compute_final_return_ranking(run_dir: Path) -> list[dict]:
         if not aid or day is None:
             continue
         prev = last_record.get(aid)
-        if prev is None or day > safe_int(prev.get("trading_day", 0)):
+        if prev is None or day > (safe_int(prev.get("trading_day", 0)) or 0):
             last_record[aid] = row
 
     if not last_record:
@@ -1140,7 +1417,178 @@ def _compute_plan_adherence(run_dir: Path) -> list[dict]:
     return result
 
 
-_COMPUTE_DISPATCH: dict[str, callable] = {
+# ──────── EMH 弱式检验 ────────
+
+def _compute_emh_weak(run_dir: Path, window: int = 30) -> list[dict]:
+    """弱式 EMH：收益率 ACF、方差比、Hurst 指数、游程检验。"""
+    from academic_metrics_common import compute_log_returns, load_reference_close_series
+    from metric_emh import rolling_hurst, rolling_return_acf, rolling_runs_test, rolling_variance_ratio
+
+    days_in, closes = load_reference_close_series(run_dir, symbol=None, exclude_seed=True)
+    if len(closes) < window:
+        return []
+    log_rets = compute_log_returns(closes)
+    ret_days = days_in[1:]
+
+    # ACF lag 1-5
+    acf_days, acf_by_lag = rolling_return_acf(ret_days, log_rets, window, lags=[1, 2, 3, 4, 5])
+    # Variance Ratio k=2,5,10
+    vr_days, vr_by_k = rolling_variance_ratio(ret_days, log_rets, window, k_list=[2, 5, 10])
+    # Hurst
+    hurst_days, hurst_vals = rolling_hurst(ret_days, log_rets, window)
+    # Runs test
+    runs_days, runs_counts, runs_z = rolling_runs_test(ret_days, log_rets, window)
+
+    # Merge into rows (all rolling windows aligned)
+    day_set = set(acf_days) & set(vr_days) & set(hurst_days) & set(runs_days)
+    # Build lookup dicts
+    acf_map = {d: {lag: acf_by_lag[lag][i] for lag in acf_by_lag} for i, d in enumerate(acf_days)}
+    vr_map = {d: {k: vr_by_k[k][i] for k in vr_by_k} for i, d in enumerate(vr_days)}
+    hurst_map = dict(zip(hurst_days, hurst_vals))
+    runs_map = {d: (runs_counts[i], runs_z[i]) for i, d in enumerate(runs_days)}
+
+    import math
+    result = []
+    for day in sorted(day_set):
+        row: dict = {"trading_day": day}
+        acf_v = acf_map.get(day, {})
+        for lag in [1, 2, 3, 4, 5]:
+            v = acf_v.get(lag, 0.0)
+            row[f"acf_lag{lag}"] = round(v, 4) if not math.isnan(v) else None
+        vr_v = vr_map.get(day, {})
+        for k in [2, 5, 10]:
+            v = vr_v.get(k, float("nan"))
+            row[f"vr_{k}"] = round(v, 4) if not math.isnan(v) else None
+        h = hurst_map.get(day, float("nan"))
+        row["hurst"] = round(h, 4) if not math.isnan(h) else None
+        rc, rz = runs_map.get(day, (0, float("nan")))
+        row["runs_count"] = rc
+        row["runs_z"] = round(rz, 4) if not math.isnan(rz) else None
+        result.append(row)
+    return result
+
+
+# ──────── EMH 半强式检验 ────────
+
+def _compute_emh_semi_strong(run_dir: Path) -> list[dict]:
+    """半强式 EMH：新闻事件后的累积异常收益 (CAR)。"""
+    import json
+    from academic_metrics_common import compute_log_returns, load_reference_close_series
+    from metric_emh import aggregate_car_by_day, compute_event_car
+
+    days_in, closes = load_reference_close_series(run_dir, symbol=None, exclude_seed=True)
+    if len(closes) < 25:
+        return []
+    log_rets = compute_log_returns(closes)
+    ret_days = days_in[1:]
+
+    # 加载新闻事件日期
+    news_file = _find_news_file(run_dir)
+    if news_file is None:
+        return []
+    with open(news_file, "r", encoding="utf-8") as f:
+        news_data = json.load(f)
+    news_list = news_data.get("news", news_data) if isinstance(news_data, dict) else news_data
+
+    # 提取有新闻的天数（去重 + 计数）
+    event_day_count: dict[int, int] = {}
+    for item in news_list:
+        d = item.get("day")
+        if isinstance(d, (int, float)):
+            event_day_count[int(d)] = event_day_count.get(int(d), 0) + 1
+    event_days = sorted(event_day_count.keys())
+    if not event_days:
+        return []
+
+    car_records = compute_event_car(event_days, ret_days, log_rets, horizons=[1, 3, 5], estimation_window=20)
+    agg = aggregate_car_by_day(car_records, horizons=[1, 3, 5])
+
+    import math
+    result = []
+    for row in agg:
+        day = row["trading_day"]
+        out: dict = {"trading_day": day, "event_count": event_day_count.get(day, 0)}
+        for h in [1, 3, 5]:
+            for prefix in ["avg_car_", "avg_abs_car_"]:
+                key = f"{prefix}{h}"
+                v = row.get(key, float("nan"))
+                out[key] = round(v * 100, 4) if not math.isnan(v) else None
+        result.append(out)
+    return result
+
+
+def _find_news_file(run_dir: Path) -> Path | None:
+    """Search for the news JSON file used by this run."""
+    # 1. Check run config for news file path
+    config_path = run_dir / "config.yaml"
+    if config_path.exists():
+        import yaml
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+        news_cfg = cfg.get("news_events_config", {})
+        if isinstance(news_cfg, dict):
+            candidate = news_cfg.get("news_file") or news_cfg.get("experimental_news_file")
+            if candidate:
+                p = Path(str(candidate))
+                for probe in [p, run_dir / p, run_dir.parent / p, run_dir.parent.parent / p]:
+                    if probe.exists():
+                        return probe
+
+    # 2. Fallback: check common locations
+    for name in ["news.json", "news2.json"]:
+        for base in [run_dir, run_dir.parent / "data", run_dir.parent.parent / "data"]:
+            p = base / name
+            if p.exists():
+                return p
+    return None
+
+
+def _compute_social_activity(run_dir: Path) -> list[dict]:
+    from metric_social import compute_social_activity
+    return compute_social_activity(run_dir)
+
+
+def _compute_info_diffusion(run_dir: Path) -> list[dict]:
+    from metric_social import compute_info_diffusion
+    return compute_info_diffusion(run_dir)
+
+
+def _compute_sentiment_dynamics(run_dir: Path) -> list[dict]:
+    from metric_social import compute_sentiment_dynamics
+    return compute_sentiment_dynamics(run_dir)
+
+
+def _compute_social_trading_nexus(run_dir: Path) -> list[dict]:
+    from metric_social import compute_social_trading_nexus
+    return compute_social_trading_nexus(run_dir)
+
+
+def _compute_reputation_system(run_dir: Path) -> list[dict]:
+    from metric_social import compute_reputation_system
+    return compute_reputation_system(run_dir)
+
+
+def _compute_kol_market_impact(run_dir: Path) -> list[dict]:
+    from metric_social import compute_kol_market_impact
+    return compute_kol_market_impact(run_dir)
+
+
+def _compute_tool_usage(run_dir: Path) -> list[dict]:
+    from metric_social import compute_tool_usage
+    return compute_tool_usage(run_dir)
+
+
+def _compute_bubble_rd_rad(run_dir: Path) -> list[dict]:
+    from metric_bubble import compute_bubble_rd_rad
+    return compute_bubble_rd_rad(run_dir)
+
+
+def _compute_bubble_gsadf(run_dir: Path) -> list[dict]:
+    from metric_bubble import compute_bubble_gsadf
+    return compute_bubble_gsadf(run_dir)
+
+
+_COMPUTE_DISPATCH: dict = {
     "kyle_lambda": _compute_kyle_lambda,
     "tail_index": _compute_tail_index,
     "volatility_clustering": _compute_volatility_clustering,
@@ -1155,19 +1603,47 @@ _COMPUTE_DISPATCH: dict[str, callable] = {
     "trade_count_stats": _compute_trade_count_stats,
     "final_return_ranking": _compute_final_return_ranking,
     "plan_adherence": _compute_plan_adherence,
+    "emh_weak": _compute_emh_weak,
+    "emh_semi_strong": _compute_emh_semi_strong,
+    "social_activity": _compute_social_activity,
+    "info_diffusion": _compute_info_diffusion,
+    "sentiment_dynamics": _compute_sentiment_dynamics,
+    "social_trading_nexus": _compute_social_trading_nexus,
+    "reputation_system": _compute_reputation_system,
+    "kol_market_impact": _compute_kol_market_impact,
+    "tool_usage": _compute_tool_usage,
+    "bubble_rd_rad": _compute_bubble_rd_rad,
+    "bubble_gsadf": _compute_bubble_gsadf,
 }
 
 
+try:
+    import orjson as _orjson
+    _HAS_ORJSON = True
+except ImportError:
+    _HAS_ORJSON = False
+
+
 def _iter_jsonl(path: Path):
-    """逐行解析 JSONL 文件（惰性读取）"""
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    yield json.loads(line)
-                except json.JSONDecodeError:
-                    continue
+    """逐行解析 JSONL 文件（惰性读取，优先使用 orjson 加速）"""
+    if _HAS_ORJSON:
+        with open(path, "rb") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        yield _orjson.loads(line)
+                    except Exception:
+                        continue
+    else:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        yield json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
 
 
 def _load_category_data(run_dir: Path, category: str) -> list[dict]:
@@ -1189,15 +1665,19 @@ def _load_category_data(run_dir: Path, category: str) -> list[dict]:
             w = request.args.get("window", type=int)
             if w and w > 0:
                 kwargs["window"] = w
+        import time as _time
         cache_key = (str(run_dir), category, tuple(sorted(kwargs.items())))
-        if cache_key in _COMPUTE_CACHE:
-            return _COMPUTE_CACHE[cache_key]
+        cached = _COMPUTE_CACHE.get(cache_key)
+        if cached is not None:
+            ts, cached_rows = cached
+            if _time.time() - ts < _CACHE_TTL_SECONDS:
+                return cached_rows
         try:
             rows = fn(run_dir, **kwargs)
         except Exception as e:
             print(f"[WARN] 计算 {category} 失败 ({run_dir.name}): {e}")
             rows = []
-        _COMPUTE_CACHE[cache_key] = rows
+        _COMPUTE_CACHE[cache_key] = (_time.time(), rows)
         return rows
 
     fpath = run_dir / cat["file"]
@@ -1361,11 +1841,13 @@ def api_data():
 
     selected_metrics = [m.strip() for m in metrics_str.split(",") if m.strip()] if metrics_str else list(cat["metrics"].keys())
     x_key = cat["x_key"]
-    group_key = cat["group_key"]
+    group_by_param = request.args.get("group_by", "").strip()
+    group_key = group_by_param if group_by_param else cat["group_key"]
     preserve_order = cat.get("x_type") == "category"  # 离散轴保留计算函数的原始顺序
 
     series_data = {}  # { run_name: { series_label: [{x, y}] } }
     all_group_values: set[str] = set()
+    _all_rows_sample: list[dict] = []  # 用于探测可用分组键
 
     for run_name in run_names:
         run_name = run_name.strip()
@@ -1378,6 +1860,10 @@ def api_data():
         rows = _load_category_data(run_dir, category)
         if not rows:
             continue
+
+        # 收集样本行用于探测可分组键（只取第一个 run）
+        if not _all_rows_sample:
+            _all_rows_sample = rows[:200]
 
         # 获取可用的分组值
         group_values = set()
@@ -1447,11 +1933,28 @@ def api_data():
     # 使用主循环中已收集的分组值
     available_groups = sorted(all_group_values) if group_key else []
 
+    # 探测可用分组键：非 x_key、非指标、值为字符串/整型且唯一值 ≤50
+    available_group_keys: list[str] = []
+    if _all_rows_sample:
+        metric_keys = set(cat["metrics"].keys())
+        skip_keys = metric_keys | {x_key}
+        for key in _all_rows_sample[0].keys():
+            if key in skip_keys:
+                continue
+            uniq = set()
+            for r in _all_rows_sample:
+                v = r.get(key)
+                if v is not None:
+                    uniq.add(str(v))
+            if 2 <= len(uniq) <= 50:
+                available_group_keys.append(key)
+
     return jsonify({
         "series": series_data,
         "x_label": x_key,
         "group_key": group_key,
         "available_groups": available_groups,
+        "available_group_keys": available_group_keys,
     })
 
 

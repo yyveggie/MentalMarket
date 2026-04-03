@@ -75,7 +75,7 @@ def _build_nonseed_close_map(run_dir: Path) -> dict[str, dict[int, float]]:
 
 def load_reference_close_series(
     run_dir: Path,
-    symbol: str,
+    symbol: str | None,
     exclude_seed: bool = False,
 ) -> tuple[list[int], list[float]]:
     """Load daily close proxy.

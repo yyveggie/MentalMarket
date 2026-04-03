@@ -31,7 +31,7 @@ def rolling_acf(
         sq_seg = [x * x for x in seg]
         a1 = autocorrelation(abs_seg, lag=1)
         b1 = autocorrelation(sq_seg, lag=1)
-        out_days.append(days[i + 1])
+        out_days.append(days[i])
         ac_abs_1.append(a1 if a1 is not None else 0.0)
         ac_sq_1.append(b1 if b1 is not None else 0.0)
 
