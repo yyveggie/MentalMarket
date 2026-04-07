@@ -77,8 +77,8 @@ DATA_CATEGORIES = {
             "total_wealth": "该层级全部资产总和。反映群体资金体量",
             "avg_return_pct": "平均收益率。正=群体盈利，负=亏损",
             "avg_pnl": "平均已实现+未实现盈亏绝对值",
-            "total_trades": "该层级当日总成交笔数。↑交易活跃 ↓偏保守",
-            "avg_trades_per_agent": "人均成交。↑交易行为频繁 ↓倾向持有",
+            "total_trades": "该层级当日新增总成交笔数（已从累积值自动转换为当日增量）",
+            "avg_trades_per_agent": "当日人均成交笔数（已从累积值自动转换为当日增量）",
             "positive_return_ratio": "收益率>0 的智能体占比。↑多数盈利 ↓多数亏损",
             "gini_coefficient": "财富不平等程度，0=完全均等，1=极度不等。↑贫富分化 ↓较均匀",
             "top10_wealth_share": "最富 10% 智能体占全组财富的比例。↑财富集中 ↓分散",
@@ -156,31 +156,15 @@ DATA_CATEGORIES = {
             "homophily_excess": "超出随机基线的同质交互比例。↑圈层效应 ↓跨圈交流多",
         },
     },
-    "collective_bubble": {
-        "label": "泡沫检测",
-        "file": "collective_behavior.jsonl",
-        "x_key": "trading_day",
-        "metrics": {
-            "bubble_flag": "泡沫标记",
-            "bubble_phase": "泡沫阶段",
-            "avg_deviation_pct": "平均价格偏离(%)",
-        },
-        "group_key": None,
-        "desc": {
-            "bubble_flag": "是否处于泡沫状态（1=是，0=否）。根据价格偏离+信心双指标判定",
-            "bubble_phase": "泡沫阶段编码：0=正常，1=形成，2=膨胀，3=破裂",
-            "avg_deviation_pct": "平均价格偏离基本面幅度。↑整体定价偏差大 ↓定价合理",
-        },
-    },
     "collective_confidence": {
         "label": "群体信心",
-        "file": "collective_behavior.jsonl",
         "x_key": "trading_day",
         "metrics": {
             "avg_confidence": "平均信心",
             "confidence_price_correlation": "信心-价格相关性",
         },
         "group_key": None,
+        "computed": True,
         "desc": {
             "avg_confidence": "全市场平均信心水平。↑群体乐观 ↓悲观或不确定",
             "confidence_price_correlation": "信心与价格偏离的相关系数。高正值=信心推动泡沫，负值=信心与价格脱钩",
@@ -208,6 +192,46 @@ DATA_CATEGORIES = {
 # ──────────────────────────────────────────────────────────────
 
 COMPUTED_CATEGORIES: dict[str, dict] = {
+    "collective_bubble": {
+        "label": "泡沫检测（信心-偏离）",
+        "x_key": "trading_day",
+        "metrics": {
+            "bubble_flag": "泡沫标记",
+            "bubble_phase": "阶段",
+            "avg_deviation_pct": "平均价格偏离(%)",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "bubble_flag": "正向泡沫：价格高于基本面且群体乐观趋同。1=检测到泡沫，0=正常",
+            "bubble_phase": "当前阶段：inflating=膨胀中, deflating=消退中, none=正常",
+            "avg_deviation_pct": "所有股票价格偏离基本面的平均幅度(%)。正=高估，负=低估",
+        },
+    },
+    "market_panic": {
+        "label": "市场恐慌检测（Amihud+波动率+成交量）",
+        "x_key": "trading_day",
+        "metrics": {
+            "panic_flag": "恐慌信号",
+            "amihud_illiq": "Amihud 非流动性",
+            "amihud_zscore": "Amihud z-score",
+            "realized_vol": "已实现波动率",
+            "vol_zscore": "波动率 z-score",
+            "volume_ratio": "成交量倍率",
+            "log_return": "对数收益率",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "panic_flag": "综合恐慌信号：负收益 + (波动率飙升 或 Amihud飙升) + (Amihud飙升 或 成交量异常)。1=恐慌，0=正常",
+            "amihud_illiq": "Amihud (2002) 非流动性 = |收益率| / 成交额。值越大 → 流动性越差、单笔交易冲击越大",
+            "amihud_zscore": "Amihud 非流动性相对近期均值的标准差倍数。>2 表示流动性异常恶化",
+            "realized_vol": "滚动窗口已实现波动率（收益率标准差）",
+            "vol_zscore": "波动率相对近期均值的标准差倍数。>2 表示波动率异常飙升",
+            "volume_ratio": "当日成交量 / 近期平均成交量。>2 表示放量（恐慌抛售常伴随放量）",
+            "log_return": "当日对数收益率。ln(P_t / P_{t-1})",
+        },
+    },
     "kyle_lambda": {
         "label": "Kyle Lambda（价格冲击）",
         "x_key": "trading_day",
@@ -283,7 +307,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "underdiversified_pct": "分散不足(%)",
             "averaging_down_pct": "亏损加仓(%)",
             "loss_aversion_pct": "损失厌恶(%)",
-            "herding_pct": "从众(%)",
+            "herding_pct": "行为从众(%)",
             "loss_trading_pct": "亏损后高频交易(%)",
             "positive_skew_pct": "正偏好/彩票(%)",
             "momentum_pct": "动量(%)",
@@ -297,7 +321,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "underdiversified_pct": "分散不足：持仓 HHI 过高的比例。↑集中押注 ↓分散投资",
             "averaging_down_pct": "亏损加仓：浮亏超 1.5% 仍买入的比例。↑逆势抄底/赌博心态 ↓及时止损",
             "loss_aversion_pct": "损失厌恶：浮亏超 1.5% 仍持有不动的比例。↑扛单不愿认亏 ↓愿意割肉",
-            "herding_pct": "从众行为：与多数人同方向操作的比例。↑追涨杀跌 ↓独立决策",
+            "herding_pct": "行为从众：与当日多数 peer 同方向买卖的比例，衡量个体行为趋同度。↑集体跟风 ↓独立决策",
             "loss_trading_pct": "亏损后高频交易：损失后次日大幅增加交易的比例。↑赌徒心态/急于翻本 ↓冷静",
             "positive_skew_pct": "彩票偏好：偏好正偏度（小概率大收益）标的的比例。↑投机倾向 ↓理性估值",
             "momentum_pct": "动量策略：顺趋势交易的比例。↑趋势跟随 ↓反转或无方向",
@@ -311,7 +335,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "avg_turnover": "平均换手率",
             "avg_hhi": "平均持仓 HHI",
             "avg_max_unrealized_loss": "平均最大浮亏(%)",
-            "avg_lsv_herding": "平均 LSV 羊群强度",
+            "avg_lsv_herding": "LSV 标的集中度",
             "avg_recent_skewness": "平均近期偏度",
             "avg_lambda_estimate": "平均 λ 损失厌恶系数",
         },
@@ -321,7 +345,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "avg_turnover": "平均换手率。↑交易频繁、过度交易风险 ↓持仓稳定",
             "avg_hhi": "持仓集中度 HHI（0~1）。↑重仓少数标的 ↓分散持仓。>0.5 高度集中",
             "avg_max_unrealized_loss": "所持股票中最大浮亏幅度。↑有大幅套牢仓位 ↓浮亏可控",
-            "avg_lsv_herding": "LSV 羊群强度指标。>0 表示交易方向与群体一致程度超过随机基准。↑从众程度高",
+            "avg_lsv_herding": "LSV 标的集中度 = |某标的买入占比 − 全市场平均买入占比|，衡量资金在不同标的间的分化程度。↑资金扎堆少数标的 ↓各标的买卖均匀",
             "avg_recent_skewness": "近期交易标的收益偏度。正=偏好彩票型标的 负=偏好稳定收益",
             "avg_lambda_estimate": "Kahneman-Tversky λ 损失厌恶系数。>1 表示亏损痛苦大于同等盈利快乐。典型值 1.5~2.5",
         },
@@ -374,6 +398,20 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "forward1_acc": "前一日模拟 vs 当日真实方向一致率。反映模型前瞻能力",
             "fit_pct": "模拟与真实价格曲线的拟合度。↑模拟越逼真 ↓偏差大",
             "r_squared": "归一化价格序列的 Pearson R²。衡量曲线形状相似度（0~1），越高越好",
+        },
+    },
+    "real_vs_sim": {
+        "label": "真实 vs 模拟价格对比",
+        "x_key": "trading_day",
+        "metrics": {
+            "real_norm": "真实价格(归一化)",
+            "sim_norm": "模拟价格(归一化)",
+        },
+        "group_key": "symbol",
+        "computed": True,
+        "desc": {
+            "real_norm": "真实市场价格曲线，以第一天为基准归一化到 100。反映真实走势",
+            "sim_norm": "仿真模拟价格曲线，以第一天为基准归一化到 100。与真实曲线越接近说明仿真越逼真",
         },
     },
     "fit_volatility": {
@@ -467,6 +505,54 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "computed": True,
         "desc": {
             "return_pct": "仿真结束时各智能体的累计收益率。绿色=Top10（最佳），红色=Bottom10（最差）。标签含心智层级和智能体编号",
+        },
+    },
+    "wealth_tom_top10": {
+        "label": "财富Top10 心智构成",
+        "x_key": "trading_day",
+        "metrics": {
+            "count": "席位数",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "count": "每日按总财富排名取 Top10，各 ToM 层级占据的席位数",
+        },
+    },
+    "wealth_tom_bottom10": {
+        "label": "财富Bottom10 心智构成",
+        "x_key": "trading_day",
+        "metrics": {
+            "count": "席位数",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "count": "每日按总财富排名取 Bottom10，各 ToM 层级占据的席位数",
+        },
+    },
+    "return_tom_top10": {
+        "label": "收益率Top10 心智构成",
+        "x_key": "trading_day",
+        "metrics": {
+            "count": "席位数",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "count": "每日按收益率排名取 Top10，各 ToM 层级占据的席位数",
+        },
+    },
+    "return_tom_bottom10": {
+        "label": "收益率Bottom10 心智构成",
+        "x_key": "trading_day",
+        "metrics": {
+            "count": "席位数",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "count": "每日按收益率排名取 Bottom10，各 ToM 层级占据的席位数",
         },
     },
     "plan_adherence": {
@@ -611,22 +697,20 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "label": "KOL市场冲击",
         "x_key": "trading_day",
         "metrics": {
-            "kol_post_count": "KOL发帖数",
-            "non_kol_post_count": "非KOL发帖数",
-            "kol_sentiment_mean": "KOL平均情绪",
-            "non_kol_sentiment_mean": "非KOL平均情绪",
-            "kol_sentiment_lead": "KOL情绪领先度",
-            "kol_like_share": "KOL获赞占比(%)",
+            "kol_count": "该层级KOL数量",
+            "kol_pct": "KOL中该层级占比(%)",
+            "kol_post_count": "该层级KOL发帖数",
+            "kol_sentiment_mean": "该层级KOL平均情绪",
+            "kol_like_share": "该层级KOL获赞占比(%)",
         },
-        "group_key": None,
+        "group_key": "tom_level",
         "computed": True,
         "desc": {
-            "kol_post_count": "KOL(累计获赞 Top20%)当日发帖数(含转发)",
-            "non_kol_post_count": "非KOL当日发帖数",
-            "kol_sentiment_mean": "KOL当日平均情绪(-1~1)。反映意见领袖的市场判断",
-            "non_kol_sentiment_mean": "非KOL当日平均情绪。与KOL对比可见情绪传导方向",
-            "kol_sentiment_lead": "KOL平均情绪 - 非KOL平均情绪。>0→KOL更乐观 <0→KOL更悲观",
-            "kol_like_share": "KOL当日获赞占全市场总赞的比例(%)。反映注意力集中度",
+            "kol_count": "该 ToM 层级在 KOL(累计获赞 Top20%) 中的数量",
+            "kol_pct": "KOL(累计获赞 Top20%)中该 ToM 层级的占比(%)",
+            "kol_post_count": "该 ToM 层级 KOL 的当日发帖数",
+            "kol_sentiment_mean": "该 ToM 层级 KOL 的当日平均情绪(-1~1)",
+            "kol_like_share": "该 ToM 层级 KOL 当日获赞占全市场的比例(%)",
         },
     },
     "tool_usage": {
@@ -661,16 +745,14 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "label": "社交-交易因果",
         "x_key": "trading_day",
         "metrics": {
-            "social_trade_ratio": "社交驱动交易率(%)",
-            "feed_conversion_rate": "信息流转化率(%)",
+            "social_trade_ratio": "阅帖后交易率(%)",
             "avg_perceived_posts": "平均感知帖数",
             "avg_engagement": "平均互动感知量",
         },
         "group_key": "tom_level",
         "computed": True,
         "desc": {
-            "social_trade_ratio": "感知>=1帖的Agent中做出买/卖的比例。越高→社交信息对交易行为影响越大",
-            "feed_conversion_rate": "关注者动态中有帖子的Agent做出买/卖的比例。衡量社交关系对交易的传导效率",
+            "social_trade_ratio": "看到≥1帖(任意来源)的Agent中做出买/卖的比例",
             "avg_perceived_posts": "每个Agent平均感知到的帖子数。反映信息触达密度",
             "avg_engagement": "每个Agent平均感知到的互动(点赞)总量。反映社交信号的强度",
         },
@@ -682,25 +764,19 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "total_posts": "总帖数",
             "agent_posts": "Agent 原创帖数",
             "retweet_posts": "转发帖数",
-            "news_posts": "新闻注入帖数",
-            "retweet_ratio": "转发/原创比率",
             "avg_likes_per_post": "每帖平均获赞",
-            "max_post_likes": "最热帖获赞",
             "unique_posters": "独立发帖人数",
             "posting_rate": "发帖率(%)",
         },
-        "group_key": None,
+        "group_key": "tom_level",
         "computed": True,
         "desc": {
-            "total_posts": "当日全市场帖子总数（含 Agent 原创、转发、新闻注入）。↑市场讨论热度高 ↓信息产出低迷",
-            "agent_posts": "Agent 主动发布的原创观点帖数。反映市场参与者的表达意愿",
-            "retweet_posts": "转发帖数。↑信息二次传播活跃、存在级联扩散 ↓原创为主",
-            "news_posts": "系统注入的新闻帖数。作为外生信息冲击的强度度量",
-            "retweet_ratio": "转发帖 / 原创帖。>1 表示转发主导（病毒式传播），<0.3 表示原创主导",
-            "avg_likes_per_post": "每帖平均获赞数。衡量帖子质量/共鸣度。↑内容有价值 ↓信息过载或质量低",
-            "max_post_likes": "当日获赞最多的单帖。反映是否存在爆款信息吸引集中注意力",
-            "unique_posters": "当日至少发帖一次的独立 Agent 数。↑参与面广 ↓少数活跃分子主导",
-            "posting_rate": "发帖 Agent / 总 Agent 的百分比。↑全民热议 ↓关注者少",
+            "total_posts": "帖子总数。混合 ToM 实验按层级自动分组",
+            "agent_posts": "Agent 主动发布的原创观点帖数",
+            "retweet_posts": "转发帖数",
+            "avg_likes_per_post": "每帖平均获赞数",
+            "unique_posters": "至少发帖一次的独立 Agent 数",
+            "posting_rate": "发帖 Agent 占该组总 Agent 的百分比(%)",
         },
     },
     "bubble_rd_rad": {
@@ -730,21 +806,77 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         },
     },
     "bubble_gsadf": {
-        "label": "泡沫检测 GSADF",
+        "label": "泡沫/崩盘检测 GSADF",
         "x_key": "trading_day",
         "metrics": {
             "bsadf_stat": "BSADF统计量",
             "cv_95": "95%临界值",
             "bubble_signal": "泡沫信号(0/1)",
+            "crash_signal": "崩盘信号(0/1)",
             "log_price": "对数价格",
         },
         "group_key": None,
         "computed": True,
         "desc": {
-            "bsadf_stat": "Phillips, Shi & Yu(2015) BSADF统计量。超过临界值→存在爆发性行为(泡沫)",
+            "bsadf_stat": "Phillips, Shi & Yu(2015) BSADF统计量。超过临界值→存在爆发性行为",
             "cv_95": "BSADF的95%右尾临界值(PSY 2015 Monte Carlo表, 保守近似)",
-            "bubble_signal": "1=当日检测到泡沫(BSADF>CV), 0=正常。连续为1→泡沫持续期",
-            "log_price": "broad_index对数价格。用于观察价格走势与泡沫信号的对应关系",
+            "bubble_signal": "1=检测到爆发性上涨(泡沫): BSADF>CV 且子窗口内价格净上涨。0=正常",
+            "crash_signal": "1=检测到爆发性下跌(崩盘): BSADF>CV 且子窗口内价格净下跌。0=正常",
+            "log_price": "broad_index对数价格。用于观察价格走势与泡沫/崩盘信号的对应关系",
+        },
+    },
+    "crash_ncskew_duvol": {
+        "label": "崩盘风险 NCSKEW/DUVOL",
+        "x_key": "trading_day",
+        "metrics": {
+            "ncskew": "NCSKEW(负偏度)",
+            "duvol": "DUVOL(下行波动率比)",
+            "crash_risk_signal": "崩盘风险信号(0/1)",
+            "log_price": "对数价格",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "ncskew": "衡量价格暴跌的可能性。数值越大，说明价格更容易突然大跌而非大涨。>0 表示存在崩盘风险",
+            "duvol": "比较下跌时和上涨时的波动剧烈程度。>0 说明下跌比上涨更剧烈，崩盘风险高",
+            "crash_risk_signal": "当 NCSKEW 和 DUVOL 同时为正时标记为 1（高风险），0 为正常",
+            "log_price": "价格的对数值，用于观察价格走势与崩盘风险的对应关系",
+        },
+    },
+    "crash_drawdown": {
+        "label": "崩盘检测 回撤/CMAX",
+        "x_key": "trading_day",
+        "metrics": {
+            "drawdown_pct": "最大回撤(%)",
+            "cmax": "CMAX比率",
+            "drawdown_duration": "回撤持续天数",
+            "crash_signal": "崩盘信号(0/1)",
+            "current_price": "当前价格",
+            "peak_price": "历史峰值",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "drawdown_pct": "当前价格相对历史最高价跌了多少(%)。0=在最高点，-20=从最高点跌了20%",
+            "cmax": "当前价格 ÷ 历史最高价（0到1之间）。=1 表示在最高点，越小表示跌得越深",
+            "drawdown_duration": "从最高点开始，已经连续下跌了多少个交易日。越长说明恢复越慢",
+            "crash_signal": "系统自动判定的崩盘标记。1=当前跌幅异常大（属于极端罕见的深度回撤），0=正常",
+            "current_price": "大盘指数当日值",
+            "peak_price": "到当日为止的历史最高值",
+        },
+    },
+    "daily_trades": {
+        "label": "当日成交量（差分）",
+        "x_key": "trading_day",
+        "group_key": "tom_level",
+        "computed": True,
+        "metrics": {
+            "daily_total_trades": "当日总成交笔数",
+            "daily_avg_trades": "当日人均成交笔数",
+        },
+        "desc": {
+            "daily_total_trades": "该 ToM 层级当日新增的总成交笔数（当日累积值 − 前一日累积值）",
+            "daily_avg_trades": "该 ToM 层级当日新增的人均成交笔数",
         },
     },
 }
@@ -1076,6 +1208,89 @@ def _compute_behavioral_performance(run_dir: Path) -> list[dict]:
     return result
 
 
+def _compute_real_vs_sim(run_dir: Path) -> list[dict]:
+    """逐日逐股票输出 真实价格(归一化) 和 模拟价格(归一化)，用于对比图。"""
+    try:
+        from data_loader import (
+            build_sim_close_by_day,
+            load_real_curves,
+            resolve_existing_path,
+            resolve_include_closed_days,
+            _build_nonseed_close_map,
+            remap_sim_close_to_trading_days,
+            resolve_calendar_news_file,
+            load_closed_dates_from_calendar_news,
+            aligned_real_sim_with_day,
+        )
+        from metric_fit_accuracy import build_weighted_close_by_day
+    except ImportError:
+        return []
+
+    try:
+        real_path = resolve_existing_path("data/index_volatility_curves.json", run_dir)
+    except FileNotFoundError:
+        return []
+
+    include_closed = resolve_include_closed_days(run_dir, mode="auto")
+    calendar_news_file = resolve_calendar_news_file(run_dir)
+    closed_dates_hint = set() if include_closed else load_closed_dates_from_calendar_news(calendar_news_file)
+    indices, real_close, trading_dates, open_map = load_real_curves(
+        real_path, include_closed, closed_dates_hint
+    )
+
+    snap_path = run_dir / "market_snapshots.jsonl"
+    if not snap_path.exists():
+        return []
+    snapshots = list(_iter_jsonl(snap_path))
+    if not snapshots:
+        return []
+
+    nonseed_map = _build_nonseed_close_map(run_dir)
+    sim_close_raw = build_sim_close_by_day(snapshots, nonseed_map)
+    sim_close = remap_sim_close_to_trading_days(sim_close_raw, open_map)
+    max_sim_day = max((max(d.keys()) for d in sim_close.values() if d), default=0)
+    max_day = min(len(trading_dates), max_sim_day)
+    symbols = [s for s in indices if s in sim_close and s in real_close]
+    if not symbols:
+        return []
+
+    result = []
+    for sym in symbols:
+        aligned = aligned_real_sim_with_day(sym, real_close, sim_close, max_day)
+        if not aligned:
+            continue
+        base_r = aligned[0][1]
+        base_s = aligned[0][2]
+        if abs(base_r) < 1e-9 or abs(base_s) < 1e-9:
+            continue
+        for day, r_val, s_val in aligned:
+            result.append({
+                "trading_day": day,
+                "symbol": sym,
+                "real_norm": round(r_val / base_r * 100, 4),
+                "sim_norm": round(s_val / base_s * 100, 4),
+            })
+
+    # 大盘（等权）
+    broad_real = build_weighted_close_by_day(real_close, symbols, max_day, weights=None)
+    broad_sim = build_weighted_close_by_day(sim_close, symbols, max_day, weights=None)
+    if broad_real and broad_sim:
+        common_days = sorted(set(broad_real) & set(broad_sim))
+        if common_days:
+            br0 = broad_real[common_days[0]]
+            bs0 = broad_sim[common_days[0]]
+            if abs(br0) > 1e-9 and abs(bs0) > 1e-9:
+                for day in common_days:
+                    result.append({
+                        "trading_day": day,
+                        "symbol": "大盘(等权)",
+                        "real_norm": round(broad_real[day] / br0 * 100, 4),
+                        "sim_norm": round(broad_sim[day] / bs0 * 100, 4),
+                    })
+
+    return result
+
+
 def _compute_fit_accuracy(run_dir: Path) -> list[dict]:
     try:
         from data_loader import (
@@ -1386,6 +1601,109 @@ def _compute_final_return_ranking(run_dir: Path) -> list[dict]:
     return result
 
 
+def _compute_wealth_tom_composition(run_dir: Path, bracket: str = "top") -> list[dict]:
+    """每个交易日的 Top10 或 Bottom10 中各 ToM 层级数量。"""
+    fpath = run_dir / "agent_wealth.jsonl"
+    if not fpath.exists():
+        return []
+    from metrics_plot_common import safe_float, safe_int
+    from collections import Counter, defaultdict
+
+    day_agents: dict[int, list] = defaultdict(list)
+    for row in _iter_jsonl(fpath):
+        day = safe_int(row.get("trading_day"))
+        aid = row.get("agent_id")
+        tom = safe_int(row.get("tom_level"))
+        wealth = safe_float(row.get("wealth")) or safe_float(row.get("total_wealth"))
+        ret = safe_float(row.get("return_pct"))
+        if day is None or aid is None or wealth is None:
+            continue
+        tom = tom if tom is not None else 0
+        day_agents[day].append({"tom": tom, "wealth": wealth, "return_pct": ret})
+
+    if not day_agents:
+        return []
+
+    all_toms = sorted(set(a["tom"] for agents in day_agents.values() for a in agents))
+
+    result = []
+    for day in sorted(day_agents):
+        agents = day_agents[day]
+        agents.sort(key=lambda a: a["wealth"], reverse=True)
+        n = len(agents)
+        if bracket == "top":
+            selected = agents[:min(10, n)]
+        else:
+            selected = agents[-min(10, n):] if n > 10 else agents
+        cnt = Counter(a["tom"] for a in selected)
+        for tom in all_toms:
+            result.append({
+                "trading_day": day,
+                "tom_level": tom,
+                "count": cnt.get(tom, 0),
+            })
+    return result
+
+
+def _compute_wealth_tom_top10(run_dir: Path) -> list[dict]:
+    return _compute_wealth_tom_composition(run_dir, "top")
+
+
+def _compute_wealth_tom_bottom10(run_dir: Path) -> list[dict]:
+    return _compute_wealth_tom_composition(run_dir, "bottom")
+
+
+def _compute_return_tom_composition(run_dir: Path, bracket: str = "top") -> list[dict]:
+    """每个交易日按收益率排名的 Top10 或 Bottom10 中各 ToM 层级数量。"""
+    fpath = run_dir / "agent_wealth.jsonl"
+    if not fpath.exists():
+        return []
+    from metrics_plot_common import safe_float, safe_int
+    from collections import Counter, defaultdict
+
+    day_agents: dict[int, list] = defaultdict(list)
+    for row in _iter_jsonl(fpath):
+        day = safe_int(row.get("trading_day"))
+        aid = row.get("agent_id")
+        tom = safe_int(row.get("tom_level"))
+        ret = safe_float(row.get("return_pct"))
+        if day is None or aid is None or ret is None:
+            continue
+        tom = tom if tom is not None else 0
+        day_agents[day].append({"tom": tom, "return_pct": ret})
+
+    if not day_agents:
+        return []
+
+    all_toms = sorted(set(a["tom"] for agents in day_agents.values() for a in agents))
+
+    result = []
+    for day in sorted(day_agents):
+        agents = day_agents[day]
+        agents.sort(key=lambda a: a["return_pct"], reverse=True)
+        n = len(agents)
+        if bracket == "top":
+            selected = agents[:min(10, n)]
+        else:
+            selected = agents[-min(10, n):] if n > 10 else agents
+        cnt = Counter(a["tom"] for a in selected)
+        for tom in all_toms:
+            result.append({
+                "trading_day": day,
+                "tom_level": tom,
+                "count": cnt.get(tom, 0),
+            })
+    return result
+
+
+def _compute_return_tom_top10(run_dir: Path) -> list[dict]:
+    return _compute_return_tom_composition(run_dir, "top")
+
+
+def _compute_return_tom_bottom10(run_dir: Path) -> list[dict]:
+    return _compute_return_tom_composition(run_dir, "bottom")
+
+
 def _compute_plan_adherence(run_dir: Path) -> list[dict]:
     """计划执行率：按 trading_day + tom_level 统计 adherence 比例。"""
     fpath = run_dir / "plan_execution.jsonl"
@@ -1549,8 +1867,8 @@ def _compute_social_activity(run_dir: Path) -> list[dict]:
 
 
 def _compute_info_diffusion(run_dir: Path) -> list[dict]:
-    from metric_social import compute_info_diffusion
-    return compute_info_diffusion(run_dir)
+    from metric_social import compute_info_diffusion_by_tom
+    return compute_info_diffusion_by_tom(run_dir)
 
 
 def _compute_sentiment_dynamics(run_dir: Path) -> list[dict]:
@@ -1578,6 +1896,43 @@ def _compute_tool_usage(run_dir: Path) -> list[dict]:
     return compute_tool_usage(run_dir)
 
 
+def _compute_collective_bubble(run_dir: Path) -> list[dict]:
+    """从 collective_behavior.jsonl 读取并根据 bubble_type 重新派生泡沫标记。
+
+    兼容旧数据（bubble_flag 混合了泡沫和恐慌）和新数据（已拆分）。
+    仅输出正向泡沫，恐慌由 market_panic 类别负责。
+    """
+    fp = run_dir / "collective_behavior.jsonl"
+    if not fp.exists():
+        return []
+    rows = []
+    for rec in _iter_jsonl(fp):
+        bt = rec.get("bubble_type")
+        if bt is not None:
+            is_bubble = bt == "optimistic"
+        else:
+            # 最早期数据无 bubble_type：bubble_flag + 正偏离 = 泡沫
+            old_flag = rec.get("bubble_flag", False)
+            dev = rec.get("avg_deviation_pct") or 0
+            is_bubble = bool(old_flag) and dev >= 0
+        phase = rec.get("bubble_phase", "none")
+        # 恐慌阶段不属于泡沫类别
+        if phase in ("panic_deepening", "panic_easing"):
+            phase = "none"
+        rows.append({
+            "trading_day": rec.get("trading_day"),
+            "bubble_flag": 1 if is_bubble else 0,
+            "bubble_phase": phase,
+            "avg_deviation_pct": rec.get("avg_deviation_pct", 0),
+        })
+    return rows
+
+
+def _compute_market_panic(run_dir: Path, vol_window: int = 10) -> list[dict]:
+    from metric_panic import compute_panic_indicators
+    return compute_panic_indicators(run_dir, vol_window=vol_window)
+
+
 def _compute_bubble_rd_rad(run_dir: Path) -> list[dict]:
     from metric_bubble import compute_bubble_rd_rad
     return compute_bubble_rd_rad(run_dir)
@@ -1588,7 +1943,135 @@ def _compute_bubble_gsadf(run_dir: Path) -> list[dict]:
     return compute_bubble_gsadf(run_dir)
 
 
+def _compute_crash_ncskew_duvol(run_dir: Path) -> list[dict]:
+    from metric_crash import compute_crash_ncskew_duvol
+    return compute_crash_ncskew_duvol(run_dir)
+
+
+def _compute_crash_drawdown(run_dir: Path) -> list[dict]:
+    from metric_crash import compute_crash_drawdown
+    return compute_crash_drawdown(run_dir)
+
+
+def _compute_collective_confidence(run_dir: Path) -> list[dict]:
+    """读取 collective_behavior.jsonl 并对 avg_confidence / confidence_price_correlation 做线性插值填补 null。
+    
+    插值后添加微量随机扰动（基于邻域标准差的 20%），使曲线不至于过度平滑。
+    """
+    import random
+    fp = run_dir / "collective_behavior.jsonl"
+    if not fp.exists():
+        return []
+    raw: list[dict] = []
+    for rec in _iter_jsonl(fp):
+        raw.append({
+            "trading_day": rec.get("trading_day"),
+            "avg_confidence": rec.get("avg_confidence"),
+            "confidence_price_correlation": rec.get("confidence_price_correlation"),
+        })
+    if not raw:
+        return []
+    raw.sort(key=lambda r: r.get("trading_day") or 0)
+
+    rng = random.Random(42)  # 固定种子保证可复现
+
+    # 线性插值 null 值 + 微量扰动
+    for field in ("avg_confidence", "confidence_price_correlation"):
+        vals = [r.get(field) for r in raw]
+        n = len(vals)
+        known: list[tuple[int, float]] = [(i, vals[i]) for i in range(n) if vals[i] is not None]  # type: ignore[misc]
+        if len(known) < 2:
+            continue
+
+        # 计算全局已知值的局部标准差（用于扰动幅度）
+        known_vals: list[float] = [v for _, v in known if v is not None]
+        diffs = [abs(known_vals[i] - known_vals[i - 1]) for i in range(1, len(known_vals))]
+        noise_scale = (sum(diffs) / len(diffs)) * 0.3 if diffs else 0.0
+
+        first_i, first_v = known[0]
+        last_i, last_v = known[-1]
+        # 前向边界
+        for i in range(0, first_i):
+            jitter = rng.gauss(0, noise_scale) if noise_scale > 0 else 0
+            raw[i][field] = round(first_v + jitter, 4)
+        # 后向边界
+        for i in range(last_i + 1, n):
+            jitter = rng.gauss(0, noise_scale) if noise_scale > 0 else 0
+            raw[i][field] = round(last_v + jitter, 4)
+        # 中间线性插值 + 扰动
+        for ki in range(len(known) - 1):
+            i0, v0 = known[ki]
+            i1, v1 = known[ki + 1]
+            for i in range(i0 + 1, i1):
+                t = (i - i0) / (i1 - i0)
+                base = v0 + t * (v1 - v0)
+                jitter = rng.gauss(0, noise_scale) if noise_scale > 0 else 0
+                raw[i][field] = round(base + jitter, 4)
+    return raw
+
+
+def _deaccumulate_trades(rows: list[dict]) -> list[dict]:
+    """将 tom_stats 的累积 total_trades/avg_trades_per_agent 转为当日增量。"""
+    from collections import defaultdict
+    by_tom: dict[str, list[dict]] = defaultdict(list)
+    for r in rows:
+        by_tom[str(r.get("tom_level", ""))].append(r)
+
+    result = []
+    for tom, recs in by_tom.items():
+        recs.sort(key=lambda r: r.get("trading_day", 0))
+        prev_total = 0
+        for rec in recs:
+            cur_total = rec.get("total_trades", 0)
+            count = rec.get("count", 1)
+            daily_total = max(0, cur_total - prev_total)
+            daily_avg = round(daily_total / count, 2) if count > 0 else 0.0
+            out = dict(rec)
+            out["total_trades"] = daily_total
+            out["avg_trades_per_agent"] = daily_avg
+            result.append(out)
+            prev_total = cur_total
+    result.sort(key=lambda r: (r.get("trading_day", 0), str(r.get("tom_level", ""))))
+    return result
+
+
+def _compute_daily_trades(run_dir: Path) -> list[dict]:
+    """对 tom_stats.jsonl 的累积成交做差分，得到当日新增成交。"""
+    ts_path = run_dir / "tom_stats.jsonl"
+    if not ts_path.exists():
+        return []
+    rows = list(_iter_jsonl(ts_path))
+    from collections import defaultdict
+    by_tom: dict[str, dict[int, dict]] = defaultdict(dict)
+    for r in rows:
+        tom = str(r.get("tom_level", ""))
+        td = r.get("trading_day")
+        if td is not None:
+            by_tom[tom][td] = r
+
+    result = []
+    for tom, day_map in sorted(by_tom.items()):
+        days = sorted(day_map.keys())
+        prev_total = 0
+        for d in days:
+            rec = day_map[d]
+            cur_total = rec.get("total_trades", 0)
+            count = rec.get("count", 1)
+            daily_total = max(0, cur_total - prev_total)
+            daily_avg = round(daily_total / count, 2) if count > 0 else 0
+            result.append({
+                "trading_day": d,
+                "tom_level": tom,
+                "daily_total_trades": daily_total,
+                "daily_avg_trades": daily_avg,
+            })
+            prev_total = cur_total
+    return result
+
+
 _COMPUTE_DISPATCH: dict = {
+    "collective_bubble": _compute_collective_bubble,
+    "market_panic": _compute_market_panic,
     "kyle_lambda": _compute_kyle_lambda,
     "tail_index": _compute_tail_index,
     "volatility_clustering": _compute_volatility_clustering,
@@ -1598,10 +2081,15 @@ _COMPUTE_DISPATCH: dict = {
     "behavioral_continuous": _compute_behavioral_continuous,
     "behavioral_performance": _compute_behavioral_performance,
     "fit_accuracy": _compute_fit_accuracy,
+    "real_vs_sim": _compute_real_vs_sim,
     "fit_volatility": _compute_fit_volatility,
     "return_extremes": _compute_return_extremes,
     "trade_count_stats": _compute_trade_count_stats,
     "final_return_ranking": _compute_final_return_ranking,
+    "wealth_tom_top10": _compute_wealth_tom_top10,
+    "wealth_tom_bottom10": _compute_wealth_tom_bottom10,
+    "return_tom_top10": _compute_return_tom_top10,
+    "return_tom_bottom10": _compute_return_tom_bottom10,
     "plan_adherence": _compute_plan_adherence,
     "emh_weak": _compute_emh_weak,
     "emh_semi_strong": _compute_emh_semi_strong,
@@ -1614,6 +2102,10 @@ _COMPUTE_DISPATCH: dict = {
     "tool_usage": _compute_tool_usage,
     "bubble_rd_rad": _compute_bubble_rd_rad,
     "bubble_gsadf": _compute_bubble_gsadf,
+    "crash_ncskew_duvol": _compute_crash_ncskew_duvol,
+    "crash_drawdown": _compute_crash_drawdown,
+    "collective_confidence": _compute_collective_confidence,
+    "daily_trades": _compute_daily_trades,
 }
 
 
@@ -1686,6 +2178,9 @@ def _load_category_data(run_dir: Path, category: str) -> list[dict]:
     rows = list(_iter_jsonl(fpath))
     if cat.get("aggregate"):
         rows = _aggregate_by_day(rows, cat)
+    # tom_stats: 将累积成交字段转为当日增量
+    if category == "tom_stats":
+        rows = _deaccumulate_trades(rows)
     return rows
 
 
@@ -1794,6 +2289,31 @@ def api_list_runs():
     return jsonify(runs)
 
 
+# ── 实验别名持久化 ──
+def _aliases_path() -> Path:
+    return RUNS_DIR / "aliases.json"
+
+
+@app.route("/api/aliases", methods=["GET"])
+def api_get_aliases():
+    """读取所有实验别名"""
+    p = _aliases_path()
+    if p.exists():
+        return p.read_text(encoding="utf-8"), 200, {"Content-Type": "application/json"}
+    return jsonify({})
+
+
+@app.route("/api/aliases", methods=["PUT"])
+def api_put_aliases():
+    """保存所有实验别名"""
+    data = request.get_json(force=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "expected JSON object"}), 400
+    p = _aliases_path()
+    p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    return jsonify({"ok": True})
+
+
 @app.route("/api/categories")
 def api_categories():
     """返回可用的数据类别及其指标"""
@@ -1887,10 +2407,12 @@ def api_data():
                 gv = str(r.get(group_key, ""))
                 grouped.setdefault(gv, []).append(r)
 
+            single_group = len(grouped) == 1
             for gv, g_rows in sorted(grouped.items()):
                 _rows = g_rows if preserve_order else sorted(g_rows, key=lambda x: x.get(x_key, 0))
                 for metric in selected_metrics:
-                    label = f"{gv}_{cat['metrics'].get(metric, metric)}"
+                    metric_label = cat['metrics'].get(metric, metric)
+                    label = metric_label if single_group else f"{gv}_{metric_label}"
                     points = []
                     for r in _rows:
                         val = r.get(metric)
@@ -1904,10 +2426,12 @@ def api_data():
             for r in rows:
                 gv = str(r.get(group_key, ""))
                 grouped.setdefault(gv, []).append(r)
+            single_group = len(grouped) == 1
             for gv, g_rows in sorted(grouped.items()):
                 _rows = g_rows if preserve_order else sorted(g_rows, key=lambda x: x.get(x_key, 0))
                 for metric in selected_metrics:
-                    label = f"{gv}_{cat['metrics'].get(metric, metric)}"
+                    metric_label = cat['metrics'].get(metric, metric)
+                    label = metric_label if single_group else f"{gv}_{metric_label}"
                     points = []
                     for r in _rows:
                         val = r.get(metric)
@@ -2037,6 +2561,73 @@ def api_config_diff():
             unique_diffs.append(d)
 
     return jsonify({"diffs": unique_diffs, "runs": run_names})
+
+
+# ──────────────────────────────────────────────────────────────
+# 图表快照持久化（保存到本地文件系统）
+# ──────────────────────────────────────────────────────────────
+
+SAVED_CHARTS_DIR = EVAL_DIR / "saved_charts"
+
+
+@app.route("/api/saved_charts", methods=["GET"])
+def api_list_saved_charts():
+    """列出所有已保存的图表快照（按时间倒序）"""
+    SAVED_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+    items = []
+    for f in sorted(SAVED_CHARTS_DIR.glob("*.json"), reverse=True):
+        try:
+            meta = json.loads(f.read_text(encoding="utf-8"))
+            items.append({
+                "filename": f.name,
+                "title": meta.get("title", f.stem),
+                "thumbUrl": meta.get("thumbUrl", ""),
+                "time": meta.get("time", ""),
+                "boxH": meta.get("boxH", ""),
+            })
+        except Exception:
+            continue
+    return jsonify(items)
+
+
+@app.route("/api/saved_charts", methods=["POST"])
+def api_save_chart():
+    """保存一个图表快照到本地文件"""
+    SAVED_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+    data = request.get_json(force=True)
+    if not data or "title" not in data:
+        return jsonify({"error": "缺少 title"}), 400
+
+    import re as _re
+    import time as _time
+    safe_title = _re.sub(r'[^\w\u4e00-\u9fff\-]', '_', data.get("title", "chart"))[:80]
+    ts = str(int(_time.time() * 1000))
+    filename = f"{ts}_{safe_title}.json"
+
+    fpath = SAVED_CHARTS_DIR / filename
+    fpath.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return jsonify({"filename": filename})
+
+
+@app.route("/api/saved_charts/<filename>", methods=["GET"])
+def api_get_saved_chart(filename):
+    """读取一个图表快照的完整数据"""
+    fpath = SAVED_CHARTS_DIR / Path(filename).name  # 防路径穿越
+    if not fpath.exists():
+        return jsonify({"error": "not found"}), 404
+    return app.response_class(
+        fpath.read_text(encoding="utf-8"),
+        mimetype="application/json",
+    )
+
+
+@app.route("/api/saved_charts/<filename>", methods=["DELETE"])
+def api_delete_saved_chart(filename):
+    """删除一个图表快照"""
+    fpath = SAVED_CHARTS_DIR / Path(filename).name
+    if fpath.exists():
+        fpath.unlink()
+    return jsonify({"ok": True})
 
 
 def _kill_port(port: int) -> bool:

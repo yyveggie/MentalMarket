@@ -197,17 +197,18 @@ def compute_bubble_gsadf(run_dir: Path) -> list[dict]:
     result = []
     for idx, day in enumerate(sorted_days):
         bsadf = None
+        best_r1 = None  # 取得 sup 时的子窗口起点
 
         if idx + 1 >= min_win:
             # 对所有起点 r1, 计算 ADF[r1 .. idx]
             max_stat = None
-            # r1 从 0 到 idx - min_win + 1
             for r1 in range(0, idx - min_win + 2):
                 segment = log_prices[r1: idx + 1]
                 stat = _ols_adf_stat(segment)
                 if stat is not None:
                     if max_stat is None or stat > max_stat:
                         max_stat = stat
+                        best_r1 = r1
             bsadf = max_stat
 
         row: dict = {
@@ -217,7 +218,12 @@ def compute_bubble_gsadf(run_dir: Path) -> list[dict]:
         }
         if bsadf is not None:
             row["bsadf_stat"] = round(bsadf, 4)
-            row["bubble_signal"] = 1 if bsadf > cv else 0
+            # 区分泡沫（爆发性上涨）与崩盘（爆发性下跌）：
+            # 只有子窗口内价格净上涨时才标为 bubble_signal=1
+            is_explosive = bsadf > cv
+            is_upward = best_r1 is not None and log_prices[idx] > log_prices[best_r1]
+            row["bubble_signal"] = 1 if is_explosive and is_upward else 0
+            row["crash_signal"] = 1 if is_explosive and not is_upward else 0
         result.append(row)
 
     return result

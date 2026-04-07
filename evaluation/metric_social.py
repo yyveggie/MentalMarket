@@ -53,24 +53,39 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
     if not all_keys:
         return []
 
-    result = []
-    for day, tom in sorted(all_keys):
-        key = (day, tom)
-        likers = day_tom_likes.get(key, [])
-        unique_likers = len(set(likers))
-        like_count = len(likers)
-        follow_count = day_tom_follows.get(key, 0)
-        targets_unique = len(day_tom_like_targets.get(key, set()))
+    # 从 config.yaml 读取 agent 总数，读不到则默认 100
+    total_agents = 100
+    cfg_path = run_dir / "config.yaml"
+    if cfg_path.exists():
+        import yaml
+        with open(cfg_path) as _f:
+            _cfg = yaml.safe_load(_f) or {}
+        total_agents = max(1, (_cfg.get("agent") or {}).get("n_agents", 100))
 
-        result.append({
-            "trading_day": day,
-            "tom_level": tom,
-            "like_events": like_count,
-            "follow_events": follow_count,
-            "unique_likers": unique_likers,
-            "avg_likes_given": round(like_count / max(1, unique_likers), 2),
-            "like_targets_unique": targets_unique,
-        })
+    # 补齐所有 day × tom 组合，确保无事件天也输出 0 而非缺失
+    all_days = sorted({d for d, _ in all_keys})
+    all_toms = sorted({t for _, t in all_keys})
+    day_min, day_max = all_days[0], all_days[-1]
+
+    result = []
+    for day in range(day_min, day_max + 1):
+        for tom in all_toms:
+            key = (day, tom)
+            likers = day_tom_likes.get(key, [])
+            unique_likers = len(set(likers))
+            like_count = len(likers)
+            follow_count = day_tom_follows.get(key, 0)
+            targets_unique = len(day_tom_like_targets.get(key, set()))
+
+            result.append({
+                "trading_day": day,
+                "tom_level": tom,
+                "like_events": like_count,
+                "follow_events": follow_count,
+                "unique_likers": unique_likers,
+                "avg_likes_given": round(like_count / total_agents, 4),
+                "like_targets_unique": targets_unique,
+            })
 
     return result
 
@@ -99,9 +114,18 @@ def compute_info_diffusion(run_dir: Path) -> list[dict]:
                 continue
             posts_by_day[day].append(r)
 
-    # ── 统计每帖获赞数 ──
+    # ── 每帖获赞数：优先读 posts.jsonl 自带的 likes 字段，回退到事件统计 ──
     post_likes: dict[int, int] = defaultdict(int)  # post_id -> like count
-    if events_path.exists():
+    # 先从帖子记录自带 likes 字段取
+    _has_inline_likes = False
+    for day_posts in posts_by_day.values():
+        for p in day_posts:
+            lk = p.get("likes")
+            if lk is not None and lk > 0:
+                _has_inline_likes = True
+                post_likes[p.get("post_id", -999)] = int(lk)
+    # 若帖子无内嵌 likes，从 social_graph_events 统计
+    if not _has_inline_likes and events_path.exists():
         for r in read_jsonl(events_path):
             if r.get("event") == "like":
                 pid = r.get("post_id")
@@ -154,6 +178,104 @@ def compute_info_diffusion(run_dir: Path) -> list[dict]:
             "unique_posters": unique_posters,
             "posting_rate": round(unique_posters / total_agents * 100, 1),
         })
+
+    return result
+
+
+# ──────────────────────────────────────────────────────────────
+# 2b. 信息传播与参与度（按 ToM 分组）
+# ──────────────────────────────────────────────────────────────
+
+def _build_agent_tom_map(run_dir: Path) -> dict[int, int]:
+    """从 agents_final.jsonl 建立 agent_id → tom_level 映射。"""
+    fpath = run_dir / "agents_final.jsonl"
+    if not fpath.exists():
+        return {}
+    import json
+    mapping: dict[int, int] = {}
+    for line in open(fpath):
+        try:
+            r = json.loads(line)
+            aid = r.get("agent_id")
+            tom = r.get("tom_level")
+            if aid is not None and tom is not None:
+                mapping[int(aid)] = int(tom)
+        except Exception:
+            continue
+    return mapping
+
+
+def compute_info_diffusion_by_tom(run_dir: Path) -> list[dict]:
+    """按 ToM 分组的每日信息传播指标。"""
+    posts_path = run_dir / "posts.jsonl"
+    if not posts_path.exists():
+        return []
+
+    agent_tom = _build_agent_tom_map(run_dir)
+    if not agent_tom:
+        return []
+
+    # 读取帖子，按 (day, tom) 分组
+    from metrics_plot_common import safe_int
+    day_tom_posts: dict[tuple[int, int], list[dict]] = defaultdict(list)
+    for r in read_jsonl(posts_path):
+        day = safe_int(r.get("trading_day"))
+        aid = r.get("agent_id")
+        if day is None or aid is None:
+            continue
+        tom = agent_tom.get(int(aid))
+        if tom is None:
+            continue
+        day_tom_posts[(day, tom)].append(r)
+
+    if not day_tom_posts:
+        return []
+
+    # 帖子获赞（复用 inline likes 逻辑）
+    post_likes: dict[int, int] = defaultdict(int)
+    for r in read_jsonl(posts_path):
+        lk = r.get("likes")
+        if lk is not None and lk > 0:
+            post_likes[r.get("post_id", -999)] = int(lk)
+
+    # 每个 tom 层级的 agent 数量
+    from collections import Counter
+    tom_agent_count = Counter(agent_tom.values())
+
+    all_keys = sorted(day_tom_posts.keys())
+    all_days = sorted({d for d, _ in all_keys})
+    all_toms = sorted({t for _, t in all_keys})
+    day_min, day_max = all_days[0], all_days[-1]
+
+    result = []
+    for day in range(day_min, day_max + 1):
+        for tom in all_toms:
+            posts = day_tom_posts.get((day, tom), [])
+            total = len(posts)
+            agent_posts = sum(1 for p in posts if p.get("source") == "agent_tool")
+            retweet_posts = sum(1 for p in posts if p.get("source") == "retweet")
+
+            day_likes = [post_likes.get(p.get("post_id", -999), 0) for p in posts]
+            avg_likes = round(sum(day_likes) / max(1, total), 2) if day_likes else 0
+
+            posters = set()
+            for p in posts:
+                a = p.get("agent_id")
+                if a is not None and a >= 0:
+                    posters.add(a)
+            unique_posters = len(posters)
+            n_agents_in_tom = max(1, tom_agent_count.get(tom, 1))
+
+            result.append({
+                "trading_day": day,
+                "tom_level": tom,
+                "total_posts": total,
+                "agent_posts": agent_posts,
+                "retweet_posts": retweet_posts,
+                "avg_likes_per_post": avg_likes,
+                "unique_posters": unique_posters,
+                "posting_rate": round(unique_posters / n_agents_in_tom * 100, 1),
+            })
 
     return result
 
@@ -456,127 +578,143 @@ def compute_kol_market_impact(
     run_dir: Path, kol_top_pct: float = 0.2
 ) -> list[dict]:
     """
-    识别 KOL（按累计获赞 top 20%），计算 KOL vs 非KOL 每日指标。
+    基于引擎实时记录的 kol_emerge/kol_lost 事件重建每日 KOL 集合，
+    按 ToM 层级分组输出。
 
-    返回行: {trading_day, kol_post_count, non_kol_post_count,
-             kol_sentiment_mean, non_kol_sentiment_mean,
-             kol_sentiment_lead, kol_like_share}
+    返回行: {trading_day, tom_level, kol_count, kol_pct, kol_post_count,
+             kol_sentiment_mean, kol_like_share}
     """
-    posts_path = run_dir / "posts.jsonl"
     graph_path = run_dir / "social_graph_events.jsonl"
+    posts_path = run_dir / "posts.jsonl"
     sent_path = run_dir / "sentiment_series.jsonl"
-    if not posts_path.exists():
+    if not graph_path.exists():
         return []
 
-    posts = read_jsonl(posts_path)
-    # ── 识别 KOL: 按累计获赞 top kol_top_pct ──
-    likes_received: dict[int, int] = defaultdict(int)
-    day_likes: dict[int, dict[int, int]] = defaultdict(lambda: defaultdict(int))
+    agent_tom = _build_agent_tom_map(run_dir)
+    all_toms = sorted(set(agent_tom.values())) if agent_tom else [0]
 
-    if graph_path.exists():
-        for r in read_jsonl(graph_path):
-            if r.get("event") == "like":
-                target = r.get("target_agent_id")
-                day = safe_int(r.get("trading_day"))
-                if target is not None:
-                    likes_received[target] += 1
-                    if day is not None:
-                        day_likes[day][target] += 1
+    # ── 从 social_graph_events 重建 KOL 时间线 ──
+    # kol_emerge/kol_lost 没有 trading_day，需从上下文推断
+    sg_lines = read_jsonl(graph_path)
+    # 第一遍：收集所有行的 trading_day 以便做线性扫描推断
+    sg_days: list[int | None] = []
+    for r in sg_lines:
+        d = safe_int(r.get("trading_day"))
+        sg_days.append(d)
 
-    # 加上发帖量作为辅助排序（likes 优先）
-    posts_count: dict[int, int] = defaultdict(int)
-    for p in posts:
-        aid = p.get("agent_id")
-        if aid is not None and p.get("source") != "news":
-            posts_count[aid] += 1
+    def _infer_day(idx: int) -> int | None:
+        # 向前/向后找最近的 trading_day
+        for offset in range(1, 50):
+            for j in (idx - offset, idx + offset):
+                if 0 <= j < len(sg_days) and sg_days[j] is not None:
+                    return sg_days[j]
+        return None
 
-    all_agents = set(likes_received.keys()) | set(posts_count.keys())
-    if not all_agents:
-        return []
+    # 构建 KOL 事件时间线: list[(day, agent_id, 'emerge'|'lost')]
+    kol_events: list[tuple[int, int, str]] = []
+    for i, r in enumerate(sg_lines):
+        ev = r.get("event")
+        if ev in ("kol_emerge", "kol_lost"):
+            day = safe_int(r.get("trading_day")) or _infer_day(i)
+            aid = r.get("agent_id")
+            if day is not None and aid is not None:
+                kol_events.append((day, aid, "emerge" if ev == "kol_emerge" else "lost"))
 
-    # 综合分: likes*10 + posts (likes 权重更大)
-    agent_score = {a: likes_received.get(a, 0) * 10 + posts_count.get(a, 0) for a in all_agents}
-    sorted_agents = sorted(agent_score.items(), key=lambda x: -x[1])
-    n_kol = max(1, int(len(sorted_agents) * kol_top_pct))
-    kol_set = {a for a, _ in sorted_agents[:n_kol]}
+    # 按天排序
+    kol_events.sort(key=lambda x: x[0])
 
-    # ── 每日帖数 ──
-    day_posts_kol: dict[int, int] = defaultdict(int)
-    day_posts_non: dict[int, int] = defaultdict(int)
-    for p in posts:
-        day = safe_int(p.get("trading_day"))
-        aid = p.get("agent_id")
-        if day is None or aid is None or p.get("source") == "news":
-            continue
-        if aid in kol_set:
-            day_posts_kol[day] += 1
-        else:
-            day_posts_non[day] += 1
+    # ── 逐日获赞 ──
+    day_like_targets: dict[int, list[int]] = defaultdict(list)
+    for r in sg_lines:
+        if r.get("event") == "like":
+            target = r.get("target_agent_id")
+            day = safe_int(r.get("trading_day"))
+            if target is not None and day is not None:
+                day_like_targets[day].append(target)
 
-    # ── 每日情绪 ──
-    day_kol_sent: dict[int, list[float]] = defaultdict(list)
-    day_non_sent: dict[int, list[float]] = defaultdict(list)
+    # ── 帖数 ──
+    day_post_map: dict[int, list[dict]] = defaultdict(list)
+    if posts_path.exists():
+        for p in read_jsonl(posts_path):
+            day = safe_int(p.get("trading_day"))
+            if day is not None and p.get("source") != "news":
+                day_post_map[day].append(p)
+
+    # ── 情绪 ──
+    day_sent: dict[int, dict[int, float]] = defaultdict(dict)
     if sent_path.exists():
         for r in read_jsonl(sent_path):
             day = safe_int(r.get("trading_day"))
             s = r.get("sentiment")
             aid = r.get("agent_id")
-            if day is None or s is None or aid is None:
-                continue
-            s = float(s)
-            if aid in kol_set:
-                day_kol_sent[day].append(s)
-            else:
-                day_non_sent[day].append(s)
+            if day is not None and s is not None and aid is not None:
+                day_sent[day][aid] = float(s)
 
     all_days = sorted(
-        set(day_posts_kol) | set(day_posts_non)
-        | set(day_kol_sent) | set(day_non_sent)
+        set(sg_days_clean := [d for d in sg_days if d is not None])
+        | set(day_post_map)
+        | set(day_sent)
     )
     if not all_days:
         return []
 
+    # ── 逐日滚动 KOL 集合 ──
+    kol_set: set[int] = set()
+    ev_idx = 0
     result = []
+
     for day in all_days:
-        kol_s = day_kol_sent.get(day, [])
-        non_s = day_non_sent.get(day, [])
-        kol_mean = round(sum(kol_s) / len(kol_s), 4) if kol_s else None
-        non_mean = round(sum(non_s) / len(non_s), 4) if non_s else None
+        # 应用截止当日的所有 KOL 事件
+        while ev_idx < len(kol_events) and kol_events[ev_idx][0] <= day:
+            _, aid, action = kol_events[ev_idx]
+            if action == "emerge":
+                kol_set.add(aid)
+            else:
+                kol_set.discard(aid)
+            ev_idx += 1
 
-        # KOL 获赞占比
-        total_day_likes = sum(day_likes.get(day, {}).values())
-        kol_day_likes = sum(day_likes.get(day, {}).get(a, 0) for a in kol_set)
-        kol_like_share = (
-            round(kol_day_likes / total_day_likes * 100, 1)
-            if total_day_likes > 0 else None
-        )
+        n_kol_total = len(kol_set)
 
-        row: dict = {
-            "trading_day": day,
-            "kol_post_count": day_posts_kol.get(day, 0),
-            "non_kol_post_count": day_posts_non.get(day, 0),
-        }
-        if kol_mean is not None:
-            row["kol_sentiment_mean"] = kol_mean
-        if non_mean is not None:
-            row["non_kol_sentiment_mean"] = non_mean
-        if kol_mean is not None and non_mean is not None:
-            row["kol_sentiment_lead"] = round(kol_mean - non_mean, 4)
-        if kol_like_share is not None:
-            row["kol_like_share"] = kol_like_share
-        result.append(row)
+        # 按 tom 分组
+        kol_by_tom: dict[int, set[int]] = defaultdict(set)
+        for a in kol_set:
+            t = agent_tom.get(a, 0)
+            kol_by_tom[t].add(a)
+
+        # 当日获赞分布
+        day_likes_count: dict[int, int] = defaultdict(int)
+        for target in day_like_targets.get(day, []):
+            day_likes_count[target] += 1
+        total_day_likes = sum(day_likes_count.values())
+
+        for tom in all_toms:
+            tom_kols = kol_by_tom.get(tom, set())
+            tom_kol_posts = sum(
+                1 for p in day_post_map.get(day, [])
+                if p.get("agent_id") in tom_kols
+            )
+            tom_kol_sents = [day_sent.get(day, {}).get(a) for a in tom_kols]
+            tom_kol_sents = [s for s in tom_kol_sents if s is not None]
+            tom_kol_likes = sum(day_likes_count.get(a, 0) for a in tom_kols)
+
+            row: dict = {
+                "trading_day": day,
+                "tom_level": tom,
+                "kol_count": len(tom_kols),
+                "kol_pct": round(len(tom_kols) / n_kol_total * 100, 1) if n_kol_total else 0,
+                "kol_post_count": tom_kol_posts,
+            }
+            if tom_kol_sents:
+                row["kol_sentiment_mean"] = round(sum(tom_kol_sents) / len(tom_kol_sents), 4)
+            if total_day_likes > 0:
+                row["kol_like_share"] = round(tom_kol_likes / total_day_likes * 100, 1)
+            result.append(row)
 
     return result
 
 
-# ──────────────────────────────────────────────────────────────
-# 7. 工具调用分布 (per day, per tom_level)
-# ──────────────────────────────────────────────────────────────
-
 def compute_tool_usage(run_dir: Path) -> list[dict]:
     """
-    从 decisions.jsonl 的 action_executed.tool_trace 计算每日工具调用比例。
-
     返回行: {trading_day, tom_level, total_decisions, total_tool_calls,
              avg_tools_per_decision, cancel_orders_pct, social_action_pct,
              set_trade_plan_pct, social_post_pct, social_retweet_pct,
