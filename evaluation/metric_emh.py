@@ -324,7 +324,8 @@ def compute_event_car(
 
         row: dict = {"event_day": ev_day}
         for h in horizons:
-            end_idx = min(ev_idx + h, len(returns))
+            # CAR(0, +h) = sum of AR from t=0 to t=+h, inclusive → h+1 days
+            end_idx = min(ev_idx + h + 1, len(returns))
             if ev_idx >= len(returns):
                 row[f"car_{h}"] = float("nan")
                 row[f"abs_car_{h}"] = float("nan")

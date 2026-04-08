@@ -1,0 +1,53 @@
+[
+  {
+    "label": "tom07/12/21",
+    "tom1_jaccard_mean": 0.1636,
+    "tom1_jaccard_std": 0.0391,
+    "tom1_ncd_sim_mean": 0.3175,
+    "tom1_ncd_sim_std": 0.0297,
+    "tom2_r1_jaccard_mean": 0.3163,
+    "tom2_r1_jaccard_std": 0.1126,
+    "tom2_r1_ncd_sim_mean": 0.3888,
+    "tom2_r1_ncd_sim_std": 0.0692,
+    "tom2_r2_jaccard_mean": 0.3005,
+    "tom2_r2_jaccard_std": 0.119,
+    "tom2_r2_ncd_sim_mean": 0.3688,
+    "tom2_r2_ncd_sim_std": 0.0757,
+    "all_jaccard_mean": 0.1893,
+    "all_ncd_sim_mean": 0.2992
+  },
+  {
+    "label": "tom01/11/21",
+    "tom1_jaccard_mean": 0.1421,
+    "tom1_jaccard_std": 0.0309,
+    "tom1_ncd_sim_mean": 0.3737,
+    "tom1_ncd_sim_std": 0.036,
+    "tom2_r1_jaccard_mean": 0.1508,
+    "tom2_r1_jaccard_std": 0.0301,
+    "tom2_r1_ncd_sim_mean": 0.4046,
+    "tom2_r1_ncd_sim_std": 0.0325,
+    "tom2_r2_jaccard_mean": 0.0913,
+    "tom2_r2_jaccard_std": 0.0141,
+    "tom2_r2_ncd_sim_mean": 0.3473,
+    "tom2_r2_ncd_sim_std": 0.0201,
+    "all_jaccard_mean": 0.0782,
+    "all_ncd_sim_mean": 0.3123
+  },
+  {
+    "label": "tom06/13/21",
+    "tom1_jaccard_mean": 0.1919,
+    "tom1_jaccard_std": 0.0446,
+    "tom1_ncd_sim_mean": 0.4286,
+    "tom1_ncd_sim_std": 0.0438,
+    "tom2_r1_jaccard_mean": 0.2026,
+    "tom2_r1_jaccard_std": 0.0552,
+    "tom2_r1_ncd_sim_mean": 0.4646,
+    "tom2_r1_ncd_sim_std": 0.0544,
+    "tom2_r2_jaccard_mean": 0.1008,
+    "tom2_r2_jaccard_std": 0.0176,
+    "tom2_r2_ncd_sim_mean": 0.3591,
+    "tom2_r2_ncd_sim_std": 0.0207,
+    "all_jaccard_mean": 0.1274,
+    "all_ncd_sim_mean": 0.3629
+  }
+]
