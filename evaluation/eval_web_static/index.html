@@ -1152,6 +1152,122 @@ async function generateChart() {
     const seriesList = [];
     let colorIdx = 0;
 
+    // ── 跨实验单点对比: category + 无group_key + 每run仅1点 → 合并为单series ──
+    const isCrossCmp = cat.x_type === 'category' && !effectiveGroupKey
+      && Object.keys(data.series).length > 1
+      && Object.values(data.series).every(rs => {
+           const pts = Object.values(rs).find(p => Array.isArray(p));
+           return pts && pts.length <= 1;
+         });
+
+    if (isCrossCmp) {
+      const xLabels = [];
+      const yValues = [];
+      for (const [runName, runSeries] of Object.entries(data.series)) {
+        for (const [seriesLabel, points] of Object.entries(runSeries)) {
+          if (!seriesLabel.includes(metricLabel) && !seriesLabel.endsWith(metricLabel)) continue;
+          if (points.length > 0) {
+            const label = runName;
+            xLabels.push(label);
+            yValues.push(points[0].y);
+          }
+        }
+      }
+      seriesList.push({
+        name: metricDisplay,
+        type: 'bar',
+        data: yValues.map((v, idx) => ({
+          value: v,
+          itemStyle: { color: COLORS[idx % COLORS.length], decal: BAR_DECALS[idx % BAR_DECALS.length] },
+        })),
+        label: { show: true, position: 'top', color: '#656d76', fontSize: 11,
+          formatter: p => _smartFmt(p.value)
+        },
+        markLine: { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#cf222e', width: 1.5 },
+          data: [{ yAxis: 100, label: { formatter: '基准 100', fontSize: 10, color: '#cf222e' } }],
+        },
+      });
+
+      const option = {
+        backgroundColor: 'transparent',
+        aria: { enabled: true, decal: { show: true } },
+        tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true, valueFormatter: v => _smartFmt(v) },
+        legend: { show: false },
+        grid: { top: 40, right: 20, bottom: 80, left: 60, containLabel: true },
+        xAxis: { type: 'category', data: xLabels, name: _axisXName('ToM 比例'), nameLocation: 'center', nameGap: 65, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabels.length > 5 ? 25 : 0, fontSize: 11, interval: 0 } },
+        yAxis: { type: 'value', name: _axisYName(metricDisplay), nameLocation: 'center', nameGap: 50, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
+        series: seriesList,
+      };
+      chart.setOption(option);
+      _autoYAxisGap(chart);
+      _saveDefaultAxisNames(chart);
+      _makeChartResizable(container);
+      _showBarWidthCtrl(container);
+      continue; // 跳过后续通用渲染逻辑
+    }
+
+    // ── 跨实验分组对比: category + group_key + 多run + 每run少量点 → 紧凑分组柱 ──
+    const isGroupedCrossCmp = cat.x_type === 'category' && effectiveGroupKey
+      && Object.keys(data.series).length > 1
+      && Object.values(data.series).every(rs =>
+           Object.values(rs).every(pts => Array.isArray(pts) && pts.length <= 5));
+
+    if (isGroupedCrossCmp) {
+      // 收集: xLabels = 各实验标签, groups = 所有 group 值
+      const xLabelsG = [];
+      const groupsSet = new Set();
+      const runDataMap = {}; // label -> { groupVal -> yValue }
+      for (const [runName, runSeries] of Object.entries(data.series)) {
+        const runDisplay = getRunDisplayName(runName);
+        let xVal = null;
+        const gMap = {};
+        for (const [seriesLabel, points] of Object.entries(runSeries)) {
+          if (!seriesLabel.includes(metricLabel) && !seriesLabel.endsWith(metricLabel)) continue;
+          for (const p of points) {
+            if (xVal === null) xVal = p.x;
+            // seriesLabel 格式: "groupVal_metricLabel" (如 "0_人均收益率(%)")
+            const uIdx = seriesLabel.indexOf('_');
+            const groupVal = uIdx >= 0 ? seriesLabel.substring(0, uIdx).trim() : seriesLabel;
+            gMap[groupVal] = p.y;
+            groupsSet.add(groupVal);
+          }
+        }
+        if (xVal !== null) {
+          xLabelsG.push(runName);
+          runDataMap[runName] = gMap;
+        }
+      }
+      const groups = [...groupsSet].sort();
+      const _gLabel = g => /^\d+$/.test(g) && effectiveGroupKey === 'tom_level' ? `ToM ${g}` : g;
+
+      const seriesListG = groups.map((g, gi) => ({
+        name: _gLabel(g),
+        type: 'bar',
+        data: xLabelsG.map(xl => runDataMap[xl][g] ?? null),
+        itemStyle: { color: COLORS[gi % COLORS.length], decal: BAR_DECALS[gi % BAR_DECALS.length] },
+        label: { show: true, position: 'top', color: '#656d76', fontSize: 10, formatter: p => p.value != null ? _smartFmt(p.value) : '' },
+        barGap: '15%',
+        barCategoryGap: '30%',
+      }));
+
+      const optionG = {
+        backgroundColor: 'transparent',
+        aria: { enabled: true, decal: { show: true } },
+        tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true, valueFormatter: v => _smartFmt(v) },
+        legend: { type: 'scroll', top: 8, itemWidth: 20, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
+        grid: { top: 50, right: 20, bottom: 80, left: 60, containLabel: true },
+        xAxis: { type: 'category', data: xLabelsG, name: _axisXName('ToM 比例'), nameLocation: 'center', nameGap: 65, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabelsG.length > 5 ? 25 : 0, fontSize: 11, interval: 0 } },
+        yAxis: { type: 'value', name: _axisYName(metricDisplay), nameLocation: 'center', nameGap: 50, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
+        series: seriesListG,
+      };
+      chart.setOption(optionG);
+      _autoYAxisGap(chart);
+      _saveDefaultAxisNames(chart);
+      _makeChartResizable(container);
+      _showBarWidthCtrl(container);
+      continue;
+    }
+
     for (const [runName, runSeries] of Object.entries(data.series)) {
       for (const [seriesLabel, points] of Object.entries(runSeries)) {
         // 只取当前指标对应的系列
@@ -1391,6 +1507,83 @@ function toggleSeriesRename(btn) {
     item.appendChild(inp);
     panel.appendChild(item);
   });
+
+  // ── 如果 xAxis 是 category 且有 data，追加 x 轴标签改名 + 排序 ──
+  const xAxisOpt = (opt.xAxis && opt.xAxis[0]) || {};
+  if (xAxisOpt.type === 'category' && Array.isArray(xAxisOpt.data) && xAxisOpt.data.length > 0) {
+    const divider = document.createElement('div');
+    divider.style.cssText = 'width:100%;border-top:1px solid var(--border);margin:6px 0;font-size:11px;color:var(--text2);padding-top:4px;';
+    divider.textContent = '横轴标签 (可改名 / ◀▶ 移动顺序):';
+    panel.appendChild(divider);
+
+    const labelContainer = document.createElement('div');
+    labelContainer.style.cssText = 'display:flex;flex-direction:column;gap:3px;width:100%;';
+    panel.appendChild(labelContainer);
+
+    function _rebuildLabelRows() {
+      labelContainer.innerHTML = '';
+      const curOpt = chart.getOption();
+      const curLabels = curOpt.xAxis[0].data.slice();
+      curLabels.forEach((_lbl, idx) => {
+        const item = document.createElement('span');
+        item.className = 'series-rename-item';
+        item.style.cssText = 'display:flex;align-items:center;gap:4px;';
+        // 左箭头
+        const btnL = document.createElement('button');
+        btnL.textContent = '◀';
+        btnL.title = '左移';
+        btnL.disabled = idx === 0;
+        btnL.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === 0 ? 'opacity:.3;' : '');
+        btnL.onclick = () => _swapBars(idx, idx - 1);
+        // 右箭头
+        const btnR = document.createElement('button');
+        btnR.textContent = '▶';
+        btnR.title = '右移';
+        btnR.disabled = idx === curLabels.length - 1;
+        btnR.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === curLabels.length - 1 ? 'opacity:.3;' : '');
+        btnR.onclick = () => _swapBars(idx, idx + 1);
+        // 输入框
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = typeof _lbl === 'string' ? _lbl.replace(/\n/g, ' ') : String(_lbl);
+        inp.title = '修改后回车确认';
+        inp.style.cssText = 'flex:1;';
+        const applyLabel = () => {
+          const newLabel = inp.value.trim();
+          if (!newLabel) return;
+          const co = chart.getOption();
+          const cd = co.xAxis[0].data.slice();
+          cd[idx] = newLabel;
+          chart.setOption({ xAxis: [{ data: cd }] }, false);
+        };
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); applyLabel(); inp.blur(); }
+        });
+        inp.addEventListener('blur', applyLabel);
+
+        item.appendChild(btnL);
+        item.appendChild(inp);
+        item.appendChild(btnR);
+        labelContainer.appendChild(item);
+      });
+    }
+
+    function _swapBars(i, j) {
+      const co = chart.getOption();
+      const labels = co.xAxis[0].data.slice();
+      [labels[i], labels[j]] = [labels[j], labels[i]];
+      const seriesUpdate = co.series.map(s => {
+        const d = (s.data || []).slice();
+        if (d.length > Math.max(i, j)) { [d[i], d[j]] = [d[j], d[i]]; }
+        return { data: d };
+      });
+      chart.setOption({ xAxis: [{ data: labels }], series: seriesUpdate }, false);
+      _rebuildLabelRows();
+    }
+
+    _rebuildLabelRows();
+  }
+
   panel.classList.add('show');
 }
 

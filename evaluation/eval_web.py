@@ -519,6 +519,54 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "count": "每日按总财富排名取 Top10，各 ToM 层级占据的席位数",
         },
     },
+    "avg_return": {
+        "label": "个体人均收益率（全体）",
+        "x_key": "trading_day",
+        "metrics": {
+            "mean_return_pct": "人均收益率(%)",
+            "median_return_pct": "中位数收益率(%)",
+            "std_return_pct": "收益率标准差(%)",
+            "min_return_pct": "最低收益率(%)",
+            "max_return_pct": "最高收益率(%)",
+            "positive_ratio": "正收益比例(%)",
+            "agent_count": "Agent 数量",
+        },
+        "group_key": None,
+        "computed": True,
+        "desc": {
+            "mean_return_pct": "全体 Agent 的收益率算术平均值",
+            "median_return_pct": "全体 Agent 的中位数收益率，更抗极端值干扰",
+            "std_return_pct": "收益率标准差，反映个体间收益离散程度",
+            "min_return_pct": "全体最低个体收益率",
+            "max_return_pct": "全体最高个体收益率",
+            "positive_ratio": "收益率>0 的个体占比。↑多数盈利 ↓多数亏损",
+            "agent_count": "Agent 总数",
+        },
+    },
+    "avg_return_by_tom": {
+        "label": "个体人均收益率（按 ToM 分组）",
+        "x_key": "trading_day",
+        "metrics": {
+            "mean_return_pct": "人均收益率(%)",
+            "median_return_pct": "中位数收益率(%)",
+            "std_return_pct": "收益率标准差(%)",
+            "min_return_pct": "最低收益率(%)",
+            "max_return_pct": "最高收益率(%)",
+            "positive_ratio": "正收益比例(%)",
+            "agent_count": "Agent 数量",
+        },
+        "group_key": "tom_level",
+        "computed": True,
+        "desc": {
+            "mean_return_pct": "该 ToM 层级所有个体收益率的算术平均值。tom_level=all 为全体汇总",
+            "median_return_pct": "中位数收益率，更抗极端值干扰。与均值差距大说明分布偏斜",
+            "std_return_pct": "收益率标准差，反映个体间收益离散程度。↑分化大 ↓趋同",
+            "min_return_pct": "该组最低个体收益率。反映最差表现者",
+            "max_return_pct": "该组最高个体收益率。反映最佳表现者",
+            "positive_ratio": "收益率>0 的个体占比。↑多数盈利 ↓多数亏损",
+            "agent_count": "该组 Agent 数量",
+        },
+    },
     "wealth_tom_bottom10": {
         "label": "财富Bottom10 心智构成",
         "x_key": "trading_day",
@@ -877,6 +925,51 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "desc": {
             "daily_total_trades": "该 ToM 层级当日新增的总成交笔数（当日累积值 − 前一日累积值）",
             "daily_avg_trades": "该 ToM 层级当日新增的人均成交笔数",
+        },
+    },
+    "tom_vs_index": {
+        "label": "ToM 比例 vs 大盘指数",
+        "x_key": "tom_label",
+        "x_type": "category",
+        "group_key": None,
+        "computed": True,
+        "metrics": {
+            "final_index_value": "大盘终值",
+            "total_return_pct": "大盘总收益率(%)",
+        },
+        "desc": {
+            "final_index_value": "仿真结束时的大盘综合指数值（起始≈100）。横轴为各实验的心智阶数比例",
+            "total_return_pct": "大盘从起始到结束的总收益率（%）。正=上涨，负=下跌",
+        },
+    },
+    "tom_vs_avg_return": {
+        "label": "ToM 比例 vs 全体人均收益率",
+        "x_key": "tom_label",
+        "x_type": "category",
+        "group_key": None,
+        "computed": True,
+        "metrics": {
+            "mean_return_pct": "人均收益率(%)",
+            "median_return_pct": "中位数收益率(%)",
+        },
+        "desc": {
+            "mean_return_pct": "仿真最后一天全体 Agent 收益率的算术平均值（%）。横轴为各实验的心智阶数比例",
+            "median_return_pct": "仿真最后一天全体 Agent 收益率的中位数（%）。横轴为各实验的心智阶数比例",
+        },
+    },
+    "tom_vs_avg_return_by_tom": {
+        "label": "ToM 比例 vs 各阶层人均收益率",
+        "x_key": "tom_label",
+        "x_type": "category",
+        "group_key": "tom_level",
+        "computed": True,
+        "metrics": {
+            "mean_return_pct": "人均收益率(%)",
+            "median_return_pct": "中位数收益率(%)",
+        },
+        "desc": {
+            "mean_return_pct": "仿真最后一天各 ToM 阶层 Agent 收益率的算术平均值（%）。每个实验按阶层分组柱",
+            "median_return_pct": "仿真最后一天各 ToM 阶层 Agent 收益率的中位数（%）。每个实验按阶层分组柱",
         },
     },
 }
@@ -1704,6 +1797,96 @@ def _compute_return_tom_bottom10(run_dir: Path) -> list[dict]:
     return _compute_return_tom_composition(run_dir, "bottom")
 
 
+def _compute_avg_return_by_tom(run_dir: Path) -> list[dict]:
+    """个体人均收益率统计（按 trading_day + tom_level 分组）。
+
+    对每个交易日，按 ToM 层级分组统计所有 Agent 的 return_pct：
+    均值、中位数、标准差、最小值、最大值、正收益占比、Agent 数量。
+    """
+    return _compute_avg_return_impl(run_dir, by_tom=True)
+
+
+def _compute_avg_return(run_dir: Path) -> list[dict]:
+    """个体人均收益率统计（全体汇总，不按 ToM 分组）。"""
+    return _compute_avg_return_impl(run_dir, by_tom=False)
+
+
+def _compute_avg_return_impl(run_dir: Path, by_tom: bool) -> list[dict]:
+    fpath = run_dir / "agent_wealth.jsonl"
+    if not fpath.exists():
+        return []
+    from collections import defaultdict
+    from metrics_plot_common import safe_float, safe_int
+
+    # 每个 (day, agent) 只保留最新记录
+    latest: dict[tuple[int, int], tuple[float, int, float]] = {}  # (day, aid) -> (sim_time, tom, return_pct)
+    for row in _iter_jsonl(fpath):
+        day = safe_int(row.get("trading_day"))
+        aid = safe_int(row.get("agent_id"))
+        tm = safe_float(row.get("sim_time"))
+        ret = safe_float(row.get("return_pct"))
+        tom = safe_int(row.get("tom_level"))
+        if day is None or day <= 0 or aid is None or tm is None or ret is None:
+            continue
+        tom = tom if tom is not None else 0
+        key = (day, aid)
+        old = latest.get(key)
+        if old is None or tm >= old[0]:
+            latest[key] = (tm, tom, ret)
+
+    # 按 (day, tom) 聚合
+    buckets: dict[tuple[int, int], list[float]] = defaultdict(list)
+    for (day, _aid), (_, tom, ret) in latest.items():
+        buckets[(day, tom)].append(ret)
+
+    import math
+
+    def _stats(rets: list[float], day: int, tom_label) -> dict:
+        rets_sorted = sorted(rets)
+        n = len(rets_sorted)
+        mean_v = sum(rets_sorted) / n
+        mid = n // 2
+        median_v = rets_sorted[mid] if n % 2 else (rets_sorted[mid - 1] + rets_sorted[mid]) / 2
+        var_v = sum((r - mean_v) ** 2 for r in rets_sorted) / n if n > 1 else 0.0
+        std_v = math.sqrt(var_v)
+        pos_cnt = sum(1 for r in rets_sorted if r > 0)
+        row = {
+            "trading_day": day,
+            "mean_return_pct": round(mean_v, 4),
+            "median_return_pct": round(median_v, 4),
+            "std_return_pct": round(std_v, 4),
+            "min_return_pct": round(rets_sorted[0], 4),
+            "max_return_pct": round(rets_sorted[-1], 4),
+            "positive_ratio": round(100.0 * pos_cnt / n, 2),
+            "agent_count": n,
+        }
+        if tom_label is not None:
+            row["tom_level"] = tom_label
+        return row
+
+    result = []
+    all_days = sorted(set(d for d, _ in buckets))
+    all_toms = sorted(set(t for _, t in buckets))
+
+    for day in all_days:
+        if by_tom:
+            for tom in all_toms:
+                rets = buckets.get((day, tom))
+                if not rets:
+                    continue
+                result.append(_stats(rets, day, tom))
+        else:
+            all_rets_day: list[float] = []
+            for tom in all_toms:
+                rets = buckets.get((day, tom))
+                if rets:
+                    all_rets_day.extend(rets)
+            if all_rets_day:
+                result.append(_stats(all_rets_day, day, None))
+
+    return result
+
+
 def _compute_plan_adherence(run_dir: Path) -> list[dict]:
     """计划执行率：按 trading_day + tom_level 统计 adherence 比例。"""
     fpath = run_dir / "plan_execution.jsonl"
@@ -2069,6 +2252,184 @@ def _compute_daily_trades(run_dir: Path) -> list[dict]:
     return result
 
 
+def _compute_tom_vs_index(run_dir: Path) -> list[dict]:
+    """返回该实验的 ToM 分布标签 + 大盘指数终值/收益率（单行）。
+
+    X 轴使用 ToM 比例标签（如 "T0:70 T1:20 T2:10"），用于跨实验对比。
+    """
+    import yaml
+
+    # ── 读取 ToM 分布 ──
+    cfg_path = run_dir / "config.yaml"
+    if not cfg_path.exists():
+        return []
+    with open(cfg_path, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f) or {}
+    tom_dist = cfg.get("simulation", {}).get("tom_distribution", {})
+    if not tom_dist:
+        return []
+    parts = []
+    for level in sorted(tom_dist.keys()):
+        pct = tom_dist[level]
+        if pct and pct > 0:
+            parts.append(f"T{level}:{int(round(pct * 100))}")
+    tom_tag = " ".join(parts) if parts else "unknown"
+
+    # ── 读取大盘指数 ──
+    bi_path = run_dir / "broad_index.jsonl"
+    if not bi_path.exists():
+        return []
+    first_row = last_row = None
+    for row in _iter_jsonl(bi_path):
+        if first_row is None:
+            first_row = row
+        last_row = row
+
+    if first_row is None or last_row is None:
+        return []
+
+    start_val = first_row.get("value", 100)
+    end_val = last_row.get("value", start_val)
+    total_return = round((end_val / start_val - 1) * 100, 4) if start_val else 0
+
+    return [{
+        "tom_label": tom_tag,
+        "final_index_value": round(end_val, 4),
+        "total_return_pct": total_return,
+    }]
+
+
+def _compute_tom_vs_avg_return(run_dir: Path) -> list[dict]:
+    """返回该实验的 ToM 分布标签 + 全体人均收益率（末日快照，单行）。"""
+    import yaml
+    from metrics_plot_common import safe_float, safe_int
+
+    cfg_path = run_dir / "config.yaml"
+    if not cfg_path.exists():
+        return []
+    with open(cfg_path, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f) or {}
+    tom_dist = cfg.get("simulation", {}).get("tom_distribution", {})
+    if not tom_dist:
+        return []
+    parts = []
+    for level in sorted(tom_dist.keys()):
+        pct = tom_dist[level]
+        if pct and pct > 0:
+            parts.append(f"T{level}:{int(round(pct * 100))}")
+    tom_tag = " ".join(parts) if parts else "unknown"
+
+    fpath = run_dir / "agent_wealth.jsonl"
+    if not fpath.exists():
+        return []
+
+    latest: dict[tuple[int, int], tuple[float, float]] = {}
+    max_day = 0
+    for row in _iter_jsonl(fpath):
+        day = safe_int(row.get("trading_day"))
+        aid = safe_int(row.get("agent_id"))
+        tm = safe_float(row.get("sim_time"))
+        ret = safe_float(row.get("return_pct"))
+        if day is None or day <= 0 or aid is None or tm is None or ret is None:
+            continue
+        if day > max_day:
+            max_day = day
+        key = (day, aid)
+        old = latest.get(key)
+        if old is None or tm >= old[0]:
+            latest[key] = (tm, ret)
+
+    if max_day <= 0:
+        return []
+
+    last_day_rets = [ret for (d, _), (_, ret) in latest.items() if d == max_day]
+    if not last_day_rets:
+        return []
+
+    mean_ret = round(sum(last_day_rets) / len(last_day_rets), 4)
+    median_ret = sorted(last_day_rets)[len(last_day_rets) // 2]
+    median_ret = round(median_ret, 4)
+
+    return [{
+        "tom_label": tom_tag,
+        "mean_return_pct": mean_ret,
+        "median_return_pct": median_ret,
+        "agent_count": len(last_day_rets),
+    }]
+
+
+def _compute_tom_vs_avg_return_by_tom(run_dir: Path) -> list[dict]:
+    """返回该实验的 ToM 分布标签 + 按 tom_level 分组的末日人均收益率。
+
+    每个 tom_level 一行，横轴 tom_label（实验 ToM 配比），group_key="tom_level"。
+    """
+    import yaml
+    from collections import defaultdict
+    from metrics_plot_common import safe_float, safe_int
+
+    # ── 读取 ToM 分布 ──
+    cfg_path = run_dir / "config.yaml"
+    if not cfg_path.exists():
+        return []
+    with open(cfg_path, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f) or {}
+    tom_dist = cfg.get("simulation", {}).get("tom_distribution", {})
+    if not tom_dist:
+        return []
+    parts = []
+    for level in sorted(tom_dist.keys()):
+        pct = tom_dist[level]
+        if pct and pct > 0:
+            parts.append(f"T{level}:{int(round(pct * 100))}")
+    tom_tag = " ".join(parts) if parts else "unknown"
+
+    # ── 读取 agent_wealth，取最后一天按 tom 分组 ──
+    fpath = run_dir / "agent_wealth.jsonl"
+    if not fpath.exists():
+        return []
+
+    latest: dict[tuple[int, int], tuple[float, int, float]] = {}  # (day, aid) -> (sim_time, tom, return_pct)
+    max_day = 0
+    for row in _iter_jsonl(fpath):
+        day = safe_int(row.get("trading_day"))
+        aid = safe_int(row.get("agent_id"))
+        tm = safe_float(row.get("sim_time"))
+        ret = safe_float(row.get("return_pct"))
+        tom = safe_int(row.get("tom_level"))
+        if day is None or day <= 0 or aid is None or tm is None or ret is None:
+            continue
+        tom = tom if tom is not None else 0
+        if day > max_day:
+            max_day = day
+        key = (day, aid)
+        old = latest.get(key)
+        if old is None or tm >= old[0]:
+            latest[key] = (tm, tom, ret)
+
+    if max_day <= 0:
+        return []
+
+    by_tom: dict[int, list[float]] = defaultdict(list)
+    for (d, _), (_, tom, ret) in latest.items():
+        if d == max_day:
+            by_tom[tom].append(ret)
+
+    result = []
+    for tom_level in sorted(by_tom.keys()):
+        rets = by_tom[tom_level]
+        mean_r = round(sum(rets) / len(rets), 4)
+        rets_s = sorted(rets)
+        median_r = round(rets_s[len(rets_s) // 2], 4)
+        result.append({
+            "tom_label": tom_tag,
+            "tom_level": tom_level,
+            "mean_return_pct": mean_r,
+            "median_return_pct": median_r,
+            "agent_count": len(rets),
+        })
+    return result
+
+
 _COMPUTE_DISPATCH: dict = {
     "collective_bubble": _compute_collective_bubble,
     "market_panic": _compute_market_panic,
@@ -2090,6 +2451,8 @@ _COMPUTE_DISPATCH: dict = {
     "wealth_tom_bottom10": _compute_wealth_tom_bottom10,
     "return_tom_top10": _compute_return_tom_top10,
     "return_tom_bottom10": _compute_return_tom_bottom10,
+    "avg_return_by_tom": _compute_avg_return_by_tom,
+    "avg_return": _compute_avg_return,
     "plan_adherence": _compute_plan_adherence,
     "emh_weak": _compute_emh_weak,
     "emh_semi_strong": _compute_emh_semi_strong,
@@ -2106,6 +2469,9 @@ _COMPUTE_DISPATCH: dict = {
     "crash_drawdown": _compute_crash_drawdown,
     "collective_confidence": _compute_collective_confidence,
     "daily_trades": _compute_daily_trades,
+    "tom_vs_index": _compute_tom_vs_index,
+    "tom_vs_avg_return": _compute_tom_vs_avg_return,
+    "tom_vs_avg_return_by_tom": _compute_tom_vs_avg_return_by_tom,
 }
 
 
