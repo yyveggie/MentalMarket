@@ -143,19 +143,12 @@ body.dark .btn-primary:hover { background: var(--accent); }
 .chart-actions { display: flex; gap: 6px; align-items: center; }
 .save-btn.saved { color: var(--accent2); border-color: var(--accent2); }
 
-/* 系列改名面板 */
-.series-rename-panel { display: none; padding: 8px 16px; border-top: 1px solid var(--border); gap: 6px; flex-wrap: wrap; }
-.series-rename-panel.show { display: flex; }
-.series-rename-item { display: flex; align-items: center; gap: 4px; font-size: 12px; }
-.series-rename-item .swatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
-.series-rename-item input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: 12px; padding: 2px 6px; width: 150px; }
-.series-rename-item input:focus { outline: none; border-color: var(--accent); }
 /* 系列样式面板 */
-.series-style-panel { display: none; padding: 8px 16px; border-top: 1px solid var(--border); gap: 8px; flex-wrap: wrap; }
+.series-style-panel { display: none; padding: 8px 16px; border-top: 1px solid var(--border); gap: 6px; flex-direction: column; }
 .series-style-panel.show { display: flex; }
 .series-style-item { display: flex; align-items: center; gap: 4px; font-size: 12px; }
 .series-style-item .swatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
-.series-style-item .series-name-label { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.series-style-item .series-name-label { overflow: visible; white-space: nowrap; }
 .series-style-item select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; padding: 1px 4px; }
 
 /* 已保存图表画廊 */
@@ -381,14 +374,15 @@ function _buildChartContainer(containerId, chartTitle, extraHeight) {
     <div class="chart-title">
       <span class="title-text" onclick="editChartTitle(this)" title="点击编辑标题">${escapeHtml(chartTitle)}</span>
       <span class="chart-actions">
-        <span class="bar-width-ctrl" style="display:none;" title="调整柱宽与间距">
-          柱宽 <input type="range" min="5" max="80" value="30" class="bar-width-slider" oninput="adjustBarWidth(this)">
-          <span class="bar-width-val">auto</span>
-          &nbsp;间距 <input type="range" min="0" max="80" value="20" class="bar-gap-slider" oninput="adjustBarGap(this)">
-          <span class="bar-gap-val">20%</span>
+        <span class="bar-width-ctrl" style="display:none;" title="调整柱宽与类别宽度">
+          柱宽 <input type="range" min="4" max="120" value="30" class="bar-width-slider" oninput="adjustBarWidth(this)">
+          <span class="bar-width-val">30px</span>
+          &nbsp;类间留白 <input type="range" min="0" max="80" value="20" class="bar-padding-slider" oninput="adjustBarPadding(this)">
+          <span class="bar-padding-val">20%</span>
+          &nbsp;类别宽度 <input type="range" min="5" max="100" value="100" class="bar-cat-width-slider" oninput="adjustBarCatWidth(this)">
+          <span class="bar-cat-width-val">100%</span>
         </span>
         <button class="btn btn-xs" title="统计摘要" onclick="toggleStatsBar(this)">统计</button>
-        <button class="btn btn-xs" title="改名图例" onclick="toggleSeriesRename(this)">改名</button>
         <button class="btn btn-xs" title="显示/隐藏图例" onclick="toggleLegend(this)">图例</button>
         <button class="btn btn-xs" title="自定义曲线标识和线型" onclick="toggleSeriesStyle(this)">样式</button>
         <button class="btn btn-xs" title="导出 PNG" onclick="exportChartPng(this)">PNG</button>
@@ -398,7 +392,6 @@ function _buildChartContainer(containerId, chartTitle, extraHeight) {
         <button class="btn btn-xs btn-danger remove-btn" onclick="removeChart(this)">✕</button>
       </span>
     </div>
-    <div class="series-rename-panel"></div>
     <div class="series-style-panel"></div>
     <div id="${containerId}" class="chart-box"${extraHeight ? ` style="height:${extraHeight}px;"` : ''}></div>
   `;
@@ -468,6 +461,48 @@ function _autoYAxisGap(chart) {
       chart.setOption({ yAxis: yAxes }, { replaceMerge: [] });
     }
   }, 150);
+  // 图例换行时自动调整 grid.top
+  _autoGridTopForLegend(chart);
+}
+
+function _autoGridTopForLegend(chart) {
+  setTimeout(() => {
+    const opt = chart.getOption();
+    if (!opt || !opt.legend || !opt.legend[0] || opt.legend[0].show === false) return;
+    const legend = opt.legend[0];
+    if (legend.type !== 'plain') return;
+    // 估算图例行数
+    const seriesNames = (opt.series || []).filter(s => s.name).map(s => s.name);
+    const chartWidth = chart.getWidth() - 40; // 减去左右边距
+    const itemWidth = (legend.itemWidth || 36) + 5;
+    const fontSize = (legend.textStyle && legend.textStyle.fontSize) || 11;
+    let usedWidth = 0;
+    let lines = 1;
+    seriesNames.forEach(name => {
+      const nameWidth = name.length * fontSize * 0.65 + itemWidth + 14;
+      if (usedWidth + nameWidth > chartWidth && usedWidth > 0) {
+        lines++;
+        usedWidth = nameWidth;
+      } else {
+        usedWidth += nameWidth;
+      }
+    });
+    if (lines > 1) {
+      const legendHeight = lines * (fontSize + 8) + 8;
+      const minTop = legendHeight + 12;
+      const grids = Array.isArray(opt.grid) ? opt.grid : [opt.grid];
+      let changed = false;
+      grids.forEach(g => {
+        if (g && typeof g.top === 'number' && g.top < minTop) {
+          g.top = minTop;
+          changed = true;
+        }
+      });
+      if (changed) {
+        chart.setOption({ grid: grids }, { replaceMerge: [] });
+      }
+    }
+  }, 200);
 }
 
 function toggleTheme() {
@@ -1033,7 +1068,7 @@ async function generateChart() {
           colorIdx++;
         }
       } else {
-        // 无 group: 每个 run 一个柱
+        // 无 group: 单 series，逐柱着色
         const vals = xLabels.map(xl => {
           for (const rMap of Object.values(runSeriesMap)) {
             if (rMap[xl] != null) return rMap[xl];
@@ -1058,7 +1093,7 @@ async function generateChart() {
         backgroundColor: 'transparent',
         aria: { enabled: true, decal: { show: true } },
         tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, valueFormatter: v => _smartFmt(v) },
-        legend: { type: 'scroll', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
+        legend: { type: 'plain', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
         grid: { top: 50, right: 20, bottom: 60, left: 60, containLabel: true },
         xAxis: { type: 'category', data: hasGroup ? xLabels.map(xl => getGroupDisplayName(xl)) : xLabels, name: _axisXName(''), nameLocation: 'center', nameGap: 30, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabels.length > 6 ? 25 : 0, fontSize: 11 } },
         yAxis: { type: 'value', name: _axisYName(`${metricDisplay}（${aggLabel}）`), nameLocation: 'center', nameGap: 50, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
@@ -1132,7 +1167,7 @@ async function generateChart() {
       backgroundColor: 'transparent',
       aria: { enabled: true, decal: { show: true } },
       tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true, valueFormatter: v => _smartFmt(v) },
-      legend: { type: 'scroll', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 }, pageTextStyle: { color: '#656d76' } },
+      legend: { type: 'plain', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
       grid: { top: 50, right: 80, bottom: 40, left: 60, containLabel: true },
       xAxis: { type: 'value', name: _axisXName(data.x_label), nameLocation: 'center', nameGap: 25, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, minInterval: 1 },
       yAxis: [
@@ -1226,7 +1261,7 @@ async function generateChart() {
         tooltip: { formatter: p => `Day ${xLabels[p.data[0]]} · ${yLabels[p.data[1]]}: ${_smartFmt(p.data[2])}` },
         grid: { top: 10, right: 80, bottom: 40, left: 120 },
         xAxis: { type: 'category', data: xLabels, axisLabel: { fontSize: 10, color: '#656d76' }, splitArea: { show: true } },
-        yAxis: { type: 'category', data: yLabels, axisLabel: { fontSize: 10, color: '#656d76', width: 110, overflow: 'truncate' }, splitArea: { show: true } },
+        yAxis: { type: 'category', data: yLabels, axisLabel: { fontSize: 10, color: '#656d76' }, splitArea: { show: true } },
         visualMap: { min: vMin, max: vMax, calculable: true, orient: 'vertical', right: 10, top: 'center', inRange: { color: ['#d1e6ff','#0969da','#1a7f37'] }, textStyle: { color: '#656d76', fontSize: 10 } },
         series: [{ type: 'heatmap', data: mapped, label: { show: mapped.length <= 200, fontSize: 9 }, itemStyle: { borderWidth: 1, borderColor: '#fff' } }],
       });
@@ -1434,7 +1469,7 @@ async function generateChart() {
         backgroundColor: 'transparent',
         aria: { enabled: true, decal: { show: true } },
         tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true, valueFormatter: v => _smartFmt(v) },
-        legend: { type: 'scroll', top: 8, itemWidth: 20, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
+        legend: { type: 'plain', top: 8, itemWidth: 20, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
         grid: { top: 50, right: 20, bottom: 80, left: 60, containLabel: true },
         xAxis: { type: 'category', data: xLabelsG, name: _axisXName('ToM 比例'), nameLocation: 'center', nameGap: 65, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabelsG.length > 5 ? 25 : 0, fontSize: 11, interval: 0 } },
         yAxis: { type: 'value', name: _axisYName(metricDisplay), nameLocation: 'center', nameGap: 50, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
@@ -1488,7 +1523,7 @@ async function generateChart() {
       backgroundColor: 'transparent',
       aria: { enabled: true, decal: { show: true } },
       tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true, valueFormatter: v => _smartFmt(v) },
-      legend: { type: 'scroll', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 }, pageTextStyle: { color: '#656d76' } },
+      legend: { type: 'plain', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
       grid: { top: 50, right: 20, bottom: cat.x_type === 'category' ? 80 : 40, left: 60, containLabel: true },
       xAxis: cat.x_type === 'category'
         ? { type: 'category', name: _axisXName(''), nameLocation: 'center', nameGap: 30, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: 35, fontSize: 10, interval: 0 } }
@@ -1516,9 +1551,7 @@ function getRunDisplayName(name) {
 }
 
 function shortRunName(name) {
-  // 截取前 20 字符 + 尾部标识
-  if (name.length <= 30) return name;
-  return name.substring(0, 15) + '..' + name.substring(name.length - 12);
+  return name;
 }
 
 function removeChart(btn) {
@@ -1537,29 +1570,47 @@ function adjustBarWidth(slider) {
   const chartDiv = container.querySelector('.chart-box');
   const chart = chartInstances.find(c => c.getDom() === chartDiv);
   if (!chart) return;
-  const val = slider.value + '%';
-  slider.nextElementSibling.textContent = val;
+  const px = Number(slider.value);
+  slider.nextElementSibling.textContent = px + 'px';
   const opt = chart.getOption();
-  const series = (opt.series || []).map(s => {
-    if (s.type === 'bar') return { ...s, barWidth: val };
-    return s;
+  (opt.series || []).forEach(s => {
+    if (s.type === 'bar') {
+      s.barWidth = px;
+      s.barMaxWidth = undefined;
+    }
   });
-  chart.setOption({ series }, { replaceMerge: ['series'] });
+  chart.setOption(opt, true);
 }
 
-function adjustBarGap(slider) {
+function adjustBarCatWidth(slider) {
   const container = slider.closest('.chart-container');
   const chartDiv = container.querySelector('.chart-box');
   const chart = chartInstances.find(c => c.getDom() === chartDiv);
   if (!chart) return;
-  const val = slider.value + '%';
-  slider.nextElementSibling.textContent = val;
+  const pct = Number(slider.value);
+  slider.nextElementSibling.textContent = pct + '%';
+  /* pct=100 显示全部类目(默认); pct=50 只显示一半类目→每个类目更宽 */
+  if (pct >= 100) {
+    chart.setOption({ dataZoom: [] }, true);
+    return;
+  }
+  const dzInside = { type: 'inside', xAxisIndex: 0, start: 0, end: pct, zoomLock: true };
+  const dzSlider = { type: 'slider', xAxisIndex: 0, start: 0, end: pct, bottom: 0, height: 18 };
+  chart.setOption({ dataZoom: [dzInside, dzSlider] });
+}
+
+function adjustBarPadding(slider) {
+  const container = slider.closest('.chart-container');
+  const chartDiv = container.querySelector('.chart-box');
+  const chart = chartInstances.find(c => c.getDom() === chartDiv);
+  if (!chart) return;
+  const pct = slider.value + '%';
+  slider.nextElementSibling.textContent = pct;
   const opt = chart.getOption();
-  const series = (opt.series || []).map(s => {
-    if (s.type === 'bar') return { ...s, barCategoryGap: val };
-    return s;
+  (opt.series || []).forEach(s => {
+    if (s.type === 'bar') s.barCategoryGap = pct;
   });
-  chart.setOption({ series }, { replaceMerge: ['series'] });
+  chart.setOption(opt, true);
 }
 
 function _makeChartResizable(container) {
@@ -1615,142 +1666,6 @@ function editChartTitle(span) {
     if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
     if (e.key === 'Escape') { input.value = oldText; input.blur(); }
   });
-}
-
-function toggleSeriesRename(btn) {
-  const container = btn.closest('.chart-container');
-  const panel = container.querySelector('.series-rename-panel');
-  const chartDiv = container.querySelector('.chart-box');
-  const chart = chartInstances.find(c => c.getDom() === chartDiv);
-  if (!chart) return;
-
-  if (panel.classList.contains('show')) {
-    panel.classList.remove('show');
-    return;
-  }
-
-  const opt = chart.getOption();
-  const series = opt.series || [];
-  panel.innerHTML = '';
-  series.forEach((s, i) => {
-    if (!s.name) return;
-    const color = (s.itemStyle && s.itemStyle.color) || '#999';
-    const item = document.createElement('span');
-    item.className = 'series-rename-item';
-    item.innerHTML = `<span class="swatch" style="background:${typeof color === 'string' ? color : '#999'}"></span>`;
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.value = s.name;
-    inp.title = '修改后回车确认';
-    const applySeries = () => {
-      const newName = inp.value.trim();
-      if (!newName || newName === s.name) return;
-      const oldName = s.name;
-      // 更新 series name（需要按索引对齐）
-      const seriesUpdate = [];
-      for (let j = 0; j < series.length; j++) {
-        seriesUpdate.push(j === i ? { name: newName } : {});
-      }
-      // 更新 legend data
-      const curOpt = chart.getOption();
-      const legendUpdate = {};
-      if (curOpt.legend && curOpt.legend[0] && curOpt.legend[0].data) {
-        const legData = curOpt.legend[0].data.slice();
-        const li = legData.indexOf(oldName);
-        if (li >= 0) legData[li] = newName;
-        legendUpdate.data = legData;
-      }
-      chart.setOption({
-        series: seriesUpdate,
-        legend: [Object.keys(legendUpdate).length ? legendUpdate : {}],
-      }, false);
-      s.name = newName;
-    };
-    inp.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); applySeries(); inp.blur(); }
-    });
-    inp.addEventListener('blur', applySeries);
-    item.appendChild(inp);
-    panel.appendChild(item);
-  });
-
-  // ── 如果 xAxis 是 category 且有 data，追加 x 轴标签改名 + 排序 ──
-  const xAxisOpt = (opt.xAxis && opt.xAxis[0]) || {};
-  if (xAxisOpt.type === 'category' && Array.isArray(xAxisOpt.data) && xAxisOpt.data.length > 0) {
-    const divider = document.createElement('div');
-    divider.style.cssText = 'width:100%;border-top:1px solid var(--border);margin:6px 0;font-size:11px;color:var(--text2);padding-top:4px;';
-    divider.textContent = '横轴标签 (可改名 / ◀▶ 移动顺序):';
-    panel.appendChild(divider);
-
-    const labelContainer = document.createElement('div');
-    labelContainer.style.cssText = 'display:flex;flex-direction:column;gap:3px;width:100%;';
-    panel.appendChild(labelContainer);
-
-    function _rebuildLabelRows() {
-      labelContainer.innerHTML = '';
-      const curOpt = chart.getOption();
-      const curLabels = curOpt.xAxis[0].data.slice();
-      curLabels.forEach((_lbl, idx) => {
-        const item = document.createElement('span');
-        item.className = 'series-rename-item';
-        item.style.cssText = 'display:flex;align-items:center;gap:4px;';
-        // 左箭头
-        const btnL = document.createElement('button');
-        btnL.textContent = '◀';
-        btnL.title = '左移';
-        btnL.disabled = idx === 0;
-        btnL.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === 0 ? 'opacity:.3;' : '');
-        btnL.onclick = () => _swapBars(idx, idx - 1);
-        // 右箭头
-        const btnR = document.createElement('button');
-        btnR.textContent = '▶';
-        btnR.title = '右移';
-        btnR.disabled = idx === curLabels.length - 1;
-        btnR.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === curLabels.length - 1 ? 'opacity:.3;' : '');
-        btnR.onclick = () => _swapBars(idx, idx + 1);
-        // 输入框
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.value = typeof _lbl === 'string' ? _lbl.replace(/\n/g, ' ') : String(_lbl);
-        inp.title = '修改后回车确认';
-        inp.style.cssText = 'flex:1;';
-        const applyLabel = () => {
-          const newLabel = inp.value.trim();
-          if (!newLabel) return;
-          const co = chart.getOption();
-          const cd = co.xAxis[0].data.slice();
-          cd[idx] = newLabel;
-          chart.setOption({ xAxis: [{ data: cd }] }, false);
-        };
-        inp.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') { e.preventDefault(); applyLabel(); inp.blur(); }
-        });
-        inp.addEventListener('blur', applyLabel);
-
-        item.appendChild(btnL);
-        item.appendChild(inp);
-        item.appendChild(btnR);
-        labelContainer.appendChild(item);
-      });
-    }
-
-    function _swapBars(i, j) {
-      const co = chart.getOption();
-      const labels = co.xAxis[0].data.slice();
-      [labels[i], labels[j]] = [labels[j], labels[i]];
-      const seriesUpdate = co.series.map(s => {
-        const d = (s.data || []).slice();
-        if (d.length > Math.max(i, j)) { [d[i], d[j]] = [d[j], d[i]]; }
-        return { data: d };
-      });
-      chart.setOption({ xAxis: [{ data: labels }], series: seriesUpdate }, false);
-      _rebuildLabelRows();
-    }
-
-    _rebuildLabelRows();
-  }
-
-  panel.classList.add('show');
 }
 
 // ──────── 曲线样式自定义面板 ────────
@@ -1833,6 +1748,83 @@ function toggleSeriesStyle(btn) {
     return 'none';
   }
 
+  // ── 全局统一控制行 ──
+  const lineIndices = [];
+  series.forEach((s, idx) => { if (s.name && s.type === 'line') lineIndices.push(idx); });
+  if (lineIndices.length > 1) {
+    const globalRow = document.createElement('div');
+    globalRow.className = 'series-style-item';
+    globalRow.style.cssText = 'width:100%;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid var(--border);';
+    globalRow.innerHTML = '<span style="font-weight:600;font-size:12px;color:var(--text2);">统一设置全部曲线</span>';
+
+    const gSymSel = document.createElement('select');
+    gSymSel.title = '统一标记形状';
+    gSymSel.innerHTML = '<option value="" selected>形状…</option>';
+    SYMBOL_OPTIONS.forEach(op => { const o = document.createElement('option'); o.value = op.v; o.textContent = op.l; gSymSel.appendChild(o); });
+    gSymSel.addEventListener('change', () => {
+      if (!gSymSel.value) return;
+      const upd = series.map((_, j) => lineIndices.includes(j) ? { symbol: gSymSel.value, symbolSize: gSymSel.value === 'none' ? 0 : 6 } : {});
+      chart.setOption({ series: upd }, false);
+      gSymSel.selectedIndex = 0;
+    });
+
+    const gIntInput = document.createElement('input');
+    gIntInput.type = 'number'; gIntInput.min = 0; gIntInput.max = 100; gIntInput.step = 1;
+    gIntInput.placeholder = '间隔…';
+    gIntInput.title = '统一标记间隔（0=每点，空=自动）';
+    gIntInput.style.cssText = 'width:52px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:11px;padding:1px 4px;';
+    gIntInput.addEventListener('change', () => {
+      const v = gIntInput.value.trim();
+      const szVal = gSzInput.value.trim();
+      const sz = (szVal !== '' && !isNaN(Number(szVal))) ? Math.max(1, Math.round(Number(szVal))) : 6;
+      const upd = series.map((_, j) => {
+        if (!lineIndices.includes(j)) return {};
+        if (v === '' || isNaN(Number(v))) return { symbolSize: sz, showAllSymbol: 'auto' };
+        const n = Math.max(0, Math.round(Number(v)));
+        if (n === 0) return { symbolSize: sz, showAllSymbol: true };
+        return { symbolSize: function(_val, params) { return params.dataIndex % n === 0 ? sz : 0; }, showAllSymbol: true };
+      });
+      chart.setOption({ series: upd }, false);
+    });
+
+    const gSzInput = document.createElement('input');
+    gSzInput.type = 'number'; gSzInput.min = 1; gSzInput.max = 30; gSzInput.step = 1;
+    gSzInput.placeholder = '大小…';
+    gSzInput.title = '统一标记大小';
+    gSzInput.style.cssText = 'width:48px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:11px;padding:1px 4px;';
+    gSzInput.addEventListener('change', () => {
+      const v = gSzInput.value.trim();
+      if (v === '' || isNaN(Number(v))) return;
+      const sz = Math.max(1, Math.round(Number(v)));
+      const intVal = gIntInput.value.trim();
+      const upd = series.map((_, j) => {
+        if (!lineIndices.includes(j)) return {};
+        if (intVal === '' || isNaN(Number(intVal))) return { symbolSize: sz, showAllSymbol: true };
+        const n = Math.max(0, Math.round(Number(intVal)));
+        if (n === 0) return { symbolSize: sz, showAllSymbol: true };
+        return { symbolSize: function(_val, params) { return params.dataIndex % n === 0 ? sz : 0; }, showAllSymbol: true };
+      });
+      chart.setOption({ series: upd }, false);
+    });
+
+    const gDashSel = document.createElement('select');
+    gDashSel.title = '统一线型';
+    gDashSel.innerHTML = '<option value="" selected>线型…</option>';
+    DASH_OPTIONS.forEach(op => { const o = document.createElement('option'); o.value = op.v; o.textContent = op.l; gDashSel.appendChild(o); });
+    gDashSel.addEventListener('change', () => {
+      if (!gDashSel.value) return;
+      const upd = series.map((_, j) => lineIndices.includes(j) ? { lineStyle: { type: _parseDash(gDashSel.value) } } : {});
+      chart.setOption({ series: upd }, false);
+      gDashSel.selectedIndex = 0;
+    });
+
+    globalRow.appendChild(gSymSel);
+    globalRow.appendChild(gSzInput);
+    globalRow.appendChild(gIntInput);
+    globalRow.appendChild(gDashSel);
+    panel.appendChild(globalRow);
+  }
+
   series.forEach((s, i) => {
     if (!s.name) return;
     const isLine = (s.type === 'line');
@@ -1843,7 +1835,33 @@ function toggleSeriesStyle(btn) {
 
     const item = document.createElement('div');
     item.className = 'series-style-item';
-    item.innerHTML = `<span class="swatch" style="background:${typeof color === 'string' ? color : '#999'}"></span><span class="series-name-label" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>`;
+    item.innerHTML = `<span class="swatch" style="background:${typeof color === 'string' ? color : '#999'}"></span>`;
+    // 可编辑的系列名
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = s.name;
+    nameInput.title = '修改名称后回车确认';
+    nameInput.style.cssText = 'background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:12px;padding:2px 6px;min-width:200px;flex:1;';
+    const applyRename = () => {
+      const newName = nameInput.value.trim();
+      if (!newName || newName === s.name) return;
+      const oldName = s.name;
+      const seriesUpdate = [];
+      for (let j = 0; j < series.length; j++) seriesUpdate.push(j === i ? { name: newName } : {});
+      const curOpt = chart.getOption();
+      const legendUpdate = {};
+      if (curOpt.legend && curOpt.legend[0] && curOpt.legend[0].data) {
+        const legData = curOpt.legend[0].data.slice();
+        const li = legData.indexOf(oldName);
+        if (li >= 0) legData[li] = newName;
+        legendUpdate.data = legData;
+      }
+      chart.setOption({ series: seriesUpdate, legend: [Object.keys(legendUpdate).length ? legendUpdate : {}] }, false);
+      s.name = newName;
+    };
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyRename(); nameInput.blur(); } });
+    nameInput.addEventListener('blur', applyRename);
+    item.appendChild(nameInput);
 
     if (isLine) {
       const curSymbol = s.symbol || 'circle';
@@ -1864,6 +1882,38 @@ function toggleSeriesStyle(btn) {
         chart.setOption({ series: upd }, false);
       });
 
+      // 标记间隔
+      const intInput = document.createElement('input');
+      intInput.type = 'number';
+      intInput.min = 0;
+      intInput.max = 100;
+      intInput.step = 1;
+      intInput.placeholder = 'auto';
+      intInput.title = '标记间隔（0=每点显示，空=自动）';
+      intInput.style.cssText = 'width:48px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:11px;padding:1px 4px;';
+      intInput.addEventListener('change', () => {
+        const v = intInput.value.trim();
+        const curSz = Math.max(1, Math.round(Number(szInput.value) || 6));
+        const upd = [];
+        for (let j = 0; j < series.length; j++) {
+          if (j === i) {
+            if (v === '' || isNaN(Number(v))) {
+              upd.push({ symbolSize: curSz, showAllSymbol: 'auto' });
+            } else {
+              const n = Math.max(0, Math.round(Number(v)));
+              if (n === 0) {
+                upd.push({ symbolSize: curSz, showAllSymbol: true });
+              } else {
+                upd.push({ symbolSize: function(_val, params) { return params.dataIndex % n === 0 ? curSz : 0; }, showAllSymbol: true });
+              }
+            }
+          } else {
+            upd.push({});
+          }
+        }
+        chart.setOption({ series: upd }, false);
+      });
+
       // 线型选择
       const dashSel = document.createElement('select');
       dashSel.title = '线型';
@@ -1880,7 +1930,38 @@ function toggleSeriesStyle(btn) {
         chart.setOption({ series: upd }, false);
       });
 
+      // 标记大小
+      const szInput = document.createElement('input');
+      szInput.type = 'number'; szInput.min = 1; szInput.max = 30; szInput.step = 1;
+      szInput.value = typeof s.symbolSize === 'number' ? s.symbolSize : 6;
+      szInput.title = '标记大小';
+      szInput.style.cssText = 'width:40px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:11px;padding:1px 4px;';
+      szInput.addEventListener('change', () => {
+        const sz = Math.max(1, Math.round(Number(szInput.value) || 6));
+        const intVal = intInput.value.trim();
+        const upd = [];
+        for (let j = 0; j < series.length; j++) {
+          if (j === i) {
+            if (intVal === '' || isNaN(Number(intVal))) {
+              upd.push({ symbolSize: sz, showAllSymbol: true });
+            } else {
+              const n = Math.max(0, Math.round(Number(intVal)));
+              if (n === 0) {
+                upd.push({ symbolSize: sz, showAllSymbol: true });
+              } else {
+                upd.push({ symbolSize: function(_val, params) { return params.dataIndex % n === 0 ? sz : 0; }, showAllSymbol: true });
+              }
+            }
+          } else {
+            upd.push({});
+          }
+        }
+        chart.setOption({ series: upd }, false);
+      });
+
       item.appendChild(symSel);
+      item.appendChild(szInput);
+      item.appendChild(intInput);
       item.appendChild(dashSel);
     } else if (isBar) {
       // 检查是否有逐柱子独立样式（data 数组中每个元素有 itemStyle）
@@ -1892,7 +1973,10 @@ function toggleSeriesStyle(btn) {
         const xOpt = opt.xAxis;
         const xAxis = Array.isArray(xOpt) ? xOpt[s.xAxisIndex || 0] : xOpt;
         const xLabels = (xAxis && xAxis.data) || [];
-        item.innerHTML += ` <span style="font-size:11px;color:var(--text2)">(${dataArr.length} 根柱子)</span>`;
+        const countSpan = document.createElement('span');
+        countSpan.style.cssText = 'font-size:11px;color:var(--text2)';
+        countSpan.textContent = `(${dataArr.length} 根柱子)`;
+        item.appendChild(countSpan);
         panel.appendChild(item);
 
         dataArr.forEach((dp, di) => {
@@ -1948,13 +2032,153 @@ function toggleSeriesStyle(btn) {
       }
     }
 
+    // ── 删除系列按钮 ──
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '✕';
+    delBtn.title = '删除此系列';
+    delBtn.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg);border-radius:3px;padding:0 4px;font-size:10px;line-height:1.4;color:#cf222e;margin-left:2px;';
+    delBtn.addEventListener('click', () => {
+      const curOpt = chart.getOption();
+      const newSeries = curOpt.series.filter((_, j) => j !== i);
+      const legendData = curOpt.legend && curOpt.legend[0] && curOpt.legend[0].data;
+      const newLegend = legendData ? legendData.filter(n => n !== s.name) : undefined;
+      chart.setOption({ series: newSeries, legend: newLegend ? [{ data: newLegend }] : undefined }, { replaceMerge: ['series'] });
+      // 重建面板
+      panel.classList.remove('show');
+      setTimeout(() => {
+        const fakeBtn = { closest(sel) { return sel === '.chart-container' ? container : null; } };
+        toggleSeriesStyle(fakeBtn);
+      }, 50);
+    });
+    item.appendChild(delBtn);
+
+    // ── 曲线顺序调整按钮 ──
+    const orderWrap = document.createElement('span');
+    orderWrap.style.cssText = 'display:inline-flex;flex-direction:column;gap:0px;margin-left:4px;vertical-align:middle;';
+    const btnUp = document.createElement('button');
+    btnUp.textContent = '▲';
+    btnUp.title = '上移（渲染在更底层）';
+    btnUp.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg);border-radius:3px 3px 0 0;padding:0 4px;font-size:8px;line-height:1.1;color:var(--text2);';
+    btnUp.addEventListener('click', () => { _swapSeriesAndRefresh(chart, container, i, i - 1); });
+    const btnDown = document.createElement('button');
+    btnDown.textContent = '▼';
+    btnDown.title = '下移（渲染在更顶层）';
+    btnDown.style.cssText = 'cursor:pointer;border:1px solid var(--border);border-top:none;background:var(--bg);border-radius:0 0 3px 3px;padding:0 4px;font-size:8px;line-height:1.1;color:var(--text2);';
+    btnDown.addEventListener('click', () => { _swapSeriesAndRefresh(chart, container, i, i + 1); });
+    if (i === 0) btnUp.disabled = true, btnUp.style.opacity = '0.3';
+    if (i === series.length - 1) btnDown.disabled = true, btnDown.style.opacity = '0.3';
+    orderWrap.appendChild(btnUp);
+    orderWrap.appendChild(btnDown);
+    item.appendChild(orderWrap);
+
     if (isLine) panel.appendChild(item);
   });
 
   if (panel.children.length === 0) {
     panel.innerHTML = '<span style="font-size:12px;color:#656d76;">当前图表没有可调整样式的系列</span>';
   }
+
+  // ── x 轴标签改名 / 排序（仅 category 轴） ──
+  const xAxisOpt = (opt.xAxis && opt.xAxis[0]) || {};
+  if (xAxisOpt.type === 'category' && Array.isArray(xAxisOpt.data) && xAxisOpt.data.length > 0) {
+    const divider = document.createElement('div');
+    divider.style.cssText = 'width:100%;border-top:1px solid var(--border);margin:6px 0;font-size:11px;color:var(--text2);padding-top:4px;';
+    divider.textContent = '横轴标签 (可改名 / ◀▶ 移动顺序):';
+    panel.appendChild(divider);
+    const labelContainer = document.createElement('div');
+    labelContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;';
+    panel.appendChild(labelContainer);
+
+    function _rebuildLabelRows() {
+      labelContainer.innerHTML = '';
+      const curOpt = chart.getOption();
+      const curLabels = curOpt.xAxis[0].data.slice();
+      curLabels.forEach((_lbl, idx) => {
+        const lItem = document.createElement('span');
+        lItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:12px;';
+        const btnL = document.createElement('button');
+        btnL.textContent = '◀'; btnL.title = '左移'; btnL.disabled = idx === 0;
+        btnL.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === 0 ? 'opacity:.3;' : '');
+        btnL.onclick = () => _swapBars(idx, idx - 1);
+        const btnR = document.createElement('button');
+        btnR.textContent = '▶'; btnR.title = '右移'; btnR.disabled = idx === curLabels.length - 1;
+        btnR.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === curLabels.length - 1 ? 'opacity:.3;' : '');
+        btnR.onclick = () => _swapBars(idx, idx + 1);
+        const lInp = document.createElement('input');
+        lInp.type = 'text';
+        lInp.value = typeof _lbl === 'string' ? _lbl.replace(/\n/g, ' ') : String(_lbl);
+        lInp.title = '修改后回车确认';
+        lInp.style.cssText = 'background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:12px;padding:2px 6px;width:120px;';
+        const applyLabel = () => {
+          const newLabel = lInp.value.trim();
+          if (!newLabel) return;
+          const co = chart.getOption();
+          const cd = co.xAxis[0].data.slice();
+          cd[idx] = newLabel;
+          chart.setOption({ xAxis: [{ data: cd }] }, false);
+        };
+        lInp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyLabel(); lInp.blur(); } });
+        lInp.addEventListener('blur', applyLabel);
+        lItem.appendChild(btnL); lItem.appendChild(lInp); lItem.appendChild(btnR);
+        // 删除此标签及对应数据
+        const delLblBtn = document.createElement('button');
+        delLblBtn.textContent = '✕';
+        delLblBtn.title = '删除此标签及对应数据';
+        delLblBtn.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg);border-radius:3px;padding:0 4px;font-size:10px;line-height:1.4;color:#cf222e;';
+        delLblBtn.addEventListener('click', () => _removeCategory(idx));
+        lItem.appendChild(delLblBtn);
+        labelContainer.appendChild(lItem);
+      });
+    }
+    function _swapBars(ii, jj) {
+      const co = chart.getOption();
+      const labels = co.xAxis[0].data.slice();
+      [labels[ii], labels[jj]] = [labels[jj], labels[ii]];
+      const seriesUpd = co.series.map(ss => {
+        const d = (ss.data || []).slice();
+        if (d.length > Math.max(ii, jj)) { [d[ii], d[jj]] = [d[jj], d[ii]]; }
+        return { data: d };
+      });
+      chart.setOption({ xAxis: [{ data: labels }], series: seriesUpd }, false);
+      _rebuildLabelRows();
+    }
+    function _removeCategory(idx) {
+      const co = chart.getOption();
+      const labels = co.xAxis[0].data.slice();
+      labels.splice(idx, 1);
+      const seriesUpd = co.series.map(ss => {
+        const d = (ss.data || []).slice();
+        d.splice(idx, 1);
+        return { data: d };
+      });
+      chart.setOption({ xAxis: [{ data: labels }], series: seriesUpd }, false);
+      _rebuildLabelRows();
+    }
+    _rebuildLabelRows();
+  }
+
   panel.classList.add('show');
+}
+
+function _swapSeriesAndRefresh(chart, container, idxA, idxB) {
+  const opt = chart.getOption();
+  const seriesArr = opt.series;
+  if (!seriesArr || idxA < 0 || idxB < 0 || idxA >= seriesArr.length || idxB >= seriesArr.length) return;
+  [seriesArr[idxA], seriesArr[idxB]] = [seriesArr[idxB], seriesArr[idxA]];
+  const legendData = opt.legend && opt.legend[0] && opt.legend[0].data;
+  if (legendData && legendData.length > Math.max(idxA, idxB)) {
+    [legendData[idxA], legendData[idxB]] = [legendData[idxB], legendData[idxA]];
+  }
+  chart.setOption({ series: seriesArr, legend: opt.legend }, { replaceMerge: ['series'] });
+  // 重建样式面板
+  const panel = container.querySelector('.series-style-panel');
+  if (panel && panel.classList.contains('show')) {
+    panel.classList.remove('show');
+    setTimeout(() => {
+      const fakeBtn = { closest(sel) { return sel === '.chart-container' ? container : null; } };
+      toggleSeriesStyle(fakeBtn);
+    }, 50);
+  }
 }
 
 function clearCharts() {
@@ -2206,12 +2430,30 @@ async function saveChartSnapshot(btn) {
   };
   // 保存滑块状态
   const bwSlider = container.querySelector('.bar-width-slider');
-  const bgSlider = container.querySelector('.bar-gap-slider');
+  const bcwSlider = container.querySelector('.bar-cat-width-slider');
   const barSliders = {
     barWidth: bwSlider ? bwSlider.value : null,
-    barGap: bgSlider ? bgSlider.value : null
+    barCatWidth: bcwSlider ? bcwSlider.value : null
   };
-  const payload = { title, thumbUrl, option, boxH, boxW, barSliders, defaults: savedAxisNames, time: new Date().toLocaleString('zh-CN') };
+  // 提取标记间隔/大小元数据（symbolSize 为函数时 JSON.stringify 会丢弃）
+  const markerMeta = (option.series || []).map(s => {
+    if (typeof s.symbolSize === 'function') {
+      const sz = s.symbolSize(0, { dataIndex: 0 });
+      let interval = 0;
+      if (sz > 0) {
+        const sz1 = s.symbolSize(0, { dataIndex: 1 });
+        if (sz1 === 0) {
+          for (let k = 2; k < 500; k++) {
+            if (s.symbolSize(0, { dataIndex: k }) > 0) { interval = k; break; }
+          }
+        }
+      }
+      s.symbolSize = sz || 6; // 替换为数字以便序列化
+      return { baseSize: sz || 6, interval };
+    }
+    return null;
+  });
+  const payload = { title, thumbUrl, option, boxH, boxW, barSliders, markerMeta, defaults: savedAxisNames, time: new Date().toLocaleString('zh-CN') };
   btn.textContent = '保存中…';
   try {
     const resp = await fetch('/api/saved_charts', {
@@ -2282,6 +2524,17 @@ async function restoreSaved(idx) {
   const chart = echarts.init(document.getElementById(containerId));
   chartInstances.push(chart);
   chart.setOption(item.option);
+  // 恢复标记间隔函数（JSON 反序列化后 symbolSize 函数会丢失）
+  if (item.markerMeta) {
+    const seriesUpd = item.markerMeta.map((m, idx) => {
+      if (m && m.interval > 0 && m.baseSize > 0) {
+        const n = m.interval, sz = m.baseSize;
+        return { symbolSize: function(_val, params) { return params.dataIndex % n === 0 ? sz : 0; }, showAllSymbol: true };
+      }
+      return {};
+    });
+    chart.setOption({ series: seriesUpd }, false);
+  }
   _autoYAxisGap(chart);
   _makeChartResizable(container);
 
@@ -2293,16 +2546,16 @@ async function restoreSaved(idx) {
     const firstBar = (item.option.series || []).find(s => s.type === 'bar') || {};
     // 优先用保存的滑块值，其次从 option.series 读取
     const bwVal = bs.barWidth || (firstBar.barWidth ? parseInt(firstBar.barWidth) : null);
-    const bgVal = bs.barGap || (firstBar.barCategoryGap ? parseInt(firstBar.barCategoryGap) : null);
+    const bcwVal = bs.barCatWidth || null;
     if (bwVal) {
       const slider = container.querySelector('.bar-width-slider');
       const valEl = container.querySelector('.bar-width-val');
-      if (slider && valEl) { slider.value = bwVal; valEl.textContent = bwVal + '%'; }
+      if (slider && valEl) { slider.value = bwVal; valEl.textContent = bwVal + 'px'; }
     }
-    if (bgVal) {
-      const slider = container.querySelector('.bar-gap-slider');
-      const valEl = container.querySelector('.bar-gap-val');
-      if (slider && valEl) { slider.value = bgVal; valEl.textContent = bgVal + '%'; }
+    if (bcwVal) {
+      const slider = container.querySelector('.bar-cat-width-slider');
+      const valEl = container.querySelector('.bar-cat-width-val');
+      if (slider && valEl) { slider.value = bcwVal; valEl.textContent = bcwVal + '%'; }
     }
   }
 
