@@ -53,14 +53,19 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
     if not all_keys:
         return []
 
-    # 从 config.yaml 读取 agent 总数，读不到则默认 100
-    total_agents = 100
+    # 从 config.yaml 读取 agent 总数和 ToM 分布
     cfg_path = run_dir / "config.yaml"
+    total_agents = 100
+    tom_agent_counts: dict[int, int] = {}
     if cfg_path.exists():
         import yaml
         with open(cfg_path) as _f:
             _cfg = yaml.safe_load(_f) or {}
-        total_agents = max(1, (_cfg.get("agent") or {}).get("n_agents", 100))
+        total_agents = max(1, (_cfg.get("simulation") or {}).get("n_agents", 100))
+        tom_dist = (_cfg.get("simulation") or {}).get("tom_distribution", {})
+        for lvl, ratio in tom_dist.items():
+            if ratio and float(ratio) > 0:
+                tom_agent_counts[int(lvl)] = max(1, int(round(total_agents * float(ratio))))
 
     # 补齐所有 day × tom 组合，确保无事件天也输出 0 而非缺失
     all_days = sorted({d for d, _ in all_keys})
@@ -76,6 +81,7 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
             like_count = len(likers)
             follow_count = day_tom_follows.get(key, 0)
             targets_unique = len(day_tom_like_targets.get(key, set()))
+            n_in_tom = tom_agent_counts.get(tom, total_agents)
 
             result.append({
                 "trading_day": day,
@@ -83,7 +89,7 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
                 "like_events": like_count,
                 "follow_events": follow_count,
                 "unique_likers": unique_likers,
-                "avg_likes_given": round(like_count / total_agents, 4),
+                "avg_likes_given": round(like_count / n_in_tom, 4),
                 "like_targets_unique": targets_unique,
             })
 
@@ -396,7 +402,7 @@ def compute_sentiment_dynamics(run_dir: Path, window: int = 30) -> list[dict]:
             "trading_day": day,
             "sentiment_mean": round(mean_s, 4),
             "sentiment_std": round(std_s, 4),
-            "sentiment_consensus": round(1.0 - std_s, 4),
+            "sentiment_consensus": round(1.0 / (1.0 + std_s), 4),
             "extreme_ratio": extreme_r,
         }
         if cross_div is not None:

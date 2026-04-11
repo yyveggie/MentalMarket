@@ -17,9 +17,9 @@ body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: v
 
 /* ===== 统一按钮系统 ===== */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-  font-family: inherit; font-size: 13px; font-weight: 500; line-height: 1.4;
-  padding: 6px 14px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  font-family: inherit; font-size: 12px; font-weight: 500; line-height: 1.4;
+  padding: 4px 10px; border-radius: 5px;
   border: 1px solid var(--border); background: var(--bg); color: var(--text);
   cursor: pointer; white-space: nowrap; transition: all 0.15s ease;
 }
@@ -30,9 +30,9 @@ body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: v
 .btn-primary:hover { opacity: 0.88; color: #fff; background: var(--accent); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text2); }
 .btn-ghost:hover { background: var(--bg); border-color: var(--border); color: var(--text); }
-.btn-sm { font-size: 12px; padding: 4px 10px; border-radius: 5px; }
-.btn-xs { font-size: 11px; padding: 3px 8px; border-radius: 4px; }
-.btn-icon { padding: 4px; min-width: 28px; min-height: 28px; }
+.btn-sm { font-size: 11px; padding: 3px 8px; border-radius: 4px; }
+.btn-xs { font-size: 11px; padding: 2px 6px; border-radius: 4px; }
+.btn-icon { padding: 3px; min-width: 24px; min-height: 24px; }
 .btn-danger:hover { border-color: var(--red); color: var(--red); background: rgba(248,81,73,0.06); }
 .btn-success.active, .btn-success:hover { border-color: var(--accent2); color: var(--accent2); }
 body.dark .btn:hover { background: rgba(88,166,255,0.08); }
@@ -40,14 +40,16 @@ body.dark .btn-danger:hover { background: rgba(248,81,73,0.08); }
 body.dark .btn-primary:hover { background: var(--accent); }
 
 /* 左侧面板 */
-.sidebar { width: 320px; min-width: 320px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-.sidebar-header { padding: 16px; border-bottom: 1px solid var(--border); }
-.sidebar-header h1 { font-size: 16px; color: var(--accent); margin-bottom: 4px; }
-.sidebar-header p { font-size: 12px; color: var(--text2); }
-.sidebar-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-.sidebar-section h3 { font-size: 13px; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-.runs-list { flex: 1; overflow-y: auto; padding: 8px; }
-.run-item { padding: 8px 12px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; transition: background 0.15s; }
+.sidebar { width: 280px; min-width: 200px; max-width: 600px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: auto; resize: horizontal; }
+.sidebar-header { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.sidebar-header h1 { font-size: 14px; color: var(--accent); margin-bottom: 2px; }
+.sidebar-header p { font-size: 11px; color: var(--text2); }
+.sidebar-section { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.sidebar-section h3 { font-size: 12px; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+.runs-list { flex: 1; overflow-y: auto; padding: 4px 6px; }
+.run-item { padding: 5px 8px; border-radius: 5px; margin-bottom: 2px; cursor: grab; display: flex; align-items: center; gap: 6px; font-size: 12px; transition: background 0.15s, opacity 0.15s; }
+.run-item.dragging { opacity: 0.4; }
+.run-item.drag-over { border-top: 2px solid var(--accent); }
 .run-item:hover { background: rgba(88,166,255,0.1); }
 .run-item.selected { background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3); }
 .run-item input[type="checkbox"] { accent-color: var(--accent); flex-shrink: 0; }
@@ -57,19 +59,28 @@ body.dark .btn-primary:hover { background: var(--accent); }
 
 /* 主区域 */
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.toolbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-.toolbar select { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.toolbar { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--card); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.toolbar select { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 4px 8px; border-radius: 5px; font-size: 12px; cursor: pointer; }
 .toolbar select:focus { outline: none; border-color: var(--accent); }
-.toolbar label { font-size: 13px; color: var(--text2); }
+.toolbar label { font-size: 12px; color: var(--text2); }
+
+/* 工具栏控件 */
+.toolbar-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; margin: 0 1px; }
+.check-label { display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 12px; color: var(--text2); white-space: nowrap; }
+.check-label:hover { color: var(--text); }
+.check-label input[type="checkbox"] { accent-color: var(--accent); width: 13px; height: 13px; }
+.toolbar-actions { display: inline-flex; gap: 5px; }
+.toolbar-row2 { display: flex; align-items: center; gap: 8px; padding: 4px 14px; background: var(--card); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.label-group { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--text2); }
 
 /* 指标选择 */
-.metrics-panel { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px; background: var(--card); border-bottom: 1px solid var(--border); }
-.metric-tag { font-size: 12px; padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; user-select: none; position: relative; }
+.metrics-panel { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
+.metric-tag { font-size: 12px; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; user-select: none; position: relative; }
 .metric-tag:hover { border-color: var(--accent); }
 .metric-tag.active { background: rgba(88,166,255,0.2); border-color: var(--accent); color: var(--accent); }
 
 /* 指标说明面板 */
-.desc-panel { padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); line-height: 1.6; display: none; }
+.desc-panel { padding: 5px 14px; background: var(--card); border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text2); line-height: 1.5; display: none; }
 .desc-panel.show { display: block; }
 .desc-toggle { margin-left: 8px; }
 .desc-toggle.active { background: rgba(88,166,255,0.1); border-color: var(--accent); color: var(--accent); }
@@ -79,22 +90,19 @@ body.dark .btn-primary:hover { background: var(--accent); }
 .desc-list .desc-text { color: var(--text2); }
 
 /* 分组筛选 */
-.group-panel { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 20px; background: var(--card); border-bottom: 1px solid var(--border); align-items: center; }
-.group-tag { font-size: 12px; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+.group-panel { display: flex; flex-wrap: wrap; gap: 5px; padding: 5px 14px; background: var(--card); border-bottom: 1px solid var(--border); align-items: center; }
+.group-tag { font-size: 12px; padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
 .group-tag:hover { border-color: var(--accent2); }
 .group-tag.active { background: rgba(63,185,80,0.2); border-color: var(--accent2); color: var(--accent2); }
 
 /* 图表区域 */
-.chart-area { flex: 1; padding: 16px; overflow-y: auto; }
-.chart-container { background: var(--card); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px; }
-.chart-title { padding: 12px 16px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.chart-area { flex: 1; padding: 10px; overflow-y: auto; }
+.chart-container { background: var(--card); border-radius: 6px; border: 1px solid var(--border); margin-bottom: 10px; }
+.chart-title { padding: 8px 12px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .chart-title .title-text { cursor: pointer; border-bottom: 1px dashed transparent; transition: border-color 0.2s; }
 .chart-title .title-text:hover { border-bottom-color: var(--accent); }
 .chart-title .title-edit { background: var(--bg); color: var(--text); border: 1px solid var(--accent); border-radius: 4px; font-size: 14px; font-weight: 600; padding: 2px 8px; width: 60%; }
-.alias-input { background: transparent; color: var(--accent); border: none; border-bottom: 1px dashed var(--border); font-size: 11px; width: 80px; padding: 1px 2px; outline: none; margin-left: 4px; }
-.alias-input:focus { border-bottom-color: var(--accent); }
-.alias-input::placeholder { color: var(--text2); opacity: 0.6; }
-.custom-title-input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 13px; width: 180px; }
+.custom-title-input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-size: 12px; width: 160px; }
 .custom-title-input:focus { outline: none; border-color: var(--accent); }
 .custom-title-input::placeholder { color: var(--text2); }
 .chart-box { width: 100%; height: 420px; }
@@ -171,6 +179,23 @@ body.dark .btn-primary:hover { background: var(--accent); }
 .toast.warn { background: var(--yellow); color: #fff; }
 .toast.error { background: var(--red); color: #fff; }
 
+/* 统计摘要卡片 */
+.stats-bar { border-bottom: 1px solid var(--border); background: var(--card); }
+.stats-bar-header { display: flex; align-items: center; padding: 2px 12px; cursor: pointer; font-size: 11px; color: var(--text2); gap: 4px; user-select: none; }
+.stats-bar-header:hover { color: var(--text); }
+.stats-bar-header .arrow { transition: transform 0.2s; display: inline-block; }
+.stats-bar.collapsed .arrow { transform: rotate(-90deg); }
+.stats-bar-content { display: flex; gap: 6px; padding: 2px 12px 4px; flex-wrap: wrap; }
+.stats-bar.collapsed .stats-bar-content { display: none; }
+.stat-chip { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text2); white-space: nowrap; }
+.stat-chip b { color: var(--text); font-weight: 600; }
+
+/* 标签系统 */
+.tag-bar { display: flex; gap: 4px; flex-wrap: wrap; padding: 4px 12px; border-bottom: 1px solid var(--border); }
+.exp-tag { font-size: 10px; padding: 1px 6px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--text2); }
+.exp-tag.active { background: rgba(88,166,255,0.2); border-color: var(--accent); color: var(--accent); }
+.tag-input { font-size: 11px; padding: 1px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); width: 80px; }
+
 /* 暗色模式 */
 body.dark { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3; --text2: #8b949e; --accent: #58a6ff; --accent2: #3fb950; --red: #f85149; --yellow: #d29922; --purple: #bc8cff; }
 body.dark ::-webkit-scrollbar-thumb { background: #30363d; }
@@ -205,14 +230,15 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #484f58; }
       <h1>MentalMarket 评估面板</h1>
       <button class="btn btn-xs" onclick="toggleTheme()" title="切换暗色/亮色模式">暗/亮</button>
     </div>
-    <p>选择实验 → 选择指标 → 生成图表</p>
   </div>
   <div class="sidebar-section">
     <h3>实验列表 <span class="selected-badge" id="selectedCount">0</span></h3>
-    <div style="display:flex; gap:6px; margin-top:4px;">
+    <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
       <button class="btn btn-xs" onclick="selectAllRuns()">全选</button>
       <button class="btn btn-xs" onclick="deselectAllRuns()">全不选</button>
+      <input class="tag-input" id="newTagInput" placeholder="新标签" onkeydown="if(event.key==='Enter'){addTag(this.value);this.value='';}">
     </div>
+    <div class="tag-bar" id="tagBar"></div>
   </div>
   <div class="runs-list" id="runsList"></div>
 </div>
@@ -220,63 +246,63 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #484f58; }
 <!-- 主区域 -->
 <div class="main">
   <div class="toolbar">
-    <label>数据类别:</label>
     <select id="categorySelect" onchange="onCategoryChange()"></select>
-    <label>图表类型:</label>
+    <select id="groupBySelect"><option value="">分组: 默认</option></select>
+    <span class="toolbar-sep"></span>
     <select id="chartTypeSelect">
       <option value="line">折线图</option>
-      <option value="line_smooth">平滑折线图</option>
+      <option value="line_smooth">平滑折线</option>
       <option value="bar">柱状图</option>
       <option value="area">面积图</option>
       <option value="scatter">散点图</option>
+      <option value="boxplot">箱线图</option>
+      <option value="heatmap">热力图</option>
+      <option value="histogram">直方图</option>
     </select>
-    <label>X轴模式:</label>
     <select id="xModeSelect">
-      <option value="timeseries">时间序列（交易日）</option>
+      <option value="timeseries">时间序列</option>
       <option value="mean">聚合均值</option>
       <option value="sum">聚合总和</option>
       <option value="last">最终值</option>
       <option value="max">最大值</option>
       <option value="min">最小值</option>
     </select>
-    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="gridLineToggle" checked onchange="toggleGridLines()">网格线</label>
-    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="windowToggle" onchange="document.getElementById('windowSelect').disabled=!this.checked">自定义窗口</label>
-    <select id="windowSelect" disabled>
-      <option value="10">10天</option>
-      <option value="20">20天</option>
-      <option value="30" selected>30天</option>
-      <option value="50">50天</option>
-      <option value="60">60天</option>
-    </select>
-    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;" id="subplotLabel" title="按分组键拆分为独立子图"><input type="checkbox" id="subplotToggle">子图分离</label>
-    <label style="display:inline-flex;align-items:center;gap:3px;">图宽:<input type="number" id="chartWidthPct" min="20" max="100" value="100" step="5" style="width:50px;" onchange="applyChartWidth(this.value)">%</label>
-    <label>纵轴:</label>
-    <select id="yScaleMode" title="多曲线纵轴处理方式">
+    <select id="yScaleMode" title="纵轴处理">
       <option value="raw" selected>原始值</option>
-      <option value="minmax">归一化(0~1)</option>
-      <option value="zscore">标准化(z-score)</option>
-      <option value="pct_change">涨跌幅(%)</option>
+      <option value="minmax">归一化</option>
+      <option value="zscore">标准化</option>
+      <option value="pct_change">涨跌幅%</option>
     </select>
-    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;" title="选2个指标时，各用左右独立Y轴画在同一张图上"><input type="checkbox" id="dualYToggle">双Y轴</label>
-    <label>分组依据:</label>
-    <select id="groupBySelect">
-      <option value="">默认</option>
+    <span class="toolbar-sep"></span>
+    <input type="checkbox" id="gridLineToggle" onchange="toggleGridLines()" style="display:none;">
+    <input type="hidden" id="customTitleInput" value="">
+    <input type="checkbox" id="showChartTitle" checked style="display:none;">
+    <label class="check-label" title="选2个指标时各用独立Y轴"><input type="checkbox" id="dualYToggle">双Y轴</label>
+    <label class="check-label" id="subplotLabel" title="按分组键拆分子图"><input type="checkbox" id="subplotToggle">子图</label>
+    <label class="check-label"><input type="checkbox" id="windowToggle" onchange="document.getElementById('windowSelect').disabled=!this.checked">窗口</label>
+    <select id="windowSelect" disabled style="width:58px;">
+      <option value="10">10天</option><option value="20">20天</option><option value="30" selected>30天</option><option value="50">50天</option><option value="60">60天</option>
     </select>
-    <button class="btn btn-primary" onclick="generateChart()">生成图表</button>
-    <button class="btn btn-sm" onclick="showConfigDiff()">配置对比</button>
-    <button class="btn btn-sm" onclick="clearCharts()">清空图表</button>
-    <button class="btn btn-sm" onclick="scrollToSaved()">已保存 (<span id="savedCount">0</span>)</button>
+    <label class="label-group">宽<input type="number" id="chartWidthPct" min="20" max="100" value="100" step="5" style="width:44px;" onchange="applyChartWidth(this.value)">%</label>
+    <span class="toolbar-sep"></span>
+    <label class="label-group">Y轴范围: <input type="text" id="yMinInput" class="custom-title-input" style="width:50px;" placeholder="min"> ~ <input type="text" id="yMaxInput" class="custom-title-input" style="width:50px;" placeholder="max"></label>
+    <button class="btn btn-xs" onclick="applyYRange()">应用</button>
+    <button class="btn btn-xs" onclick="resetYRange()">重置</button>
   </div>
-  <div class="toolbar" style="padding-top:4px;padding-bottom:4px;gap:8px;">
-    <label>图表标题:</label>
-    <input type="text" id="customTitleInput" class="custom-title-input" placeholder="自定义图表标题（可选）" oninput="updateAllChartsTitleText()">
-    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="showChartTitle" checked onchange="updateAllChartsTitleVisibility()">显示</label>
-    <label>X轴:</label>
-    <input type="text" id="customXAxisName" class="custom-title-input" style="width:100px;" placeholder="名称（可选）" oninput="updateAllChartsAxisNames()">
-    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="showXAxisName" checked onchange="updateAllChartsAxisNames()">显示</label>
-    <label>Y轴:</label>
-    <input type="text" id="customYAxisName" class="custom-title-input" style="width:100px;" placeholder="名称（可选）" oninput="updateAllChartsAxisNames()">
-    <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox" id="showYAxisName" checked onchange="updateAllChartsAxisNames()">显示</label>
+  <div class="toolbar-row2">
+    <button class="btn btn-primary" onclick="generateChart()">生成图表</button>
+    <label class="check-label" title="多图 dataZoom 同步联动"><input type="checkbox" id="syncZoomToggle" checked>联动</label>
+    <button class="btn btn-sm" onclick="addAnnotationLine()" title="添加垂直标注线">标注线</button>
+    <button class="btn btn-sm" onclick="toggleDeviationBand()" title="偏差带阴影">偏差带</button>
+    <button class="btn btn-sm" onclick="showCorrelationMatrix()" title="相关性热力图">相关矩阵</button>
+    <span class="toolbar-sep"></span>
+    <label class="label-group">X轴<input type="text" id="customXAxisName" class="custom-title-input" style="width:80px;" placeholder="名称" oninput="updateAllChartsAxisNames()"></label>
+    <label class="check-label"><input type="checkbox" id="showXAxisName" checked onchange="updateAllChartsAxisNames()">显示</label>
+    <span class="toolbar-sep"></span>
+    <label class="label-group">Y轴<input type="text" id="customYAxisName" class="custom-title-input" style="width:80px;" placeholder="名称" oninput="updateAllChartsAxisNames()"></label>
+    <label class="check-label"><input type="checkbox" id="showYAxisName" checked onchange="updateAllChartsAxisNames()">显示</label>
+    <button class="btn btn-sm" onclick="clearCharts()">清空</button>
+    <button class="btn btn-sm" onclick="scrollToSaved()">已保存 (<span id="savedCount">0</span>)</button>
   </div>
   <div class="metrics-panel" id="metricsPanel"></div>
   <div class="desc-panel" id="descPanel"></div>
@@ -361,6 +387,7 @@ function _buildChartContainer(containerId, chartTitle, extraHeight) {
           &nbsp;间距 <input type="range" min="0" max="80" value="20" class="bar-gap-slider" oninput="adjustBarGap(this)">
           <span class="bar-gap-val">20%</span>
         </span>
+        <button class="btn btn-xs" title="统计摘要" onclick="toggleStatsBar(this)">统计</button>
         <button class="btn btn-xs" title="改名图例" onclick="toggleSeriesRename(this)">改名</button>
         <button class="btn btn-xs" title="显示/隐藏图例" onclick="toggleLegend(this)">图例</button>
         <button class="btn btn-xs" title="自定义曲线标识和线型" onclick="toggleSeriesStyle(this)">样式</button>
@@ -552,20 +579,11 @@ function renderRunsList() {
   el.innerHTML = allRuns.map(run => {
     const tom = run.config_summary?.tom_distribution || {};
     const tomStr = Object.entries(tom).map(([k,v]) => `T${k}:${v}`).join(' ');
-    const alias = runAliases[run.name] || '';
     const escapedName = run.name.replace(/'/g, "\\'");
     return `
       <div class="run-item ${selectedRuns.has(run.name) ? 'selected' : ''}" onclick="toggleRun('${escapedName}', this)">
         <input type="checkbox" ${selectedRuns.has(run.name) ? 'checked' : ''} onclick="event.stopPropagation(); toggleRun('${escapedName}', this.parentElement)">
-        <div style="flex:1;min-width:0;">
-          <div class="run-name" title="${run.name}">${run.name}</div>
-          <div class="run-meta">
-            ${run.trading_days}天 · ${run.config_summary?.n_agents || '?'}人
-            ${tomStr ? ' · ' + tomStr : ''}
-            · ${run.config_summary?.cash_mode || '?'}
-            <input class="alias-input" type="text" placeholder="别名" value="${alias}" onclick="event.stopPropagation()" onchange="setRunAlias('${escapedName}', this.value)">
-          </div>
-        </div>
+        <div class="run-name" style="flex:1;min-width:0;" title="${run.name}">${run.name}</div>
       </div>
     `;
   }).join('');
@@ -712,10 +730,11 @@ async function generateChart() {
   const catKey = document.getElementById('categorySelect').value;
   const cat = categories[catKey];
   let chartType = document.getElementById('chartTypeSelect').value;
+  const origChartType = chartType;
   const xMode = document.getElementById('xModeSelect').value;
   const isAgg = xMode !== 'timeseries';
-  // 离散 x 轴或聚合模式自动切换为柱状图
-  if ((cat.x_type === 'category' || isAgg) && (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area')) chartType = 'bar';
+  // 离散 x 轴或聚合模式自动切换为柱状图（prefer_line 类别除外）
+  if ((cat.x_type === 'category' || isAgg) && !cat.prefer_line && (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area')) chartType = 'bar';
   const runs = Array.from(selectedRuns).join(',');
   const metrics = Array.from(selectedMetrics).join(',');
   const groupFilter = Array.from(selectedGroups).join(',');
@@ -751,7 +770,7 @@ async function generateChart() {
   }
 
   // 加载提示（所有类别统一显示）
-  const genBtn = document.querySelector('.toolbar button:first-of-type');
+  const genBtn = document.querySelector('.toolbar-row2 .btn-primary') || document.querySelector('.btn-primary');
   const origText = genBtn.textContent;
   genBtn.textContent = cat.computed ? '⏳ 计算中...' : '⏳ 加载中...';
   genBtn.disabled = true;
@@ -1134,6 +1153,139 @@ async function generateChart() {
     return;
   }
 
+  // ──────── 特殊图表类型 ────────
+  if (chartType === 'boxplot' || origChartType === 'boxplot') {
+    for (const metricKey of selectedMetrics) {
+      const metricLabel = cat.metrics[metricKey] || metricKey;
+      const metricDisplay = getMetricDisplayName(catKey, metricKey);
+      const containerId = `chart_box_${Date.now()}_${metricKey}`;
+      const chartTitle = `${cat.label} — ${metricDisplay} (箱线图)`;
+      const container = _buildChartContainer(containerId, chartTitle);
+      chartArea.insertBefore(container, chartArea.firstChild);
+      const chart = echarts.init(document.getElementById(containerId));
+      chartInstances.push(chart);
+
+      const catLabels = [], boxData = [];
+      for (const [runName, runSeries] of Object.entries(data.series)) {
+        for (const [sLabel, pts] of Object.entries(runSeries)) {
+          if (!sLabel.includes(metricLabel)) continue;
+          const label = Object.keys(data.series).length > 1 ? `${getRunDisplayName(runName)} · ${sLabel}` : sLabel;
+          const ys = pts.map(p => p.y).filter(v => v != null).sort((a,b)=>a-b);
+          if (ys.length < 5) continue;
+          const q1i = Math.floor(ys.length*0.25), q3i = Math.floor(ys.length*0.75);
+          const mn = ys[0], q1 = ys[q1i], med = ys[Math.floor(ys.length/2)], q3 = ys[q3i], mx = ys[ys.length-1];
+          catLabels.push(label);
+          boxData.push([mn, q1, med, q3, mx]);
+        }
+      }
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'item', formatter: p => { const d=p.data; return `${p.name}<br>最小: ${_smartFmt(d[1])}<br>Q1: ${_smartFmt(d[2])}<br>中位: ${_smartFmt(d[3])}<br>Q3: ${_smartFmt(d[4])}<br>最大: ${_smartFmt(d[5])}`; } },
+        grid: { top: 30, right: 20, bottom: 60, left: 60, containLabel: true },
+        xAxis: { type: 'category', data: catLabels, axisLabel: { rotate: catLabels.length > 4 ? 20 : 0, fontSize: 10, color: '#656d76' } },
+        yAxis: { type: 'value', name: metricDisplay, nameLocation: 'center', nameGap: 50, nameTextStyle: { fontSize: 12, fontWeight: 'bold' }, splitLine: { lineStyle: { color: '#eaeef2' } } },
+        series: [{ type: 'boxplot', data: boxData, itemStyle: { color: '#e6f0ff', borderColor: '#0969da' } }],
+      });
+      _makeChartResizable(container);
+    }
+    return;
+  }
+
+  if (chartType === 'heatmap' || origChartType === 'heatmap') {
+    for (const metricKey of selectedMetrics) {
+      const metricLabel = cat.metrics[metricKey] || metricKey;
+      const metricDisplay = getMetricDisplayName(catKey, metricKey);
+      const containerId = `chart_heat_${Date.now()}_${metricKey}`;
+      const chartTitle = `${cat.label} — ${metricDisplay} (热力图)`;
+      const container = _buildChartContainer(containerId, chartTitle, 500);
+      chartArea.insertBefore(container, chartArea.firstChild);
+      const chart = echarts.init(document.getElementById(containerId));
+      chartInstances.push(chart);
+
+      const runNames = Object.keys(data.series);
+      const allDays = new Set();
+      const yLabels = [];
+      const heatData = [];
+      for (const [runName, runSeries] of Object.entries(data.series)) {
+        for (const [sLabel, pts] of Object.entries(runSeries)) {
+          if (!sLabel.includes(metricLabel)) continue;
+          const label = runNames.length > 1 ? `${getRunDisplayName(runName)} · ${sLabel}` : sLabel;
+          const yIdx = yLabels.length;
+          yLabels.push(label);
+          pts.forEach(p => { allDays.add(p.x); heatData.push([p.x, yIdx, p.y]); });
+        }
+      }
+      const xLabels = [...allDays].sort((a,b)=>a-b);
+      const xMap = {}; xLabels.forEach((d,i) => xMap[d] = i);
+      const mapped = heatData.map(d => [xMap[d[0]] ?? 0, d[1], d[2]]);
+      const allVals = mapped.map(d => d[2]).filter(v => v != null);
+      const vMin = Math.min(...allVals), vMax = Math.max(...allVals);
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { formatter: p => `Day ${xLabels[p.data[0]]} · ${yLabels[p.data[1]]}: ${_smartFmt(p.data[2])}` },
+        grid: { top: 10, right: 80, bottom: 40, left: 120 },
+        xAxis: { type: 'category', data: xLabels, axisLabel: { fontSize: 10, color: '#656d76' }, splitArea: { show: true } },
+        yAxis: { type: 'category', data: yLabels, axisLabel: { fontSize: 10, color: '#656d76', width: 110, overflow: 'truncate' }, splitArea: { show: true } },
+        visualMap: { min: vMin, max: vMax, calculable: true, orient: 'vertical', right: 10, top: 'center', inRange: { color: ['#d1e6ff','#0969da','#1a7f37'] }, textStyle: { color: '#656d76', fontSize: 10 } },
+        series: [{ type: 'heatmap', data: mapped, label: { show: mapped.length <= 200, fontSize: 9 }, itemStyle: { borderWidth: 1, borderColor: '#fff' } }],
+      });
+      _makeChartResizable(container);
+    }
+    return;
+  }
+
+  if (chartType === 'histogram' || origChartType === 'histogram') {
+    for (const metricKey of selectedMetrics) {
+      const metricLabel = cat.metrics[metricKey] || metricKey;
+      const metricDisplay = getMetricDisplayName(catKey, metricKey);
+      const containerId = `chart_hist_${Date.now()}_${metricKey}`;
+      const chartTitle = `${cat.label} — ${metricDisplay} (直方图)`;
+      const container = _buildChartContainer(containerId, chartTitle);
+      chartArea.insertBefore(container, chartArea.firstChild);
+      const chart = echarts.init(document.getElementById(containerId));
+      chartInstances.push(chart);
+
+      const seriesList = [];
+      let colorIdx = 0;
+      for (const [runName, runSeries] of Object.entries(data.series)) {
+        for (const [sLabel, pts] of Object.entries(runSeries)) {
+          if (!sLabel.includes(metricLabel)) continue;
+          const ys = pts.map(p => p.y).filter(v => v != null);
+          if (ys.length < 2) continue;
+          const mn = Math.min(...ys), mx = Math.max(...ys);
+          const nBins = Math.min(30, Math.max(8, Math.ceil(Math.sqrt(ys.length))));
+          const binW = (mx - mn) / nBins || 1;
+          const bins = Array(nBins).fill(0);
+          const binLabels = [];
+          for (let i = 0; i < nBins; i++) binLabels.push(_smartFmt(mn + i * binW));
+          ys.forEach(v => { const idx = Math.min(nBins - 1, Math.floor((v - mn) / binW)); bins[idx]++; });
+          const label = Object.keys(data.series).length > 1 ? `${getRunDisplayName(runName)} · ${sLabel}` : sLabel;
+          seriesList.push({
+            name: label, type: 'bar', data: bins,
+            itemStyle: { color: COLORS[colorIdx % COLORS.length] },
+            barWidth: '90%',
+          });
+          colorIdx++;
+          if (seriesList.length === 1) {
+            chart.setOption({
+              backgroundColor: 'transparent',
+              tooltip: { trigger: 'axis' },
+              legend: seriesList.length > 1 ? { top: 8 } : undefined,
+              grid: { top: 40, right: 20, bottom: 40, left: 60, containLabel: true },
+              xAxis: { type: 'category', data: binLabels, name: metricDisplay, nameLocation: 'center', nameGap: 25, axisLabel: { fontSize: 10, color: '#656d76', rotate: nBins > 15 ? 30 : 0 } },
+              yAxis: { type: 'value', name: '频次', nameLocation: 'center', nameGap: 40 },
+              series: seriesList,
+            });
+          }
+        }
+      }
+      if (seriesList.length > 0) chart.setOption({ series: seriesList });
+      _makeChartResizable(container);
+    }
+    return;
+  }
+
   for (const metricKey of selectedMetrics) {
     const metricLabel = cat.metrics[metricKey] || metricKey;  // for data matching
     const metricDisplay = getMetricDisplayName(catKey, metricKey);  // for user display
@@ -1163,6 +1315,7 @@ async function generateChart() {
     if (isCrossCmp) {
       const xLabels = [];
       const yValues = [];
+      const xSortKeys = [];
       for (const [runName, runSeries] of Object.entries(data.series)) {
         for (const [seriesLabel, points] of Object.entries(runSeries)) {
           if (!seriesLabel.includes(metricLabel) && !seriesLabel.endsWith(metricLabel)) continue;
@@ -1170,20 +1323,47 @@ async function generateChart() {
             const label = runName;
             xLabels.push(label);
             yValues.push(points[0].y);
+            xSortKeys.push(points[0].x);
           }
         }
       }
+
+      // prefer_line 模式：按 x 值排序，确保曲线连贯
+      const useLineMode = cat.prefer_line && (origChartType === 'line' || origChartType === 'line_smooth');
+      if (useLineMode) {
+        const indices = xLabels.map((_, i) => i);
+        indices.sort((a, b) => {
+          const va = typeof xSortKeys[a] === 'string' ? parseFloat(xSortKeys[a].replace(/[^0-9.]/g, '')) || 0 : (xSortKeys[a] || 0);
+          const vb = typeof xSortKeys[b] === 'string' ? parseFloat(xSortKeys[b].replace(/[^0-9.]/g, '')) || 0 : (xSortKeys[b] || 0);
+          return va - vb;
+        });
+        const sortedLabels = indices.map(i => xLabels[i]);
+        const sortedValues = indices.map(i => yValues[i]);
+        xLabels.length = 0; yValues.length = 0;
+        xLabels.push(...sortedLabels);
+        yValues.push(...sortedValues);
+      }
+
+      const crossSeriesType = useLineMode ? (origChartType === 'line_smooth' ? 'line' : 'line') : 'bar';
       seriesList.push({
         name: metricDisplay,
-        type: 'bar',
-        data: yValues.map((v, idx) => ({
-          value: v,
-          itemStyle: { color: COLORS[idx % COLORS.length], decal: BAR_DECALS[idx % BAR_DECALS.length] },
-        })),
+        type: crossSeriesType,
+        smooth: useLineMode && origChartType === 'line_smooth',
+        symbol: useLineMode ? 'circle' : 'none',
+        symbolSize: useLineMode ? 8 : 0,
+        showSymbol: useLineMode,
+        lineStyle: useLineMode ? { width: 2.5, color: COLORS[0] } : undefined,
+        data: useLineMode
+          ? yValues.map(v => ({ value: v }))
+          : yValues.map((v, idx) => ({
+              value: v,
+              itemStyle: { color: COLORS[idx % COLORS.length], decal: BAR_DECALS[idx % BAR_DECALS.length] },
+            })),
+        itemStyle: { color: COLORS[0] },
         label: { show: true, position: 'top', color: '#656d76', fontSize: 11,
           formatter: p => _smartFmt(p.value)
         },
-        markLine: { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#cf222e', width: 1.5 },
+        markLine: useLineMode ? undefined : { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#cf222e', width: 1.5 },
           data: [{ yAxis: 100, label: { formatter: '基准 100', fontSize: 10, color: '#cf222e' } }],
         },
       });
@@ -1194,7 +1374,7 @@ async function generateChart() {
         tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true, valueFormatter: v => _smartFmt(v) },
         legend: { show: false },
         grid: { top: 40, right: 20, bottom: 80, left: 60, containLabel: true },
-        xAxis: { type: 'category', data: xLabels, name: _axisXName('ToM 比例'), nameLocation: 'center', nameGap: 65, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabels.length > 5 ? 25 : 0, fontSize: 11, interval: 0 } },
+        xAxis: { type: 'category', data: xLabels, name: _axisXName(cat.prefer_line ? 'ToM 0 比例' : 'ToM 比例'), nameLocation: 'center', nameGap: 65, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabels.length > 5 ? 25 : 0, fontSize: 11, interval: 0 } },
         yAxis: { type: 'value', name: _axisYName(metricDisplay), nameLocation: 'center', nameGap: 50, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
         series: seriesList,
       };
@@ -1202,8 +1382,8 @@ async function generateChart() {
       _autoYAxisGap(chart);
       _saveDefaultAxisNames(chart);
       _makeChartResizable(container);
-      _showBarWidthCtrl(container);
-      continue; // 跳过后续通用渲染逻辑
+      if (!useLineMode) _showBarWidthCtrl(container);
+      continue;
     }
 
     // ── 跨实验分组对比: category + group_key + 多run + 每run少量点 → 紧凑分组柱 ──
@@ -1329,20 +1509,6 @@ async function generateChart() {
   }
 }
 
-function setRunAlias(name, alias) {
-  alias = alias.trim();
-  if (alias) {
-    runAliases[name] = alias;
-  } else {
-    delete runAliases[name];
-  }
-  // 持久化到后端
-  fetch('/api/aliases', {
-    method: 'PUT',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(runAliases),
-  }).catch(e => console.warn('alias save failed', e));
-}
 
 function getRunDisplayName(name) {
   if (runAliases[name]) return runAliases[name];
@@ -2218,6 +2384,324 @@ async function _migrateLocalStorage() {
   localStorage.setItem(MIGRATED_KEY, '1');
   console.log(`迁移完成: ${ok}/${old.length}`);
   if (ok > 0) showToast(`已从浏览器缓存迁移 ${ok} 个图表到服务端`, 'success');
+}
+
+// ──────── Y 轴范围自定义 ────────
+function applyYRange() {
+  const minVal = document.getElementById('yMinInput').value.trim();
+  const maxVal = document.getElementById('yMaxInput').value.trim();
+  const yMin = minVal !== '' ? parseFloat(minVal) : null;
+  const yMax = maxVal !== '' ? parseFloat(maxVal) : null;
+  if (yMin === null && yMax === null) { showToast('请输入至少一个值', 'warn'); return; }
+  chartInstances.forEach(chart => {
+    const opt = chart.getOption();
+    const yAxes = opt.yAxis || [];
+    const updates = yAxes.map(() => {
+      const u = {};
+      if (yMin !== null && !isNaN(yMin)) u.min = yMin;
+      if (yMax !== null && !isNaN(yMax)) u.max = yMax;
+      return u;
+    });
+    chart.setOption({ yAxis: updates }, false);
+  });
+  showToast(`Y轴范围已设为 [${yMin ?? 'auto'}, ${yMax ?? 'auto'}]`, '');
+}
+
+function resetYRange() {
+  document.getElementById('yMinInput').value = '';
+  document.getElementById('yMaxInput').value = '';
+  chartInstances.forEach(chart => {
+    const opt = chart.getOption();
+    const updates = (opt.yAxis || []).map(() => ({ min: null, max: null }));
+    chart.setOption({ yAxis: updates }, false);
+  });
+  showToast('Y轴范围已重置为自动', '');
+}
+
+// ──────── F1: 图表联动 / 同步缩放 ────────
+(function setupSyncZoom() {
+  let _syncing = false;
+  window._onDataZoom = function(params, sourceChart) {
+    if (_syncing || !document.getElementById('syncZoomToggle').checked) return;
+    _syncing = true;
+    const opt = sourceChart.getOption();
+    const dz = opt.dataZoom;
+    if (!dz || dz.length === 0) { _syncing = false; return; }
+    const start = dz[0].start, end = dz[0].end;
+    chartInstances.forEach(c => {
+      if (c === sourceChart) return;
+      const co = c.getOption();
+      if (co.dataZoom && co.dataZoom.length > 0) {
+        c.dispatchAction({ type: 'dataZoom', start, end });
+      }
+    });
+    _syncing = false;
+  };
+  const _origPush = Array.prototype.push;
+  const _patchChart = (chart) => {
+    chart.on('datazoom', (params) => window._onDataZoom(params, chart));
+  };
+  const origPushCI = chartInstances.push;
+  chartInstances.push = function(...args) {
+    const result = _origPush.apply(this, args);
+    args.forEach(c => { if (c && c.on) _patchChart(c); });
+    return result;
+  };
+})();
+
+// ──────── F2: 交易日标注线 ────────
+function addAnnotationLine() {
+  const day = prompt('输入要标注的交易日（数字）:');
+  if (!day || isNaN(Number(day))) return;
+  const dayNum = Number(day);
+  const label = prompt('标注文字（可选）:', `Day ${dayNum}`) || `Day ${dayNum}`;
+  chartInstances.forEach(chart => {
+    const opt = chart.getOption();
+    if (!opt.xAxis || !opt.xAxis[0]) return;
+    const xType = opt.xAxis[0].type;
+    if (xType === 'category') return;
+    const existing = (opt.series || []).map(s => {
+      const ml = s.markLine || { data: [] };
+      return { markLine: { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#8250df', width: 1.5 },
+        label: { formatter: label, fontSize: 10, color: '#8250df', position: 'start' },
+        data: [...(ml.data || []), { xAxis: dayNum }] } };
+    });
+    if (existing.length > 0) {
+      chart.setOption({ series: existing }, false);
+    }
+  });
+  showToast(`已在所有图表添加标注线: ${label}`, '');
+}
+
+// ──────── F3: 差异高亮 / 偏差带 ────────
+function toggleDeviationBand() {
+  chartInstances.forEach(chart => {
+    const opt = chart.getOption();
+    const series = opt.series || [];
+    const bandIdx = series.findIndex(s => s._isDeviationBand && s.data && s.data.length > 0);
+    if (bandIdx >= 0) {
+      const cleaned = series.filter(s => !s._isDeviationBand);
+      chart.setOption({ series: cleaned }, { replaceMerge: ['series'] });
+      showToast('已隐藏偏差带', '');
+      return;
+    }
+    const lineSeries = series.filter(s => s.type === 'line' && s.data && s.data.length > 0 && !s._isDeviationBand);
+    if (lineSeries.length < 2) return;
+    const s1Data = lineSeries[0].data.map(d => Array.isArray(d) ? d : [d[0] || 0, d.value || d]);
+    const s2Data = lineSeries[1].data.map(d => Array.isArray(d) ? d : [d[0] || 0, d.value || d]);
+    const upperData = [], lowerData = [];
+    const len = Math.min(s1Data.length, s2Data.length);
+    for (let i = 0; i < len; i++) {
+      const x = s1Data[i][0];
+      const y1 = s1Data[i][1], y2 = s2Data[i][1];
+      upperData.push([x, Math.max(y1, y2)]);
+      lowerData.push([x, Math.min(y1, y2)]);
+    }
+    const bandSeries = [
+      { type: 'line', data: lowerData, lineStyle: { width: 0 }, symbol: 'none', stack: '_devband', silent: true, _isDeviationBand: true },
+      { type: 'line', data: upperData.map((p, i) => [p[0], p[1] - lowerData[i][1]]), lineStyle: { width: 0 }, symbol: 'none', stack: '_devband', areaStyle: { color: 'rgba(130,80,223,0.12)' }, silent: true, _isDeviationBand: true },
+    ];
+    const update = series.map(() => ({}));
+    chart.setOption({ series: [...update, ...bandSeries] }, false);
+  });
+  showToast('偏差带已切换', '');
+}
+
+// ──────── F4: 指标相关性矩阵 ────────
+async function showCorrelationMatrix() {
+  if (selectedRuns.size === 0 || selectedMetrics.size < 2) {
+    showToast('请选择至少1个实验和2个指标', 'warn'); return;
+  }
+  const catKey = document.getElementById('categorySelect').value;
+  const cat = categories[catKey];
+  const runs = Array.from(selectedRuns).join(',');
+  const metrics = Array.from(selectedMetrics).join(',');
+  const res = await fetch(`/api/data?runs=${encodeURIComponent(runs)}&category=${catKey}&metrics=${metrics}&group_filter=`);
+  const data = await res.json();
+  if (data.error) { showToast(data.error, 'error'); return; }
+
+  const metricKeys = Array.from(selectedMetrics);
+  const metricLabels = metricKeys.map(k => cat.metrics[k] || k);
+  const seriesMap = {};
+  for (const [runName, runSeries] of Object.entries(data.series)) {
+    for (const [label, pts] of Object.entries(runSeries)) {
+      seriesMap[label] = pts.map(p => p.y);
+    }
+  }
+  const vectors = metricLabels.map(ml => {
+    for (const [k, v] of Object.entries(seriesMap)) { if (k.includes(ml)) return v; }
+    return [];
+  });
+
+  function pearson(a, b) {
+    const n = Math.min(a.length, b.length);
+    if (n < 3) return 0;
+    const ma = a.slice(0,n).reduce((s,v)=>s+v,0)/n;
+    const mb = b.slice(0,n).reduce((s,v)=>s+v,0)/n;
+    let cov=0, va=0, vb=0;
+    for (let i=0;i<n;i++) { const da=a[i]-ma, db=b[i]-mb; cov+=da*db; va+=da*da; vb+=db*db; }
+    const d = Math.sqrt(va*vb);
+    return d > 1e-15 ? cov/d : 0;
+  }
+
+  const n = metricLabels.length;
+  const matData = [];
+  for (let i=0;i<n;i++) for (let j=0;j<n;j++) {
+    const r = i===j ? 1.0 : pearson(vectors[i], vectors[j]);
+    matData.push([j, i, Math.round(r*1000)/1000]);
+  }
+
+  const chartArea = document.getElementById('chartArea');
+  const empty = chartArea.querySelector('.empty-state');
+  if (empty) empty.remove();
+  const containerId = `chart_corr_${Date.now()}`;
+  const container = _buildChartContainer(containerId, `指标相关性矩阵 — ${cat.label}`, 400);
+  chartArea.insertBefore(container, chartArea.firstChild);
+  const chart = echarts.init(document.getElementById(containerId));
+  chartInstances.push(chart);
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { formatter: p => `${metricLabels[p.value[1]]} × ${metricLabels[p.value[0]]}: ${p.value[2]}` },
+    grid: { top: 10, right: 80, bottom: 60, left: 100 },
+    xAxis: { type: 'category', data: metricLabels, axisLabel: { rotate: 30, fontSize: 10, color: '#656d76' }, splitArea: { show: true } },
+    yAxis: { type: 'category', data: metricLabels, axisLabel: { fontSize: 10, color: '#656d76' }, splitArea: { show: true } },
+    visualMap: { min: -1, max: 1, calculable: true, orient: 'vertical', right: 10, top: 'center', inRange: { color: ['#cf222e','#ffffff','#0969da'] }, textStyle: { color: '#656d76' } },
+    series: [{ type: 'heatmap', data: matData, label: { show: n<=8, fontSize: 10, color: '#1f2328' }, itemStyle: { borderWidth: 1, borderColor: '#ffffff' } }],
+  });
+}
+
+// ──────── F5: 统计摘要卡片 ────────
+function toggleStatsBar(btn) {
+  const container = btn.closest('.chart-container');
+  const existing = container.querySelector('.stats-bar');
+  if (existing) {
+    existing.remove();
+    return;
+  }
+  const chartDiv = container.querySelector('.chart-box');
+  const chart = chartInstances.find(c => c.getDom() === chartDiv);
+  if (!chart) return;
+  const opt = chart.getOption();
+  const seriesData = {};
+  (opt.series || []).forEach(s => {
+    if (s.data && s.data.length > 1) seriesData[s.name || ''] = s.data;
+  });
+  const bar = _buildStatsBar(seriesData);
+  if (bar) {
+    const titleDiv = container.querySelector('.chart-title');
+    titleDiv.after(bar);
+  }
+}
+
+function _buildStatsBar(seriesData) {
+  const bar = document.createElement('div');
+  bar.className = 'stats-bar';
+  const header = document.createElement('div');
+  header.className = 'stats-bar-header';
+  header.innerHTML = '<span class="arrow">▾</span> 统计摘要';
+  header.onclick = () => bar.classList.toggle('collapsed');
+  bar.appendChild(header);
+  const content = document.createElement('div');
+  content.className = 'stats-bar-content';
+  let hasData = false;
+  for (const [name, pts] of Object.entries(seriesData)) {
+    if (!pts || pts.length === 0) continue;
+    const ys = pts.map(p => typeof p === 'number' ? p : (p.y != null ? p.y : (Array.isArray(p) ? p[1] : 0)));
+    const n = ys.length;
+    const mean = ys.reduce((a,b)=>a+b,0)/n;
+    const std = Math.sqrt(ys.reduce((a,v)=>a+(v-mean)**2,0)/n);
+    const mn = Math.min(...ys), mx = Math.max(...ys);
+    const last = ys[n-1];
+    content.innerHTML += `<span class="stat-chip">${name}: <b>μ=${_smartFmt(mean)}</b> σ=${_smartFmt(std)} ↓${_smartFmt(mn)} ↑${_smartFmt(mx)} 末=${_smartFmt(last)}</span>`;
+    hasData = true;
+  }
+  bar.appendChild(content);
+  return hasData ? bar : null;
+}
+
+
+// ──────── F6: 实验分组标签系统 ────────
+const runTags = {};  // {runName: Set<tag>}
+const allTags = new Set();
+let activeTagFilter = null;
+
+function addTag(tag) {
+  tag = tag.trim();
+  if (!tag) return;
+  allTags.add(tag);
+  selectedRuns.forEach(rn => {
+    if (!runTags[rn]) runTags[rn] = new Set();
+    runTags[rn].add(tag);
+  });
+  renderTagBar();
+  renderRunsList();
+  showToast(`标签「${tag}」已添加到 ${selectedRuns.size} 个实验`, '');
+}
+
+function filterByTag(tag) {
+  if (activeTagFilter === tag) { activeTagFilter = null; }
+  else { activeTagFilter = tag; }
+  renderTagBar();
+  renderRunsList();
+}
+
+function renderTagBar() {
+  const bar = document.getElementById('tagBar');
+  if (allTags.size === 0) { bar.innerHTML = ''; return; }
+  bar.innerHTML = Array.from(allTags).map(t =>
+    `<span class="exp-tag ${activeTagFilter === t ? 'active' : ''}" onclick="filterByTag('${t.replace(/'/g,"\\'")}')">` +
+    `${t} <span style="cursor:pointer;margin-left:2px;" onclick="event.stopPropagation();removeTag('${t.replace(/'/g,"\\'")}')">×</span></span>`
+  ).join('');
+}
+
+function removeTag(tag) {
+  allTags.delete(tag);
+  for (const rn of Object.keys(runTags)) {
+    runTags[rn].delete(tag);
+  }
+  if (activeTagFilter === tag) activeTagFilter = null;
+  renderTagBar();
+  renderRunsList();
+}
+
+const _origRenderRunsList = renderRunsList;
+let _dragSrcIdx = null;
+renderRunsList = function() {
+  const el = document.getElementById('runsList');
+  const filteredRuns = activeTagFilter
+    ? allRuns.filter(r => runTags[r.name] && runTags[r.name].has(activeTagFilter))
+    : allRuns;
+  el.innerHTML = filteredRuns.map((run, idx) => {
+    const tom = run.config_summary?.tom_distribution || {};
+    const tomStr = Object.entries(tom).map(([k,v]) => `T${k}:${v}`).join(' ');
+    const escapedName = run.name.replace(/'/g, "\\'");
+    const tags = runTags[run.name] ? Array.from(runTags[run.name]).map(t => `<span class="exp-tag" style="font-size:9px;">${t}</span>`).join('') : '';
+    return `
+      <div class="run-item ${selectedRuns.has(run.name) ? 'selected' : ''}" draggable="true" data-idx="${idx}"
+           onclick="toggleRun('${escapedName}', this)"
+           ondragstart="_onDragStart(event,${idx})" ondragover="_onDragOver(event)" ondragenter="_onDragEnter(event)" ondragleave="_onDragLeave(event)" ondrop="_onDrop(event,${idx})" ondragend="_onDragEnd(event)">
+        <input type="checkbox" ${selectedRuns.has(run.name) ? 'checked' : ''} onclick="event.stopPropagation(); toggleRun('${escapedName}', this.parentElement)">
+        <div style="flex:1;min-width:0;">
+          <div class="run-name" title="${run.name}">${run.name}</div>
+          ${tags ? '<div style="margin-top:2px;">' + tags + '</div>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  updateSelectedCount();
+};
+function _onDragStart(e, idx) { _dragSrcIdx = idx; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function _onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function _onDragEnter(e) { e.currentTarget.classList.add('drag-over'); }
+function _onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function _onDragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); }
+function _onDrop(e, targetIdx) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if (_dragSrcIdx === null || _dragSrcIdx === targetIdx) return;
+  const item = allRuns.splice(_dragSrcIdx, 1)[0];
+  allRuns.splice(targetIdx, 0, item);
+  _dragSrcIdx = null;
+  renderRunsList();
 }
 
 // 启动

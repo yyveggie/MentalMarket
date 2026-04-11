@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """真实大盘 vs 模拟大盘 对比图（支持多个实验叠加）。"""
 
+from __future__ import annotations
+
 import argparse
 import csv
 import json

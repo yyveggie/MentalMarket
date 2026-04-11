@@ -20,115 +20,115 @@
     "broad_curve_definition": "market-cap weighted composite from stock_profile.csv (fallback: equal-weight)"
   },
   "overall": {
-    "same_day_acc": 52.5,
+    "same_day_acc": 52.34375,
     "same_day_n": 640,
-    "forward1_acc": 48.888888888888886,
+    "forward1_acc": 48.73015873015873,
     "forward1_n": 630,
-    "fit_pct": 10.677648579779417,
+    "fit_pct": 11.488169790614199,
     "fit_n": 640,
-    "rmse": 0.025807803926796723,
-    "r_squared": 0.15856515684908148
+    "rmse": 0.025222438622484255,
+    "r_squared": 0.2015414429725293
   },
   "per_symbol": {
     "CGEI": {
-      "same_day_acc": 54.6875,
+      "same_day_acc": 51.5625,
+      "same_day_n": 64,
+      "forward1_acc": 52.38095238095238,
+      "forward1_n": 63,
+      "fit_pct": 0.0,
+      "fit_n": 64,
+      "rmse": 0.024897506330714577,
+      "r_squared": 0.0015320972667056017
+    },
+    "CPEI": {
+      "same_day_acc": 51.5625,
+      "same_day_n": 64,
+      "forward1_acc": 55.55555555555556,
+      "forward1_n": 63,
+      "fit_pct": 25.81961945847192,
+      "fit_n": 64,
+      "rmse": 0.02036845350279686,
+      "r_squared": 0.09734945018735877
+    },
+    "EREI": {
+      "same_day_acc": 46.875,
       "same_day_n": 64,
       "forward1_acc": 55.55555555555556,
       "forward1_n": 63,
       "fit_pct": 0.0,
       "fit_n": 64,
-      "rmse": 0.02608193461351399,
-      "r_squared": 0.3375138511348711
-    },
-    "CPEI": {
-      "same_day_acc": 51.5625,
-      "same_day_n": 64,
-      "forward1_acc": 49.20634920634921,
-      "forward1_n": 63,
-      "fit_pct": 23.829218854324964,
-      "fit_n": 64,
-      "rmse": 0.021363616714732934,
-      "r_squared": 0.007643235484231066
-    },
-    "EREI": {
-      "same_day_acc": 40.625,
-      "same_day_n": 64,
-      "forward1_acc": 52.38095238095238,
-      "forward1_n": 63,
-      "fit_pct": 0.0,
-      "fit_n": 64,
-      "rmse": 0.019711617444776376,
-      "r_squared": 0.006243463602456169
+      "rmse": 0.01939129691961008,
+      "r_squared": 0.5250807547664004
     },
     "FSEI": {
-      "same_day_acc": 62.5,
+      "same_day_acc": 56.25,
       "same_day_n": 64,
-      "forward1_acc": 53.96825396825397,
+      "forward1_acc": 47.61904761904762,
       "forward1_n": 63,
-      "fit_pct": 8.629670805858114,
+      "fit_pct": 12.01530238347939,
       "fit_n": 64,
-      "rmse": 0.015386425465196427,
-      "r_squared": 0.39239301777533014
+      "rmse": 0.014337387158930183,
+      "r_squared": 0.4506039948592126
     },
     "IEEI": {
-      "same_day_acc": 59.375,
+      "same_day_acc": 50.0,
       "same_day_n": 64,
       "forward1_acc": 44.44444444444444,
       "forward1_n": 63,
-      "fit_pct": 21.47897952887569,
+      "fit_pct": 16.56491994577505,
       "fit_n": 64,
-      "rmse": 0.018933345572704718,
-      "r_squared": 0.0588883570509006
+      "rmse": 0.0184843948312474,
+      "r_squared": 0.019320156128475683
     },
     "MEI": {
-      "same_day_acc": 60.9375,
+      "same_day_acc": 64.0625,
+      "same_day_n": 64,
+      "forward1_acc": 47.61904761904762,
+      "forward1_n": 63,
+      "fit_pct": 0.0,
+      "fit_n": 64,
+      "rmse": 0.02418296958137025,
+      "r_squared": 0.3571689117607497
+    },
+    "REEI": {
+      "same_day_acc": 48.4375,
+      "same_day_n": 64,
+      "forward1_acc": 39.682539682539684,
+      "forward1_n": 63,
+      "fit_pct": 6.307522293917439,
+      "fit_n": 64,
+      "rmse": 0.026693492879879387,
+      "r_squared": 0.1442773889031281
+    },
+    "TLEI": {
+      "same_day_acc": 57.8125,
       "same_day_n": 64,
       "forward1_acc": 41.26984126984127,
       "forward1_n": 63,
-      "fit_pct": 5.357530413827191,
+      "fit_pct": 17.162003570006508,
       "fit_n": 64,
-      "rmse": 0.023482661709782124,
-      "r_squared": 0.023890893235756414
-    },
-    "REEI": {
-      "same_day_acc": 46.875,
-      "same_day_n": 64,
-      "forward1_acc": 34.92063492063492,
-      "forward1_n": 63,
-      "fit_pct": 4.3168334091616165,
-      "fit_n": 64,
-      "rmse": 0.02695129276547137,
-      "r_squared": 0.01833145348493711
-    },
-    "TLEI": {
-      "same_day_acc": 59.375,
-      "same_day_n": 64,
-      "forward1_acc": 42.857142857142854,
-      "forward1_n": 63,
-      "fit_pct": 11.817848286650543,
-      "fit_n": 64,
-      "rmse": 0.01855169620881842,
-      "r_squared": 0.39789106047163864
+      "rmse": 0.01805885006924923,
+      "r_squared": 0.02215540263957372
     },
     "TSEI": {
       "same_day_acc": 43.75,
       "same_day_n": 64,
-      "forward1_acc": 61.904761904761905,
+      "forward1_acc": 55.55555555555556,
       "forward1_n": 63,
-      "fit_pct": 17.155840405569585,
+      "fit_pct": 18.618603815493216,
       "fit_n": 64,
-      "rmse": 0.04160402922447341,
-      "r_squared": 0.002411074054070633
+      "rmse": 0.0408533176086897,
+      "r_squared": 0.06726943601937552
     },
     "TTEI": {
-      "same_day_acc": 45.3125,
+      "same_day_acc": 53.125,
       "same_day_n": 64,
-      "forward1_acc": 52.38095238095238,
+      "forward1_acc": 47.61904761904762,
       "forward1_n": 63,
-      "fit_pct": 14.190564093526476,
+      "fit_pct": 18.39372643899847,
       "fit_n": 64,
-      "rmse": 0.03445469800796618,
-      "r_squared": 0.340445162196623
+      "rmse": 0.03333503047332573,
+      "r_squared": 0.3306568371943126
     }
   }
 }
