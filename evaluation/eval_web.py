@@ -546,10 +546,10 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "avg_car_1": "CAR(0,1) %",
             "avg_car_3": "CAR(0,3) %",
             "avg_car_5": "CAR(0,5) %",
-            "avg_abs_car_1": "|CAR|(0,1) %",
-            "avg_abs_car_3": "|CAR|(0,3) %",
-            "avg_abs_car_5": "|CAR|(0,5) %",
             "event_count": "当日事件数",
+            "caar_1": "CAAR(0,1) %",
+            "caar_3": "CAAR(0,3) %",
+            "caar_5": "CAAR(0,5) %",
         },
         "group_key": None,
         "computed": True,
@@ -557,10 +557,10 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "avg_car_1": "新闻后1日累积异常收益(%)。EMH下应迅速→0。持续偏离→市场反应不足或过度",
             "avg_car_3": "新闻后3日CAR(%)。如果CAR从1日到3日持续扩大→信息反应迟缓(反应不足)",
             "avg_car_5": "新闻后5日CAR(%)。如果5日后CAR反转→过度反应；如果继续漂移→反应不足",
-            "avg_abs_car_1": "1日|CAR|(%)。衡量新闻冲击力度（不论方向），EMH下应在1日内完成调整",
-            "avg_abs_car_3": "3日|CAR|(%)。如果远大于1日→价格调整缓慢，半强EMH不成立",
-            "avg_abs_car_5": "5日|CAR|(%)。长窗口异常收益，反映信息充分消化所需时间",
             "event_count": "当日注入的新闻事件数量。事件密集时CAR的统计意义更强",
+            "caar_1": "CAAR(0,1)(%)。全部事件的CAR(0,1)截面均值，反映市场对新闻的典型1日响应",
+            "caar_3": "CAAR(0,3)(%)。全部事件的CAR(0,3)截面均值，反映市场3日内信息吸收情况",
+            "caar_5": "CAAR(0,5)(%)。全部事件的CAR(0,5)截面均值，反映市场5日内信息完整吸收程度",
         },
     },
     "social_overview": {
@@ -1985,13 +1985,13 @@ def _compute_emh_weak(run_dir: Path, window: int = 30) -> list[dict]:
     return result
 
 
-# ──────── EMH 半强式检验 ────────
+# ──────── EMH 半强式检验 ────────caar, compute_
 
 def _compute_emh_semi_strong(run_dir: Path) -> list[dict]:
     """半强式 EMH：新闻事件后的累积异常收益 (CAR)。"""
     import json
     from academic_metrics_common import compute_log_returns, load_reference_close_series
-    from metric_emh import aggregate_car_by_day, compute_event_car
+    from metric_emh import aggregate_car_by_day, compute_caar, compute_car_significance, compute_event_car
 
     days_in, closes = load_reference_close_series(run_dir, symbol=None, exclude_seed=True)
     if len(closes) < 25:
@@ -2014,11 +2014,10 @@ def _compute_emh_semi_strong(run_dir: Path) -> list[dict]:
         if isinstance(d, (int, float)):
             event_day_count[int(d)] = event_day_count.get(int(d), 0) + 1
     event_days = sorted(event_day_count.keys())
-    if not event_days:
-        return []
 
     car_records = compute_event_car(event_days, ret_days, log_rets, horizons=[1, 3, 5], estimation_window=20)
     agg = aggregate_car_by_day(car_records, horizons=[1, 3, 5])
+    caar = compute_caar(car_records, horizons=[1, 3, 5])
 
     import math
     result = []
@@ -2026,12 +2025,49 @@ def _compute_emh_semi_strong(run_dir: Path) -> list[dict]:
         day = row["trading_day"]
         out: dict = {"trading_day": day, "event_count": event_day_count.get(day, 0)}
         for h in [1, 3, 5]:
-            for prefix in ["avg_car_", "avg_abs_car_"]:
-                key = f"{prefix}{h}"
-                v = row.get(key, float("nan"))
-                out[key] = round(v * 100, 4) if not math.isnan(v) else None
+            key = f"avg_car_{h}"
+            v = row.get(key, float("nan"))
+            out[key] = round(v * 100, 4) if not math.isnan(v) else None
+            # avg_car SE（也乘100转百分比）
+            se_key = f"avg_car_{h}_se"
+            se_v = row.get(se_key, float("nan"))
+            out[se_key] = round(se_v * 100, 4) if not math.isnan(se_v) else None
+        # Attach CAAR summary to every row so dashboard can display it
+        for h in [1, 3, 5]:
+            key = f"caar_{h}"
+            v = caar.get(key, float("nan"))
+            out[key] = round(v * 100, 4) if not math.isnan(v) else None
+            # 标准误（也乘100转百分比）
+            se_key = f"caar_{h}_se"
+            se_v = caar.get(se_key, float("nan"))
+            out[se_key] = round(se_v * 100, 4) if not math.isnan(se_v) else None
         result.append(out)
     return result
+
+
+def _load_actual_news_posts(run_dir: Path) -> list[dict]:
+    """Load actually delivered news from posts.jsonl (source='news').
+
+    Returns list of {trading_day, content} dicts — the news agents actually saw.
+    Returns empty list if posts.jsonl doesn't exist or has no news posts.
+    """
+    posts_file = run_dir / "posts.jsonl"
+    if not posts_file.exists():
+        return []
+    import json
+    news_posts: list[dict] = []
+    with open(posts_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if rec.get("source") == "news":
+                news_posts.append(rec)
+    return news_posts
 
 
 def _find_news_file(run_dir: Path) -> Path | None:
@@ -2863,11 +2899,16 @@ def api_data():
                 for metric in selected_metrics:
                     metric_label = cat['metrics'].get(metric, metric)
                     label = metric_label if single_group else f"{gv}_{metric_label}"
+                    se_key = f"{metric}_se"
                     points = []
                     for r in _rows:
                         val = r.get(metric)
                         if val is not None:
-                            points.append({"x": r[x_key], "y": val})
+                            pt: dict = {"x": r[x_key], "y": val}
+                            se_val = r.get(se_key)
+                            if se_val is not None:
+                                pt["se"] = se_val
+                            points.append(pt)
                     if points:
                         run_series[label] = points
         elif group_key and group_filter:
@@ -2882,11 +2923,16 @@ def api_data():
                 for metric in selected_metrics:
                     metric_label = cat['metrics'].get(metric, metric)
                     label = metric_label if single_group else f"{gv}_{metric_label}"
+                    se_key = f"{metric}_se"
                     points = []
                     for r in _rows:
                         val = r.get(metric)
                         if val is not None:
-                            points.append({"x": r[x_key], "y": val})
+                            pt: dict = {"x": r[x_key], "y": val}
+                            se_val = r.get(se_key)
+                            if se_val is not None:
+                                pt["se"] = se_val
+                            points.append(pt)
                     if points:
                         run_series[label] = points
         else:
@@ -2894,11 +2940,16 @@ def api_data():
             _rows = rows if preserve_order else sorted(rows, key=lambda x: x.get(x_key, 0))
             for metric in selected_metrics:
                 label = cat["metrics"].get(metric, metric)
+                se_key = f"{metric}_se"
                 points = []
                 for r in _rows:
                     val = r.get(metric)
                     if val is not None:
-                        points.append({"x": r[x_key], "y": val})
+                        pt: dict = {"x": r[x_key], "y": val}
+                        se_val = r.get(se_key)
+                        if se_val is not None:
+                            pt["se"] = se_val
+                        points.append(pt)
                 if points:
                     run_series[label] = points
 
@@ -2930,6 +2981,212 @@ def api_data():
         "available_groups": available_groups,
         "available_group_keys": available_group_keys,
     })
+
+
+@app.route("/api/car_tests")
+def api_car_tests():
+    """统计检验：CAAR 显著性 + 增量漂移检验"""
+    run_name = request.args.get("run", "").strip()
+    if not run_name:
+        return jsonify({"error": "缺少 run 参数"}), 400
+    run_dir = RUNS_DIR / run_name
+    if not run_dir.exists():
+        return jsonify({"error": f"run 不存在: {run_name}"}), 404
+
+    try:
+        from metric_emh import classify_event_day_sentiment, compute_car_significance, compute_event_car
+        from academic_metrics_common import compute_log_returns, load_reference_close_series
+
+        days_in, closes = load_reference_close_series(run_dir, symbol=None, exclude_seed=True)
+        if len(closes) < 25:
+            return jsonify({"error": "数据不足（<25天）"}), 400
+        log_rets = compute_log_returns(closes)
+        ret_days = days_in[1:]
+
+        news_file = _find_news_file(run_dir)
+        if news_file is None:
+            return jsonify({"error": "未找到新闻文件"}), 404
+        with open(news_file, "r", encoding="utf-8") as f:
+            news_data = json.load(f)
+        news_list = news_data.get("news", news_data) if isinstance(news_data, dict) else news_data
+
+        event_day_count: dict[int, int] = {}
+        for item in news_list:
+            d = item.get("day")
+            if isinstance(d, (int, float)):
+                event_day_count[int(d)] = event_day_count.get(int(d), 0) + 1
+        event_days = sorted(event_day_count.keys())
+
+        car_records = compute_event_car(event_days, ret_days, log_rets,
+                                        horizons=[1, 3, 5], estimation_window=20)
+        # 优先从 posts.jsonl 提取实际发放的新闻（agent 实际看到的）
+        actual_news = _load_actual_news_posts(run_dir)
+        event_sentiments = classify_event_day_sentiment(actual_news if actual_news else news_list)
+        tests = compute_car_significance(car_records, horizons=[1, 3, 5], n_bootstrap=2000,
+                                         event_sentiments=event_sentiments)
+
+        import math
+        # 格式化：百分比化 + 保留 4 位小数，p-value 保留原值
+        formatted = {}
+        pct_keys = {"caar_", "se_", "ci_lower_", "ci_upper_", "boot_ci_lower_", "boot_ci_upper_", "delta_"}
+        for k, v in tests.items():
+            if isinstance(v, float) and math.isnan(v):
+                formatted[k] = None
+            elif isinstance(v, float):
+                # 百分比化 CAR 相关字段
+                if any(k.startswith(pk) for pk in pct_keys):
+                    formatted[k] = round(v * 100, 4)
+                else:
+                    formatted[k] = round(v, 6)
+            else:
+                formatted[k] = v
+
+        return jsonify({"run": run_name, "tests": formatted})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/efficiency_ranking")
+def api_efficiency_ranking():
+    """计算所有实验的市场效率排名"""
+    import math
+    from metric_emh import classify_event_day_sentiment, compute_car_significance, compute_event_car
+    from academic_metrics_common import compute_log_returns, load_reference_close_series
+
+    rows = []
+    if not RUNS_DIR.exists():
+        return jsonify({"error": "runs 目录不存在"}), 404
+
+    for run_dir in sorted(RUNS_DIR.iterdir()):
+        if not run_dir.is_dir():
+            continue
+        run_name = run_dir.name
+        try:
+            days_in, closes = load_reference_close_series(run_dir, symbol=None, exclude_seed=True)
+            if len(closes) < 25:
+                continue
+            log_rets = compute_log_returns(closes)
+            ret_days = days_in[1:]
+
+            news_file = _find_news_file(run_dir)
+            if news_file is None:
+                continue
+            with open(news_file, "r", encoding="utf-8") as f:
+                nd = json.load(f)
+            nl = nd.get("news", nd) if isinstance(nd, dict) else nd
+            event_days = sorted(set(
+                int(it["day"]) for it in nl if isinstance(it.get("day"), (int, float))
+            ))
+
+            car_records = compute_event_car(event_days, ret_days, log_rets,
+                                            horizons=[1, 3, 5], estimation_window=20)
+            if len(car_records) < 5:
+                continue
+
+            event_sentiments = classify_event_day_sentiment(
+                _load_actual_news_posts(run_dir) or nl
+            )
+            tests = compute_car_significance(car_records, horizons=[1, 3, 5], n_bootstrap=2000,
+                                             event_sentiments=event_sentiments)
+            n = tests.get("n_1", 0)
+
+            abs_caar_avg = sum(abs(tests.get(f"caar_{h}", 0)) for h in [1, 3, 5]) / 3
+            car_std_avg = sum(tests.get(f"se_{h}", 0) * math.sqrt(n) for h in [1, 3, 5]) / 3
+            p_avg = sum(tests.get(f"p_value_{h}", 0) for h in [1, 3, 5]) / 3
+            ci_width_avg = sum(
+                tests.get(f"ci_upper_{h}", 0) - tests.get(f"ci_lower_{h}", 0)
+                for h in [1, 3, 5]
+            ) / 3
+            drift_stat = sum(
+                abs(tests.get(f"delta_{h1}_{h2}", 0))
+                for h1, h2 in [(1, 3), (3, 5)]
+            ) / 2
+            score = abs_caar_avg + ci_width_avg * 0.5 + drift_stat
+
+            # 有效性判断 (α=0.10, 分组用单尾 p)
+            alpha = 0.10
+            # 效率判定：bootstrap p 为主（block bootstrap 处理了事件重叠依赖）
+            # t-test 仅作对照展示
+            any_caar_sig = any(
+                tests.get(f"boot_p_{h}", 1) < alpha
+                for h in [1, 3, 5]
+            )
+            # 分组有效性：利好/利空新闻日，bootstrap p，α=0.10
+            any_group_sig = any(
+                tests.get(f"boot_p_{grp}_{h}", 1) < alpha
+                for grp in ["pos", "neg"]
+                for h in [1, 3, 5]
+            )
+
+            if any_caar_sig:
+                eff_label = "inefficient"
+            elif any_group_sig:
+                eff_label = "inefficient_grouped"
+            else:
+                eff_label = "efficient"
+
+            # Robustness: α=0.05
+            alpha05 = 0.05
+            any_caar_sig_05 = any(
+                tests.get(f"boot_p_{h}", 1) < alpha05 for h in [1, 3, 5]
+            )
+            any_group_sig_05 = any(
+                tests.get(f"boot_p_{grp}_{h}", 1) < alpha05
+                for grp in ["pos", "neg"] for h in [1, 3, 5]
+            )
+            if any_caar_sig_05:
+                eff_label_05 = "inefficient"
+            elif any_group_sig_05:
+                eff_label_05 = "inefficient_grouped"
+            else:
+                eff_label_05 = "efficient"
+
+            # 哪些 horizon 显著 (bootstrap)
+            sig_h = [h for h in [1, 3, 5]
+                     if tests.get(f"boot_p_{h}", 1) < alpha]
+            sig_group = []
+            for grp, label in [("pos", "利好"), ("neg", "利空")]:
+                for h in [1, 3, 5]:
+                    if tests.get(f"boot_p_{grp}_{h}", 1) < alpha:
+                        sig_group.append(f"{label}h{h}")
+
+            rows.append({
+                "run": run_name,
+                "n_events": n,
+                "abs_caar": round(abs_caar_avg * 100, 4),
+                "car_std": round(car_std_avg * 100, 4),
+                "p_avg": round(p_avg, 4),
+                "ci_width": round(ci_width_avg * 100, 4),
+                "drift": round(drift_stat * 100, 4),
+                "score": round(score * 100, 4),
+                "caar_1": round(tests.get("caar_1", 0) * 100, 4),
+                "caar_3": round(tests.get("caar_3", 0) * 100, 4),
+                "caar_5": round(tests.get("caar_5", 0) * 100, 4),
+                "p_1": round(tests.get("p_value_1", 1), 4),
+                "p_3": round(tests.get("p_value_3", 1), 4),
+                "p_5": round(tests.get("p_value_5", 1), 4),
+                "efficient": eff_label,
+                "efficient_05": eff_label_05,
+                "sig_horizons": sig_h,
+                "sig_groups": sig_group,
+                "n_pos": tests.get("n_pos", 0),
+                "n_neg": tests.get("n_neg", 0),
+                "caar_pos_5": round(tests.get("caar_pos_5", 0) * 100, 4),
+                "caar_neg_5": round(tests.get("caar_neg_5", 0) * 100, 4),
+                "p_pos_5": round(tests.get("p_pos_5", 1), 4),
+                "p_neg_5": round(tests.get("p_neg_5", 1), 4),
+                "p1_pos_5": round(tests.get("p1_pos_5", 1), 4),
+                "p1_neg_5": round(tests.get("p1_neg_5", 1), 4),
+            })
+        except Exception:
+            continue
+
+    eff_order = {"efficient": 0, "inefficient_grouped": 1, "inefficient": 2}
+    rows.sort(key=lambda r: (eff_order.get(r["efficient"], 9), r["score"]))
+    for i, r in enumerate(rows, 1):
+        r["rank"] = i
+
+    return jsonify({"ranking": rows})
 
 
 @app.route("/api/config")

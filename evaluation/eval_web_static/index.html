@@ -245,6 +245,7 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #484f58; }
     <select id="chartTypeSelect">
       <option value="line">折线图</option>
       <option value="line_smooth">平滑折线</option>
+      <option value="step">阶梯图</option>
       <option value="bar">柱状图</option>
       <option value="area">面积图</option>
       <option value="scatter">散点图</option>
@@ -272,6 +273,9 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #484f58; }
     <input type="checkbox" id="showChartTitle" checked style="display:none;">
     <label class="check-label" title="选2个指标时各用独立Y轴"><input type="checkbox" id="dualYToggle">双Y轴</label>
     <label class="check-label" id="subplotLabel" title="按分组键拆分子图"><input type="checkbox" id="subplotToggle">子图</label>
+    <label class="check-label" title="柱状图显示误差棒(需后端提供_se字段)"><input type="checkbox" id="errorBarToggle">误差棒</label>
+    <label class="check-label" title="散点图/折线图添加y=0基准线"><input type="checkbox" id="baselineToggle">基准线</label>
+    <label class="check-label" title="将多个指标合并到同一张图"><input type="checkbox" id="mergeToggle">合并</label>
     <label class="check-label"><input type="checkbox" id="windowToggle" onchange="document.getElementById('windowSelect').disabled=!this.checked">窗口</label>
     <select id="windowSelect" disabled style="width:58px;">
       <option value="10">10天</option><option value="20">20天</option><option value="30" selected>30天</option><option value="50">50天</option><option value="60">60天</option>
@@ -284,6 +288,8 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #484f58; }
   </div>
   <div class="toolbar-row2">
     <button class="btn btn-primary" onclick="generateChart()">生成图表</button>
+    <button class="btn btn-sm" onclick="runCARTests()" title="CAR/CAAR 统计显著性检验">📊 统计检验</button>
+    <button class="btn btn-sm" onclick="showEfficiencyRanking()" title="全实验市场效率排名">🏆 效率排名</button>
     <label class="check-label" title="多图 dataZoom 同步联动"><input type="checkbox" id="syncZoomToggle" checked>联动</label>
     <button class="btn btn-sm" onclick="addAnnotationLine()" title="添加垂直标注线">标注线</button>
     <button class="btn btn-sm" onclick="toggleDeviationBand()" title="偏差带阴影">偏差带</button>
@@ -357,14 +363,16 @@ const BAR_DECALS = [
 ];
 
 // ──────── 工具函数 ────────
-function showToast(msg, type) {
+function showToast(msg, type, duration) {
   const c = document.getElementById('toastContainer');
   const el = document.createElement('div');
   el.className = 'toast' + (type ? ' ' + type : '');
   el.textContent = msg;
   c.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
+  const dur = typeof duration === 'number' ? duration : 3000;
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, dur);
+  return el;
 }
 
 function _buildChartContainer(containerId, chartTitle, extraHeight) {
@@ -769,7 +777,7 @@ async function generateChart() {
   const xMode = document.getElementById('xModeSelect').value;
   const isAgg = xMode !== 'timeseries';
   // 离散 x 轴或聚合模式自动切换为柱状图（prefer_line 类别除外）
-  if ((cat.x_type === 'category' || isAgg) && !cat.prefer_line && (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area')) chartType = 'bar';
+  if ((cat.x_type === 'category' || isAgg) && !cat.prefer_line && (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area' || chartType === 'step')) chartType = 'bar';
   const runs = Array.from(selectedRuns).join(',');
   const metrics = Array.from(selectedMetrics).join(',');
   const groupFilter = Array.from(selectedGroups).join(',');
@@ -994,11 +1002,91 @@ async function generateChart() {
 
   // ──────── 聚合模式处理 ────────
   if (isAgg) {
+    const aggLabel = {mean:'均值', sum:'总和', last:'最终值', max:'最大值', min:'最小值'}[xMode];
+    const hasGroup = !!effectiveGroupKey;
+
+    // ── 聚合合并模式：多个指标分组柱状图 ──
+    const mergeAgg = document.getElementById('mergeToggle').checked && selectedMetrics.size > 1;
+    if (mergeAgg) {
+      const allMetricKeys = Array.from(selectedMetrics);
+      const allMetricDisplays = allMetricKeys.map(k => getMetricDisplayName(catKey, k));
+      const containerId = `chart_agg_merge_${Date.now()}`;
+      const customTitle = document.getElementById('customTitleInput').value.trim();
+      const chartTitle = customTitle || `${cat.label} — ${allMetricDisplays.join(' / ')}（${aggLabel}）`;
+
+      // 收集每个指标的聚合值: { metricDisplay: { xLabel: aggVal } }
+      const xLabelsSet = new Set();
+      const metricAggMap = {}; // { metricDisplay: { xLabel: value } }
+
+      for (const metricKey of allMetricKeys) {
+        const metricLabel = cat.metrics[metricKey] || metricKey;
+        const metricDisplay = getMetricDisplayName(catKey, metricKey);
+        metricAggMap[metricDisplay] = {};
+
+        for (const [runName, runSeries] of Object.entries(data.series)) {
+          const runDisplay = getRunDisplayName(runName);
+          for (const [seriesLabel, points] of Object.entries(runSeries)) {
+            if (!seriesLabel.includes(metricLabel) && !seriesLabel.endsWith(metricLabel)) continue;
+            const yVals = points.map(p => p.y);
+            let aggVal = _aggregate(yVals, xMode);
+            if (aggVal == null) continue;
+            aggVal = Math.round(aggVal * 10000) / 10000;
+
+            let xLabel;
+            if (hasGroup) {
+              xLabel = seriesLabel.replace(`_${metricLabel}`, '').replace(new RegExp(`_${metricLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`), '');
+              if (xLabel === seriesLabel) xLabel = seriesLabel;
+            } else {
+              xLabel = runDisplay;
+            }
+            xLabelsSet.add(xLabel);
+            metricAggMap[metricDisplay][xLabel] = aggVal;
+          }
+        }
+      }
+
+      const xLabels = Array.from(xLabelsSet);
+      const container = _buildChartContainer(containerId, chartTitle);
+      chartArea.insertBefore(container, chartArea.firstChild);
+      const chart = echarts.init(document.getElementById(containerId));
+      chartInstances.push(chart);
+
+      const mergeAggSeries = [];
+      let ci = 0;
+      for (const metricDisplay of Object.keys(metricAggMap)) {
+        const vals = metricAggMap[metricDisplay];
+        mergeAggSeries.push({
+          name: metricDisplay,
+          type: 'bar',
+          data: xLabels.map(xl => vals[xl] ?? null),
+          itemStyle: { color: COLORS[ci % COLORS.length], decal: BAR_DECALS[ci % BAR_DECALS.length] },
+          label: { show: xLabels.length <= 12, position: 'top', color: '#656d76', fontSize: 10, formatter: p => _smartFmt(p.value) },
+          barGap: '15%',
+          barCategoryGap: '30%',
+        });
+        ci++;
+      }
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        aria: { enabled: true, decal: { show: true } },
+        tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, valueFormatter: v => _smartFmt(v) },
+        legend: { type: 'plain', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
+        grid: { top: 50, right: 20, bottom: 60, left: 60, containLabel: true },
+        xAxis: { type: 'category', data: hasGroup ? xLabels.map(xl => getGroupDisplayName(xl)) : xLabels, name: _axisXName(''), nameLocation: 'center', nameGap: 30, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76', rotate: xLabels.length > 6 ? 25 : 0, fontSize: 11 } },
+        yAxis: { type: 'value', name: _axisYName(`${allMetricDisplays.join(' / ')}（${aggLabel}）`), nameLocation: 'center', nameGap: 50, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: document.getElementById('gridLineToggle').checked, lineStyle: { color: '#eaeef2' } } },
+        series: mergeAggSeries,
+      });
+      _autoYAxisGap(chart);
+      _saveDefaultAxisNames(chart);
+      _showBarWidthCtrl(container);
+      return;
+    }
+
     for (const metricKey of selectedMetrics) {
       const metricLabel = cat.metrics[metricKey] || metricKey;  // for data matching
       const metricDisplay = getMetricDisplayName(catKey, metricKey);  // for user display
       const containerId = `chart_${Date.now()}_${metricKey}`;
-      const aggLabel = {mean:'均值', sum:'总和', last:'最终值', max:'最大值', min:'最小值'}[xMode];
       const customTitle = document.getElementById('customTitleInput').value.trim();
       const chartTitle = customTitle || `${cat.label} — ${metricDisplay}（${aggLabel}）`;
 
@@ -1321,6 +1409,121 @@ async function generateChart() {
     return;
   }
 
+  // ──────── 合并绘制模式：多个指标画在同一张图 ────────
+  const mergeMode = document.getElementById('mergeToggle').checked;
+  if (mergeMode && selectedMetrics.size > 1) {
+    const allMetricKeys = Array.from(selectedMetrics);
+    const allMetricDisplays = allMetricKeys.map(k => getMetricDisplayName(catKey, k));
+    const containerId = `chart_merged_${Date.now()}`;
+    const customTitle = document.getElementById('customTitleInput').value.trim();
+    const chartTitle = customTitle || `${cat.label} — ${allMetricDisplays.join(' / ')}`;
+
+    const container = _buildChartContainer(containerId, chartTitle);
+    chartArea.insertBefore(container, chartArea.firstChild);
+    const chart = echarts.init(document.getElementById(containerId));
+    chartInstances.push(chart);
+
+    const mergeSeriesList = [];
+    let mColorIdx = 0;
+
+    for (const metricKey of allMetricKeys) {
+      const metricLabel = cat.metrics[metricKey] || metricKey;
+      const metricDisplay = getMetricDisplayName(catKey, metricKey);
+
+      for (const [runName, runSeries] of Object.entries(data.series)) {
+        for (const [seriesLabel, points] of Object.entries(runSeries)) {
+          if (!seriesLabel.includes(metricLabel) && Object.keys(data.series).length > 1) {
+            if (!seriesLabel.endsWith(metricLabel)) continue;
+          }
+          const multiRun = Object.keys(data.series).length > 1;
+          const displayName = multiRun
+            ? `${getRunDisplayName(runName)} · ${metricDisplay}`
+            : metricDisplay;
+
+          const xyData = _transformY(points.map(p => [p.x, p.y]));
+          const seData = points.map(p => p.se != null ? p.se : null);
+          let mItemColor = COLORS[mColorIdx % COLORS.length];
+
+          const isLine = (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area' || chartType === 'step');
+          mergeSeriesList.push({
+            name: displayName,
+            type: chartType === 'area' ? 'line' : chartType === 'line_smooth' ? 'line' : chartType === 'step' ? 'line' : chartType,
+            data: xyData,
+            smooth: chartType === 'line_smooth',
+            step: chartType === 'step' ? 'middle' : undefined,
+            areaStyle: chartType === 'area' ? { opacity: 0.15 } : undefined,
+            symbol: chartType === 'scatter' ? 'circle' : isLine ? LINE_SYMBOLS[mColorIdx % LINE_SYMBOLS.length] : 'none',
+            symbolSize: chartType === 'scatter' ? 4 : isLine ? 6 : 0,
+            showSymbol: isLine ? xyData.length <= 120 : undefined,
+            lineStyle: { width: 2, type: isLine ? LINE_DASHES[mColorIdx % LINE_DASHES.length] : undefined },
+            itemStyle: { color: mItemColor },
+          });
+
+          // 误差棒
+          const showErrorBar = document.getElementById('errorBarToggle').checked;
+          if (showErrorBar && seData.some(v => v != null)) {
+            const ebData = xyData.map((pt, i) => {
+              const se = seData[i];
+              if (se == null) return null;
+              return [pt[0], pt[1] - 1.96 * se, pt[1] + 1.96 * se];
+            }).filter(v => v != null);
+            mergeSeriesList.push({
+              type: 'custom', name: displayName + ' (95%CI)', clip: true,
+              encode: { x: 0, y: [1, 2] },
+              renderItem: function(params, api) {
+                const x = api.coord([api.value(0), 0])[0];
+                const yLow = api.coord([0, api.value(1)])[1];
+                const yHigh = api.coord([0, api.value(2)])[1];
+                const hw = 4;
+                return { type: 'group', children: [
+                  { type: 'line', shape: { x1: x, y1: yLow, x2: x, y2: yHigh }, style: { stroke: mItemColor, lineWidth: 1.5 } },
+                  { type: 'line', shape: { x1: x - hw, y1: yLow, x2: x + hw, y2: yLow }, style: { stroke: mItemColor, lineWidth: 1.5 } },
+                  { type: 'line', shape: { x1: x - hw, y1: yHigh, x2: x + hw, y2: yHigh }, style: { stroke: mItemColor, lineWidth: 1.5 } },
+                ]};
+              },
+              data: ebData, z: 10,
+              tooltip: { formatter: p => `${displayName} 95%CI: [${p.data[1].toFixed(4)}, ${p.data[2].toFixed(4)}]` },
+            });
+          }
+          mColorIdx++;
+        }
+      }
+    }
+
+    const mergeOption = {
+      backgroundColor: 'transparent',
+      aria: { enabled: true, decal: { show: true } },
+      tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#d0d7de', textStyle: { color: '#1f2328', fontSize: 12 }, confine: true, valueFormatter: v => _smartFmt(v) },
+      legend: { type: 'scroll', top: 8, itemWidth: 36, itemHeight: 10, textStyle: { color: '#656d76', fontSize: 11 } },
+      grid: { top: 50, right: 20, bottom: 40, left: 60, containLabel: true },
+      xAxis: { type: 'value', name: _axisXName(data.x_label), nameLocation: 'center', nameGap: 25, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, minInterval: 1 },
+      yAxis: { type: 'value', name: _axisYName(allMetricDisplays.join(' / ') + yScaleSuffix), nameLocation: 'center', nameGap: 50, nameTextStyle: { color: '#1f2328', fontSize: 13, fontWeight: 'bold' }, axisLine: { lineStyle: { color: '#d0d7de' } }, axisLabel: { color: '#656d76' }, splitLine: { show: showGrid, lineStyle: { color: '#eaeef2' } } },
+      dataZoom: [
+        { type: 'inside', xAxisIndex: 0 },
+        { type: 'slider', xAxisIndex: 0, height: 20, bottom: 5, borderColor: '#d0d7de', backgroundColor: '#ffffff', fillerColor: 'rgba(9,105,218,0.1)', handleStyle: { color: '#0969da' }, textStyle: { color: '#656d76' } }
+      ],
+      series: mergeSeriesList,
+    };
+
+    // 基准线
+    const showMergeBaseline = document.getElementById('baselineToggle').checked;
+    if (showMergeBaseline && mergeSeriesList.length > 0) {
+      const bs = mergeSeriesList[0];
+      if (!bs.markLine) bs.markLine = { data: [] };
+      bs.markLine.silent = true;
+      bs.markLine.symbol = 'none';
+      bs.markLine.lineStyle = { type: 'dashed', color: '#cf222e', width: 1.5 };
+      bs.markLine.data.push({ yAxis: 0, label: { formatter: 'y = 0', fontSize: 10, color: '#cf222e', position: 'insideEndTop' } });
+    }
+
+    chart.setOption(mergeOption);
+    _autoYAxisGap(chart);
+    _saveDefaultAxisNames(chart);
+    _makeChartResizable(container);
+    if (mergeSeriesList.some(s => s.type === 'bar')) _showBarWidthCtrl(container);
+    return; // 合并模式结束
+  }
+
   for (const metricKey of selectedMetrics) {
     const metricLabel = cat.metrics[metricKey] || metricKey;  // for data matching
     const metricDisplay = getMetricDisplayName(catKey, metricKey);  // for user display
@@ -1495,18 +1698,21 @@ async function generateChart() {
           : seriesLabel;
 
         const xyData = _transformY(points.map(p => [p.x, p.y]));
+        // 提取 SE 数据（如果后端提供了 se 字段）
+        const seData = points.map(p => p.se != null ? p.se : null);
 
         // 排名图配色: Top10=绿, Bottom10=红
         let itemColor = COLORS[colorIdx % COLORS.length];
         if (seriesLabel.includes('Top10')) itemColor = '#1a7f37';
         else if (seriesLabel.includes('Bottom10')) itemColor = '#cf222e';
 
-        const isLine = (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area');
+        const isLine = (chartType === 'line' || chartType === 'line_smooth' || chartType === 'area' || chartType === 'step');
         const seriesOpt = {
           name: displayName,
-          type: chartType === 'area' ? 'line' : chartType === 'line_smooth' ? 'line' : chartType,
+          type: chartType === 'area' ? 'line' : chartType === 'line_smooth' ? 'line' : chartType === 'step' ? 'line' : chartType,
           data: xyData,
           smooth: chartType === 'line_smooth',
+          step: chartType === 'step' ? 'middle' : undefined,
           areaStyle: chartType === 'area' ? { opacity: 0.15 } : undefined,
           symbol: chartType === 'scatter' ? 'circle' : isLine ? LINE_SYMBOLS[colorIdx % LINE_SYMBOLS.length] : 'none',
           symbolSize: chartType === 'scatter' ? 4 : isLine ? 6 : 0,
@@ -1515,6 +1721,46 @@ async function generateChart() {
           itemStyle: { color: itemColor },
         };
         seriesList.push(seriesOpt);
+
+        // 误差棒：当 toggle 开启且有 SE 数据时，添加 custom series 渲染误差棒
+        const showErrorBar = document.getElementById('errorBarToggle').checked;
+        if (showErrorBar && seData.some(v => v != null)) {
+          const ebData = xyData.map((pt, i) => {
+            const se = seData[i];
+            if (se == null) return null;
+            const y = pt[1];
+            return [pt[0], y - 1.96 * se, y + 1.96 * se];
+          }).filter(v => v != null);
+          seriesList.push({
+            type: 'custom',
+            name: displayName + ' (95%CI)',
+            clip: true,
+            encode: { x: 0, y: [1, 2] },
+            renderItem: function(params, api) {
+              const x = api.coord([api.value(0), 0])[0];
+              const yLow = api.coord([0, api.value(1)])[1];
+              const yHigh = api.coord([0, api.value(2)])[1];
+              const halfWidth = 4;
+              return {
+                type: 'group',
+                children: [
+                  { type: 'line', shape: { x1: x, y1: yLow, x2: x, y2: yHigh }, style: { stroke: itemColor, lineWidth: 1.5 } },
+                  { type: 'line', shape: { x1: x - halfWidth, y1: yLow, x2: x + halfWidth, y2: yLow }, style: { stroke: itemColor, lineWidth: 1.5 } },
+                  { type: 'line', shape: { x1: x - halfWidth, y1: yHigh, x2: x + halfWidth, y2: yHigh }, style: { stroke: itemColor, lineWidth: 1.5 } },
+                ]
+              };
+            },
+            data: ebData,
+            z: 10,
+            tooltip: {
+              formatter: function(params) {
+                const d = params.data;
+                return `${displayName} 95%CI: [${d[1].toFixed(4)}, ${d[2].toFixed(4)}]`;
+              }
+            },
+          });
+        }
+
         colorIdx++;
       }
     }
@@ -1535,6 +1781,20 @@ async function generateChart() {
       ],
       series: seriesList,
     };
+
+    // 基准线：当 toggle 开启时，在第一个 series 上添加 y=0 基准线
+    const showBaseline = document.getElementById('baselineToggle').checked;
+    if (showBaseline && seriesList.length > 0) {
+      const baseSeries = seriesList[0];
+      if (!baseSeries.markLine) baseSeries.markLine = { data: [] };
+      baseSeries.markLine.silent = true;
+      baseSeries.markLine.symbol = 'none';
+      baseSeries.markLine.lineStyle = { type: 'dashed', color: '#cf222e', width: 1.5 };
+      baseSeries.markLine.data.push({
+        yAxis: 0,
+        label: { formatter: 'y = 0', fontSize: 10, color: '#cf222e', position: 'insideEndTop' }
+      });
+    }
 
     chart.setOption(option);
     _autoYAxisGap(chart);
@@ -2086,7 +2346,7 @@ function toggleSeriesStyle(btn) {
     divider.textContent = '横轴标签 (可改名 / ◀▶ 移动顺序):';
     panel.appendChild(divider);
     const labelContainer = document.createElement('div');
-    labelContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;';
+    labelContainer.style.cssText = 'display:flex;flex-direction:column;gap:3px;';
     panel.appendChild(labelContainer);
 
     function _rebuildLabelRows() {
@@ -2094,21 +2354,21 @@ function toggleSeriesStyle(btn) {
       const curOpt = chart.getOption();
       const curLabels = curOpt.xAxis[0].data.slice();
       curLabels.forEach((_lbl, idx) => {
-        const lItem = document.createElement('span');
-        lItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:12px;';
+        const lItem = document.createElement('div');
+        lItem.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:12px;width:100%;';
         const btnL = document.createElement('button');
         btnL.textContent = '◀'; btnL.title = '左移'; btnL.disabled = idx === 0;
-        btnL.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === 0 ? 'opacity:.3;' : '');
+        btnL.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;flex-shrink:0;' + (idx === 0 ? 'opacity:.3;' : '');
         btnL.onclick = () => _swapBars(idx, idx - 1);
         const btnR = document.createElement('button');
         btnR.textContent = '▶'; btnR.title = '右移'; btnR.disabled = idx === curLabels.length - 1;
-        btnR.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;' + (idx === curLabels.length - 1 ? 'opacity:.3;' : '');
+        btnR.style.cssText = 'cursor:pointer;border:1px solid var(--border);background:var(--bg2);border-radius:3px;padding:1px 5px;font-size:12px;flex-shrink:0;' + (idx === curLabels.length - 1 ? 'opacity:.3;' : '');
         btnR.onclick = () => _swapBars(idx, idx + 1);
         const lInp = document.createElement('input');
         lInp.type = 'text';
         lInp.value = typeof _lbl === 'string' ? _lbl.replace(/\n/g, ' ') : String(_lbl);
         lInp.title = '修改后回车确认';
-        lInp.style.cssText = 'background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:12px;padding:2px 6px;width:120px;';
+        lInp.style.cssText = 'background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:12px;padding:2px 6px;flex:1;min-width:200px;';
         const applyLabel = () => {
           const newLabel = lInp.value.trim();
           if (!newLabel) return;
@@ -2296,6 +2556,345 @@ function escapeHtml(str) {
 window.addEventListener('resize', () => {
   chartInstances.forEach(c => c.resize());
 });
+
+// ──────── 市场效率排名 ────────
+async function showEfficiencyRanking() {
+  const chartArea = document.getElementById('chartArea');
+  const loadingId = `rank_loading_${Date.now()}`;
+  const loadingEl = document.createElement('div');
+  loadingEl.id = loadingId;
+  loadingEl.className = 'chart-container';
+  loadingEl.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-secondary);">⏳ 正在计算所有实验的效率排名（可能需要 10-30 秒）...</div>`;
+  chartArea.insertBefore(loadingEl, chartArea.firstChild);
+
+  try {
+    const res = await fetch('/api/efficiency_ranking');
+    const data = await res.json();
+    loadingEl.remove();
+
+    if (data.error) {
+      showToast(data.error, 'error');
+      return;
+    }
+
+    const rows = data.ranking;
+    if (!rows || rows.length === 0) {
+      showToast('无可用实验数据', 'warn');
+      return;
+    }
+
+    function fmt(v, d) { return v != null ? Number(v).toFixed(d || 3) : '—'; }
+    function pStars(p) {
+      if (p == null) return '';
+      if (p < 0.001) return ' ***';
+      if (p < 0.01) return ' **';
+      if (p < 0.05) return ' *';
+      if (p < 0.10) return ' †';
+      return '';
+    }
+
+    // 计算排名颜色（梯度：绿→黄→红）
+    const maxScore = Math.max(...rows.map(r => r.score));
+    function scoreColor(s) {
+      const ratio = Math.min(s / (maxScore || 1), 1);
+      const r = Math.round(ratio * 220);
+      const g = Math.round((1 - ratio) * 180);
+      return `rgb(${r},${g},50)`;
+    }
+
+    let html = `<div style="padding:16px; font-family:monospace; overflow-x:auto;">`;
+    html += `<h3 style="margin-bottom:12px;">🏆 市场效率排名（${rows.length} 个实验）</h3>`;
+    html += `<p style="font-size:11px; color:#999; margin-bottom:8px;">Score = |CAAR| + 0.5×CI宽度 + 漂移幅度（越小=越有效）</p>`;
+
+    html += `<table style="border-collapse:collapse; font-size:11px; width:100%;">`;
+    html += `<tr style="background:#f0f0f0;">
+      <th style="padding:4px 6px; border:1px solid #ddd;">#</th>
+      <th style="padding:4px 6px; border:1px solid #ddd; text-align:left;">实验</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">n</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">Score</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">|CAAR|%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">CAR_std%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">CI宽%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">漂移%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">有效性</th>
+      <th style="padding:4px 6px; border:1px solid #ddd; font-size:10px;" title="Robustness check α=0.05">α=.05</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">CAAR(1)%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">CAAR(3)%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">CAAR(5)%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;" title="利好新闻日 CAAR(0,5)">利好日%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;" title="利空新闻日 CAAR(0,5)">利空日%</th>
+      <th style="padding:4px 6px; border:1px solid #ddd;">p̄</th>
+    </tr>`;
+
+    for (const r of rows) {
+      const runDisplay = getRunDisplayName(r.run);
+      // 有效性标签
+      let effTag, effColor;
+      if (r.efficient === 'efficient') {
+        effTag = '✅ Consistent'; effColor = '#1a7f37';
+      } else if (r.efficient === 'inefficient_grouped') {
+        effTag = '⚠️ Conditional'; effColor = '#cf222e';
+      } else {
+        effTag = '❌ Against'; effColor = '#cf222e';
+      }
+      let effDetail = '';
+      if (r.sig_horizons && r.sig_horizons.length > 0) effDetail += `h=${r.sig_horizons.join(',')}`;
+      if (r.sig_groups && r.sig_groups.length > 0) effDetail += (effDetail ? ' ' : '') + r.sig_groups.join(',');
+      const bg = r.efficient === 'efficient' ? '#f0fff4' : '#fff5f5';
+      const medal = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : '';
+      html += `<tr style="background:${bg};">`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:center;">${medal}${r.rank}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.run}">${runDisplay}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${r.n_events}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right; font-weight:bold; color:${scoreColor(r.score)};">${fmt(r.score, 3)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${fmt(r.abs_caar, 3)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${fmt(r.car_std, 3)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${fmt(r.ci_width, 3)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${fmt(r.drift, 3)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:center; white-space:nowrap;"><span style="color:${effColor}; font-weight:bold;">${effTag}</span>${effDetail ? '<br><span style="font-size:10px; color:#888;">' + effDetail + '</span>' : ''}</td>`;
+      // α=0.05 robustness
+      let eff05Tag, eff05Color;
+      if (r.efficient_05 === 'efficient') { eff05Tag = '✅'; eff05Color = '#1a7f37'; }
+      else if (r.efficient_05 === 'inefficient_grouped') { eff05Tag = '⚠️'; eff05Color = '#cf222e'; }
+      else { eff05Tag = '❌'; eff05Color = '#cf222e'; }
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:center;"><span style="color:${eff05Color};">${eff05Tag}</span></td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${r.caar_1 >= 0 ? '+' : ''}${fmt(r.caar_1, 3)}${pStars(r.p_1)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${r.caar_3 >= 0 ? '+' : ''}${fmt(r.caar_3, 3)}${pStars(r.p_3)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${r.caar_5 >= 0 ? '+' : ''}${fmt(r.caar_5, 3)}${pStars(r.p_5)}</td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right; font-size:10px;">${r.caar_pos_5 != null ? (r.caar_pos_5 >= 0 ? '+' : '') + fmt(r.caar_pos_5, 2) + pStars(r.p_pos_5) : '—'}<br><span style="color:#999;">(n=${r.n_pos || 0})</span></td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right; font-size:10px;">${r.caar_neg_5 != null ? (r.caar_neg_5 >= 0 ? '+' : '') + fmt(r.caar_neg_5, 2) + pStars(r.p_neg_5) : '—'}<br><span style="color:#999;">(n=${r.n_neg || 0})</span></td>`;
+      html += `<td style="padding:3px 6px; border:1px solid #ddd; text-align:right;">${fmt(r.p_avg, 3)}</td>`;
+      html += `</tr>`;
+    }
+    html += `</table>`;
+
+    // 简要结论
+    const effCount = rows.filter(r => r.efficient === 'efficient').length;
+    const partCount = rows.filter(r => r.efficient === 'partial').length;
+    const ineffCount = rows.filter(r => r.efficient === 'inefficient' || r.efficient === 'inefficient_grouped').length;
+    const grpIneffCount = rows.filter(r => r.efficient === 'inefficient_grouped').length;
+    const top3 = rows.slice(0, 3).map(r => getRunDisplayName(r.run)).join('、');
+    const bot3 = rows.slice(-3).reverse().map(r => getRunDisplayName(r.run)).join('、');
+    html += `<div style="margin-top:12px; padding:10px; background:#fafafa; border:1px solid #eee; border-radius:6px; font-size:12px; line-height:1.8;">`;
+    html += `<b>统计汇总</b>：<span style="color:#1a7f37;">✅ 有效 ${effCount}</span> / <span style="color:#9a6700;">⚠️ 漂移 ${partCount}</span> / <span style="color:#cf222e;">❌ 无效 ${ineffCount}${grpIneffCount > 0 ? '(分组' + grpIneffCount + ')' : ''}</span>（共 ${rows.length} 个实验）<br>`;
+    html += `<b>最有效</b>：${top3}<br>`;
+    html += `<b>最不有效</b>：${bot3}<br>`;
+    html += `<span style="color:#999;">判定标准 (α=0.10, Market-Adjusted Model)：基于 Block Bootstrap p-value (B=2000, block=5)。Consistent=所有CAAR及分组 boot_p≥0.10 | Conditional=整体不显著但分组显著 | Against=整体CAAR显著<br>Ex-ante分组：twitter-xlm-roberta-base-sentiment 情感模型(事前分组, 无look-ahead bias) | t检验仅供对照 | †p<0.10 *p<0.05 **p<0.01 ***p<0.001</span>`;
+    html += `</div></div>`;
+
+    const container = document.createElement('div');
+    container.className = 'chart-container';
+    container.innerHTML = `
+      <div class="chart-header">
+        <span class="chart-title" ondblclick="editChartTitle(this)">🏆 市场效率排名</span>
+        <div class="chart-actions">
+          <button class="btn btn-xs btn-danger" onclick="this.closest('.chart-container').remove()">✕</button>
+        </div>
+      </div>
+      <div style="background:var(--card); border-radius:0 0 8px 8px;">${html}</div>`;
+    chartArea.insertBefore(container, chartArea.firstChild);
+
+  } catch (e) {
+    document.getElementById(loadingId)?.remove();
+    showToast(`效率排名请求失败: ${e.message}`, 'error');
+  }
+}
+
+// ──────── CAR/CAAR 统计检验 ────────
+async function runCARTests() {
+  const runs = Array.from(selectedRuns);
+  if (runs.length === 0) {
+    showToast('请先选择至少一个实验', 'warn');
+    return;
+  }
+
+  const chartArea = document.getElementById('chartArea');
+
+  for (const run of runs) {
+    try {
+      const res = await fetch(`/api/car_tests?run=${encodeURIComponent(run)}`);
+      const data = await res.json();
+      if (data.error) {
+        showToast(`${run}: ${data.error}`, 'error');
+        continue;
+      }
+
+      const t = data.tests;
+      const runDisplay = getRunDisplayName(run);
+
+      // 显著性星号
+      function stars(p) {
+        if (p == null) return '';
+        if (p < 0.001) return ' ***';
+        if (p < 0.01) return ' **';
+        if (p < 0.05) return ' *';
+        if (p < 0.10) return ' †';
+        return '';
+      }
+      function fmt(v, dec) {
+        if (v == null) return '—';
+        return Number(v).toFixed(dec || 4);
+      }
+      function pFmt(v) {
+        if (v == null) return '—';
+        if (v < 0.001) return '<0.001';
+        return v.toFixed(4);
+      }
+
+      // 构建 HTML 表格
+      let html = `<div style="padding:16px; font-family:monospace;">`;
+      html += `<h3 style="margin-bottom:12px;">📊 ${runDisplay} — CAR/CAAR 统计检验</h3>`;
+
+      // Panel A: CAAR 显著性 (Market-Adjusted Model)
+      html += `<h4 style="margin:8px 0 4px;">Panel A: CAAR 显著性检验 (Market-Adjusted, Block Bootstrap, H₀: CAAR = 0, α=0.10)</h4>`;
+      html += `<table style="border-collapse:collapse; font-size:12px; width:100%;">`;
+      html += `<tr style="background:#f0f0f0;"><th style="padding:4px 8px; border:1px solid #ddd;">Horizon</th>
+        <th>CAAR(%)</th><th>SE(%)</th><th>t-stat</th><th>p(t)</th><th>p(boot)</th>
+        <th>95% CI(%)</th><th>Boot 95% CI(%)</th><th>n</th><th>结论</th></tr>`;
+      for (const h of [1, 3, 5]) {
+        const p = t[`p_value_${h}`];
+        const bp = t[`boot_p_${h}`];
+        const sig = bp != null && bp < 0.10;
+        const bgColor = sig ? '#fff3f3' : '#f3fff3';
+        html += `<tr style="background:${bgColor};">`;
+        html += `<td style="padding:4px 8px; border:1px solid #ddd; font-weight:bold;">CAR(0,${h})</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:right;">${fmt(t[`caar_${h}`])}${stars(p)}</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:right;">${fmt(t[`se_${h}`])}</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:right;">${fmt(t[`t_stat_${h}`], 3)}</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:right;">${pFmt(p)}</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:right;">${pFmt(bp)}</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:center;">[${fmt(t[`ci_lower_${h}`])}, ${fmt(t[`ci_upper_${h}`])}]</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:center;">[${fmt(t[`boot_ci_lower_${h}`])}, ${fmt(t[`boot_ci_upper_${h}`])}]</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:right;">${t[`n_${h}`] ?? '—'}</td>`;
+        html += `<td style="border:1px solid #ddd; text-align:center;">${sig ? '❌ 显著≠0' : '✅ 不显著'}</td>`;
+        html += `</tr>`;
+      }
+      html += `</table>`;
+
+      // Panel B: 新闻情绪分组检验 (ex-ante)
+      html += `<h4 style="margin:12px 0 4px;">Panel B: 新闻情绪分组 CAAR 检验 (Ex-ante, 双尾 α=0.10)</h4>`;
+      html += `<p style="font-size:11px; color:#666; margin:0 0 4px;">用 twitter-xlm-roberta-base-sentiment 模型对新闻标题打分并分为利好/利空日（Ex-ante，无 look-ahead bias），检验各组 CAAR(0,h) 是否≠0</p>`;
+      html += `<table style="border-collapse:collapse; font-size:12px; width:100%;">`;
+      html += `<tr style="background:#f0f0f0;"><th style="padding:4px 8px; border:1px solid #ddd;">组别</th>
+        <th>Horizon</th><th>CAAR(%)</th><th>SE(%)</th><th>t-stat</th><th>p(t)</th><th>p(boot)</th><th>n</th><th>结论(α=0.10)</th></tr>`;
+      for (const [grp, label] of [['pos', '📈 利好新闻日'], ['neg', '📉 利空新闻日']]) {
+        const nGrp = t[`n_${grp}`] ?? 0;
+        for (const h of [1, 3, 5]) {
+          const caar_g = t[`caar_${grp}_${h}`];
+          const se_g = t[`se_${grp}_${h}`];
+          const t_g = t[`t_${grp}_${h}`];
+          const p_g = t[`p_${grp}_${h}`];
+          const bp_g = t[`boot_p_${grp}_${h}`];
+          const sig = bp_g != null && bp_g < 0.10;
+          const bgColor = sig ? '#fff3f3' : '#f3fff3';
+          html += `<tr style="background:${bgColor};">`;
+          html += `<td style="padding:4px 8px; border:1px solid #ddd;">${label} (n=${nGrp})</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:center;">h=${h}</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:right;">${fmt(caar_g)}${stars(bp_g)}</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:right;">${fmt(se_g)}</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:right;">${fmt(t_g, 3)}</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:right; font-weight:bold;">${pFmt(p_g)}</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:right;">${pFmt(bp_g)}</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:right;">${nGrp}</td>`;
+          html += `<td style="border:1px solid #ddd; text-align:center;">${sig ? '❌ 异常收益' : '✅ 有效吸收'}</td>`;
+          html += `</tr>`;
+        }
+      }
+      html += `</table>`;
+      html += `<p style="font-size:11px; color:#999; margin-top:4px;">分组依据（Ex-ante）：用 twitter-xlm-roberta-base-sentiment 情感模型对新闻标题打分，score = p(pos)−p(neg)，每日均值>0为利好日、<0为利空日。</p>`;
+
+      // Panel C: 解读摘要
+      html += `<h4 style="margin:12px 0 4px;">Panel C: 市场效率判断</h4>`;
+      html += `<div style="background:#fafafa; padding:10px; border:1px solid #eee; border-radius:6px; font-size:12px; line-height:1.8;">`;
+
+      // 判定以 block bootstrap p 为主（t-test 仅作对照）
+      const allCAARInsig = [1, 3, 5].every(h => {
+        const bp = t[`boot_p_${h}`];
+        return bp == null || bp >= 0.10;
+      });
+
+      // 分组检验：利好/利空组 h=1,3,5 bootstrap p < 0.10
+      const groupSigs = [];
+      for (const [grp, label] of [['pos', '利好新闻'], ['neg', '利空新闻']]) {
+        for (const h of [1, 3, 5]) {
+          const bp_g = t[`boot_p_${grp}_${h}`] ?? 1;
+          if (bp_g != null && bp_g < 0.10) {
+            const caar_g = t[`caar_${grp}_${h}`] ?? 0;
+            const p_g = t[`p_${grp}_${h}`] ?? 1;
+            groupSigs.push({grp, label, h, p: p_g, caar: caar_g});
+          }
+        }
+      }
+      const anyGroupSig = groupSigs.length > 0;
+
+      if (!allCAARInsig) {
+        html += `<b style="color:#cf222e;">Evidence against semi-strong efficiency</b><br>`;
+        html += `CAAR 显著不为零 (α=0.10)，存在统计显著的异常收益，表明新闻信息未被完全或迅速纳入价格。`;
+        const posH = [1, 3, 5].filter(h => (t[`caar_${h}`] ?? 0) > 0 && (t[`boot_p_${h}`] ?? 1) < 0.10);
+        const negH = [1, 3, 5].filter(h => (t[`caar_${h}`] ?? 0) < 0 && (t[`boot_p_${h}`] ?? 1) < 0.10);
+        if (posH.length > 0) html += `<br>→ h=${posH.join(',')} 存在显著正异常收益（反应不足/持续动量）`;
+        if (negH.length > 0) html += `<br>→ h=${negH.join(',')} 存在显著负异常收益（过度反应/恐慌）`;
+      } else if (anyGroupSig) {
+        html += `<b style="color:#cf222e;">Conditional evidence against efficiency</b><br>`;
+        html += `整体 CAAR 不显著（利好/利空抵消），但按新闻情绪 ex-ante 分组后存在显著异常收益，表明市场对不同类型信息的定价效率存在差异：`;
+        for (const s of groupSigs) {
+          const interp = s.grp === 'pos'
+              ? (s.caar > 0 ? '利好新闻后持续正收益（反应不足/动量）' : '利好新闻后负收益（过度反应/反转）')
+              : (s.caar < 0 ? '利空新闻后持续负收益（反应不足/恐慌延续）' : '利空新闻后正收益（过度反应/反转）');
+          html += `<br>→ ${s.label}日 h=${s.h}: CAAR=${(s.caar).toFixed(2)}%(p=${s.p.toFixed(4)}) — ${interp}`;
+        }
+      } else {
+        html += `<b style="color:#1a7f37;">Consistent with semi-strong efficiency</b><br>`;
+        html += `所有 CAAR 不显著异于零，新闻情绪分组检验亦不显著 (双尾 α=0.10)，信息被迅速纳入价格。`;
+      }
+
+      // 辅助信息：延迟吸收(drift) — 不参与判定，仅供参考
+      const driftPairs = [['1', '3'], ['3', '5']];
+      const driftInfos = [];
+      for (const [h1, h2] of driftPairs) {
+        const dp = t[`delta_p_${h1}_${h2}`];
+        if (dp != null && dp < 0.10) {
+          const dv = t[`delta_${h1}_${h2}`];
+          driftInfos.push(`CAR(0,${h2})−CAR(0,${h1})=${dv != null ? dv.toFixed(3) + '%' : '?'}(p=${dp.toFixed(4)})`);
+        }
+      }
+      if (driftInfos.length > 0) {
+        html += `<br><span style="color:#9a6700; font-size:11px;">📌 辅助信息 — 增量漂移: ${driftInfos.join('; ')}（仅供参考，不影响判定）</span>`;
+      }
+
+      // Robustness: α=0.05
+      const allInsig05 = [1, 3, 5].every(h => (t[`boot_p_${h}`] ?? 1) >= 0.05);
+      const anyGrpSig05 = ['pos', 'neg'].some(grp => [1, 3, 5].some(h => (t[`boot_p_${grp}_${h}`] ?? 1) < 0.05));
+      let rob05;
+      if (!allInsig05) rob05 = 'Against';
+      else if (anyGrpSig05) rob05 = 'Conditional';
+      else rob05 = 'Consistent';
+      const rob05Color = rob05 === 'Consistent' ? '#1a7f37' : '#cf222e';
+      html += `<br><span style="font-size:11px; color:${rob05Color};">Robustness (α=0.05): <b>${rob05}</b></span>`;
+      html += `</div>`;
+
+      html += `<p style="margin-top:8px; font-size:11px; color:#999;">†p<0.10, *p<0.05, **p<0.01, ***p<0.001 | 判定基于 Block Bootstrap p (B=2000, block=5) | t-test 仅供对照 | 正常收益: Market-Adjusted Model</p>`;
+      html += `</div>`;
+
+      // 创建图表容器展示
+      const containerId = `test_${Date.now()}_${run}`;
+      const container = document.createElement('div');
+      container.className = 'chart-container';
+      container.innerHTML = `
+        <div class="chart-header">
+          <span class="chart-title" ondblclick="editChartTitle(this)">📊 ${runDisplay} 统计检验</span>
+          <div class="chart-actions">
+            <button class="btn btn-xs btn-danger" onclick="this.closest('.chart-container').remove()">✕</button>
+          </div>
+        </div>
+        <div style="background:var(--card); border-radius:0 0 8px 8px;">${html}</div>`;
+      chartArea.insertBefore(container, chartArea.firstChild);
+
+    } catch (e) {
+      showToast(`${run}: 请求失败 - ${e.message}`, 'error');
+    }
+  }
+}
 
 function toggleGridLines() {
   const show = document.getElementById('gridLineToggle').checked;

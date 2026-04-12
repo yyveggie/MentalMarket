@@ -282,21 +282,124 @@ def rolling_runs_test(
 
 # ──────── Semi-strong: Cumulative Abnormal Return ────────
 
+# ── Ex-ante news sentiment classifier (transformer model) ──
+
+_SENT_CACHE: dict[str, float] = {}  # title → score cache (in-process)
+_SENT_CLASSIFIER = None  # lazy-loaded pipeline
+
+
+def _get_sentiment_classifier():
+    """Lazy-load the sentiment classification pipeline (singleton)."""
+    global _SENT_CLASSIFIER
+    if _SENT_CLASSIFIER is None:
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline as hf_pipeline
+        model_name = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        import torch
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = 0
+        else:
+            device = -1
+        _SENT_CLASSIFIER = hf_pipeline(
+            "text-classification", model=model, tokenizer=tokenizer,
+            device=device, top_k=None, truncation=True, max_length=512,
+        )
+    return _SENT_CLASSIFIER
+
+
+def _score_from_probs(probs: list[dict]) -> float:
+    """Convert model output probabilities to sentiment score in [-1, 1].
+
+    Score = p(positive) - p(negative).
+    """
+    p_map = {"positive": 0.0, "neutral": 0.0, "negative": 0.0}
+    for item in probs:
+        label = item["label"].lower().strip()
+        if "positive" in label or "label_2" in label:
+            p_map["positive"] = item["score"]
+        elif "negative" in label or "label_0" in label:
+            p_map["negative"] = item["score"]
+        else:
+            p_map["neutral"] = item["score"]
+    return p_map["positive"] - p_map["negative"]
+
+
+def classify_news_sentiment_batch(titles: list[str]) -> list[float]:
+    """Classify a batch of news headlines, return sentiment scores in [-1, 1]."""
+    classifier = _get_sentiment_classifier()
+    uncached = [(i, t) for i, t in enumerate(titles) if t not in _SENT_CACHE]
+    if uncached:
+        texts = [t for _, t in uncached]
+        results = classifier(texts, batch_size=64)
+        for (i, t), probs in zip(uncached, results):
+            _SENT_CACHE[t] = _score_from_probs(probs)
+    return [_SENT_CACHE[t] for t in titles]
+
+
+def classify_event_day_sentiment(
+    news_list: list[dict],
+) -> dict[int, str]:
+    """Classify each event day's net sentiment using a transformer model.
+
+    Accepts news_list items with either 'title' or 'content' field,
+    and 'day' or 'trading_day' for the day number.
+
+    Returns {day: 'positive'/'negative'/'neutral'}.
+    Sentiment score per headline is in [-1, 1]; day score = mean of its headlines.
+    Day label: >0 → positive, <0 → negative, =0 → neutral.
+    """
+    from collections import defaultdict
+    day_titles: dict[int, list[str]] = defaultdict(list)
+    for item in news_list:
+        d = item.get("day") or item.get("trading_day")
+        if not isinstance(d, (int, float)):
+            continue
+        title = (item.get("title") or item.get("content") or "").strip()
+        if title:
+            day_titles[int(d)].append(title)
+
+    # Batch all unique titles at once for efficiency
+    all_titles = list({t for titles in day_titles.values() for t in titles})
+    if all_titles:
+        classify_news_sentiment_batch(all_titles)  # populates cache
+
+    result: dict[int, str] = {}
+    for day, titles in day_titles.items():
+        scores = [_SENT_CACHE.get(t, 0.0) for t in titles]
+        avg = sum(scores) / len(scores) if scores else 0.0
+        if avg > 0:
+            result[day] = "positive"
+        elif avg < 0:
+            result[day] = "negative"
+        else:
+            result[day] = "neutral"
+    return result
+
+
 def compute_event_car(
     event_days: list[int],
     all_days: list[int],
     returns: list[float],
     horizons: list[int] | None = None,
     estimation_window: int = 20,
+    model: str = "market_adjusted",
 ) -> list[dict]:
     """Compute Cumulative Abnormal Returns (CAR) around news events.
 
+    Args:
+        model: Normal return model.
+            - "mean_adjusted": per-event estimation window mean (MacKinlay 1997 default)
+            - "market_adjusted": global average return across the full sample
+
     For each event day:
-    1. Estimate expected return from the [t-estimation_window, t-1] window (mean return).
-    2. For each horizon h in horizons, compute CAR(0, h) = sum of abnormal returns from t to t+h.
+    1. Estimate expected return using the chosen model.
+    2. For each horizon h, compute CAR(0, h) = sum of abnormal returns from t to t+h.
 
     Returns:
-        list of {event_day, car_1, car_3, car_5, abs_car_1, abs_car_3, abs_car_5}
+        list of {event_day, car_1, car_3, car_5}
     """
     if horizons is None:
         horizons = [1, 3, 5]
@@ -306,21 +409,27 @@ def compute_event_car(
     for idx, d in enumerate(all_days):
         day_to_idx[d] = idx
 
+    # Global average return for market-adjusted model
+    global_mean_r = sum(returns) / len(returns) if returns else 0.0
+
     results: list[dict] = []
     for ev_day in event_days:
         ev_idx = day_to_idx.get(ev_day)
         if ev_idx is None:
             continue
 
-        # Estimation window: [ev_idx - estimation_window, ev_idx - 1]
-        est_start = ev_idx - estimation_window
-        if est_start < 0:
-            est_start = 0
-        est_end = ev_idx
-        if est_end - est_start < 10:
-            continue  # Too few samples for reliable expected return
-        est_returns = returns[est_start:est_end]
-        expected_r = sum(est_returns) / len(est_returns) if est_returns else 0.0
+        if model == "market_adjusted":
+            expected_r = global_mean_r
+        else:
+            # Mean-adjusted: estimation window mean
+            est_start = ev_idx - estimation_window
+            if est_start < 0:
+                est_start = 0
+            est_end = ev_idx
+            if est_end - est_start < 10:
+                continue  # Too few samples for reliable expected return
+            est_returns = returns[est_start:est_end]
+            expected_r = sum(est_returns) / len(est_returns) if est_returns else 0.0
 
         row: dict = {"event_day": ev_day}
         for h in horizons:
@@ -328,11 +437,9 @@ def compute_event_car(
             end_idx = min(ev_idx + h + 1, len(returns))
             if ev_idx >= len(returns):
                 row[f"car_{h}"] = float("nan")
-                row[f"abs_car_{h}"] = float("nan")
                 continue
             ar_sum = sum(returns[t] - expected_r for t in range(ev_idx, end_idx))
             row[f"car_{h}"] = ar_sum
-            row[f"abs_car_{h}"] = abs(ar_sum)
         results.append(row)
 
     return results
@@ -344,8 +451,7 @@ def aggregate_car_by_day(
 ) -> list[dict]:
     """Aggregate CAR metrics per event day (average across events on same day).
 
-    Returns list of {trading_day, avg_car_1, avg_car_3, avg_car_5,
-                     avg_abs_car_1, avg_abs_car_3, avg_abs_car_5, event_count}.
+    Returns list of {trading_day, avg_car_1, avg_car_3, avg_car_5, event_count}.
     """
     if horizons is None:
         horizons = [1, 3, 5]
@@ -361,8 +467,360 @@ def aggregate_car_by_day(
         row: dict = {"trading_day": day, "event_count": len(recs)}
         for h in horizons:
             car_vals = [r[f"car_{h}"] for r in recs if not math.isnan(r.get(f"car_{h}", float("nan")))]
-            abs_car_vals = [r[f"abs_car_{h}"] for r in recs if not math.isnan(r.get(f"abs_car_{h}", float("nan")))]
-            row[f"avg_car_{h}"] = (sum(car_vals) / len(car_vals)) if car_vals else float("nan")
-            row[f"avg_abs_car_{h}"] = (sum(abs_car_vals) / len(abs_car_vals)) if abs_car_vals else float("nan")
+            n = len(car_vals)
+            mean = (sum(car_vals) / n) if n else float("nan")
+            row[f"avg_car_{h}"] = mean
+            if n > 1:
+                variance = sum((v - mean) ** 2 for v in car_vals) / (n - 1)
+                row[f"avg_car_{h}_se"] = math.sqrt(variance / n)
+            else:
+                row[f"avg_car_{h}_se"] = float("nan")
         results.append(row)
     return results
+
+
+def compute_caar(
+    car_records: list[dict],
+    horizons: list[int] | None = None,
+) -> dict[str, float]:
+    """Compute CAAR (Cumulative Average Abnormal Return) across all events.
+
+    CAAR(h) = mean of CAR(0,h) over all events, giving a single summary
+    number per horizon that reflects the *typical* market response pattern.
+
+    Returns dict like {"caar_1": 0.003, "caar_3": 0.005, "caar_5": 0.002}.
+    """
+    if horizons is None:
+        horizons = [1, 3, 5]
+
+    result: dict[str, float] = {}
+    for h in horizons:
+        vals = [
+            r[f"car_{h}"]
+            for r in car_records
+            if not math.isnan(r.get(f"car_{h}", float("nan")))
+        ]
+        n = len(vals)
+        mean = (sum(vals) / n) if n else float("nan")
+        result[f"caar_{h}"] = mean
+        # 标准误 SE = std / sqrt(n)
+        if n > 1:
+            variance = sum((v - mean) ** 2 for v in vals) / (n - 1)
+            result[f"caar_{h}_se"] = math.sqrt(variance / n)
+        else:
+            result[f"caar_{h}_se"] = float("nan")
+    return result
+
+
+def _block_bootstrap_means(
+    vals: list[float],
+    n_bootstrap: int,
+    block_size: int,
+    rng,
+) -> list[float]:
+    """Circular block bootstrap for CAAR mean estimation.
+
+    Accounts for cross-sectional dependence between overlapping event windows.
+    Draws ceil(n/block_size) contiguous blocks (with wrap-around) to form each
+    bootstrap sample of size n.
+    """
+    n = len(vals)
+    if n < 2:
+        return []
+    bs = min(block_size, n)
+    n_blocks = math.ceil(n / bs)
+    boot_means: list[float] = []
+    for _ in range(n_bootstrap):
+        sample: list[float] = []
+        for _ in range(n_blocks):
+            start = rng.randint(0, n - 1)
+            for j in range(bs):
+                sample.append(vals[(start + j) % n])
+        # Trim to exactly n
+        sample = sample[:n]
+        boot_means.append(sum(sample) / n)
+    return boot_means
+
+
+def compute_car_significance(
+    car_records: list[dict],
+    horizons: list[int] | None = None,
+    n_bootstrap: int = 1000,
+    event_sentiments: dict[int, str] | None = None,
+    block_size: int = 5,
+) -> dict:
+    """Compute statistical significance tests for CAR / CAAR.
+
+    Args:
+        event_sentiments: Optional mapping {event_day: 'positive'/'negative'/'neutral'}
+            for ex-ante sentiment grouping. If None, sentiment-grouped tests are skipped.
+        block_size: Block size for circular block bootstrap (default 5).
+            Accounts for cross-sectional dependence due to overlapping event windows.
+
+    Returns a dict with:
+    - For each horizon h:
+      - caar_{h}: mean CAR
+      - se_{h}: standard error
+      - t_stat_{h}: t-statistic (H0: CAAR=0)
+      - p_value_{h}: two-sided p-value
+      - ci_lower_{h}, ci_upper_{h}: 95% confidence interval
+      - n_{h}: number of events
+    - For consecutive horizon pairs (h1→h2):
+      - delta_{h1}_{h2}: mean incremental CAR
+      - delta_t_{h1}_{h2}: t-stat for paired difference
+      - delta_p_{h1}_{h2}: p-value for paired difference
+      - drift_{h1}_{h2}: "none" / "positive_drift" / "negative_drift"
+    - Bootstrap CI for CAAR (more robust for non-normal distributions):
+      - boot_ci_lower_{h}, boot_ci_upper_{h}: bootstrap 95% CI
+    """
+    import random
+
+    if horizons is None:
+        horizons = [1, 3, 5]
+
+    # Sort records by event_day to preserve temporal order for block bootstrap
+    car_records = sorted(car_records, key=lambda r: r.get("event_day", 0))
+
+    result: dict = {}
+
+    # ── Per-horizon tests ──
+    car_vals_by_h: dict[int, list[float]] = {}
+    for h in horizons:
+        vals = [
+            r[f"car_{h}"]
+            for r in car_records
+            if not math.isnan(r.get(f"car_{h}", float("nan")))
+        ]
+        car_vals_by_h[h] = vals
+        n = len(vals)
+        result[f"n_{h}"] = n
+
+        if n < 2:
+            for key in [f"caar_{h}", f"se_{h}", f"t_stat_{h}", f"p_value_{h}",
+                        f"ci_lower_{h}", f"ci_upper_{h}",
+                        f"boot_ci_lower_{h}", f"boot_ci_upper_{h}"]:
+                result[key] = float("nan")
+            continue
+
+        mean = sum(vals) / n
+        variance = sum((v - mean) ** 2 for v in vals) / (n - 1)
+        se = math.sqrt(variance / n)
+        t_stat = mean / se if se > 0 else float("nan")
+
+        # Two-sided p-value using t-distribution approximation
+        # Use normal approximation for large n (>30), otherwise scipy-free t approx
+        df = n - 1
+        p_value = _two_sided_t_pvalue(t_stat, df)
+
+        # 95% CI: mean ± t_crit * SE
+        t_crit = _t_critical_95(df)
+        ci_lower = mean - t_crit * se
+        ci_upper = mean + t_crit * se
+
+        result[f"caar_{h}"] = mean
+        result[f"se_{h}"] = se
+        result[f"t_stat_{h}"] = t_stat
+        result[f"p_value_{h}"] = p_value
+        result[f"ci_lower_{h}"] = ci_lower
+        result[f"ci_upper_{h}"] = ci_upper
+
+        # Block bootstrap 95% CI + bootstrap p-value
+        # Uses circular block bootstrap to account for cross-sectional dependence
+        if n_bootstrap > 0 and n >= 5:
+            rng = random.Random(42)
+            boot_means = _block_bootstrap_means(vals, n_bootstrap, block_size, rng)
+            boot_means.sort()
+            lo_idx = max(0, int(0.025 * n_bootstrap))
+            hi_idx = min(n_bootstrap - 1, int(0.975 * n_bootstrap))
+            result[f"boot_ci_lower_{h}"] = boot_means[lo_idx]
+            result[f"boot_ci_upper_{h}"] = boot_means[hi_idx]
+            # Bootstrap p-value (two-sided): under H0 (centered at 0),
+            # proportion of |boot_mean - observed_mean| >= |observed_mean|
+            n_extreme = sum(1 for bm in boot_means if abs(bm - mean) >= abs(mean))
+            result[f"boot_p_{h}"] = n_extreme / n_bootstrap
+        else:
+            result[f"boot_ci_lower_{h}"] = float("nan")
+            result[f"boot_ci_upper_{h}"] = float("nan")
+            result[f"boot_p_{h}"] = float("nan")
+
+    # ── Incremental (drift) tests: paired differences ──
+    for i in range(len(horizons) - 1):
+        h1, h2 = horizons[i], horizons[i + 1]
+        tag = f"{h1}_{h2}"
+
+        # Paired differences: for events that have both horizons
+        diffs = []
+        for r in car_records:
+            v1 = r.get(f"car_{h1}", float("nan"))
+            v2 = r.get(f"car_{h2}", float("nan"))
+            if not math.isnan(v1) and not math.isnan(v2):
+                diffs.append(v2 - v1)
+
+        n_d = len(diffs)
+        result[f"delta_n_{tag}"] = n_d
+
+        if n_d < 2:
+            for key in [f"delta_{tag}", f"delta_t_{tag}", f"delta_p_{tag}", f"drift_{tag}"]:
+                result[key] = float("nan") if key != f"drift_{tag}" else "insufficient_data"
+            continue
+
+        d_mean = sum(diffs) / n_d
+        d_var = sum((d - d_mean) ** 2 for d in diffs) / (n_d - 1)
+        d_se = math.sqrt(d_var / n_d)
+        d_t = d_mean / d_se if d_se > 0 else float("nan")
+        d_p = _two_sided_t_pvalue(d_t, n_d - 1)
+
+        result[f"delta_{tag}"] = d_mean
+        result[f"delta_t_{tag}"] = d_t
+        result[f"delta_p_{tag}"] = d_p
+
+        # Drift interpretation (α=0.10)
+        if d_p < 0.10:
+            result[f"drift_{tag}"] = "positive_drift" if d_mean > 0 else "negative_drift"
+        else:
+            result[f"drift_{tag}"] = "none"
+
+    # ── Ex-ante sentiment-grouped tests ──
+    # Group by news sentiment label (truly ex-ante, no look-ahead bias).
+    # Test H0: CAAR = 0 within each sentiment group, for each horizon.
+    if event_sentiments:
+        pos_recs = [r for r in car_records if event_sentiments.get(r["event_day"]) == "positive"]
+        neg_recs = [r for r in car_records if event_sentiments.get(r["event_day"]) == "negative"]
+    else:
+        pos_recs = []
+        neg_recs = []
+
+    for group_tag, recs in [("pos", pos_recs), ("neg", neg_recs)]:
+        result[f"n_{group_tag}"] = len(recs)
+        for h in horizons:
+            vals = [r[f"car_{h}"] for r in recs
+                    if not math.isnan(r.get(f"car_{h}", float("nan")))]
+            n_g = len(vals)
+            if n_g < 2:
+                for key in [f"caar_{group_tag}_{h}", f"se_{group_tag}_{h}",
+                            f"t_{group_tag}_{h}", f"p_{group_tag}_{h}",
+                            f"p1_{group_tag}_{h}", f"boot_p_{group_tag}_{h}"]:
+                    result[key] = float("nan")
+                continue
+            mean_g = sum(vals) / n_g
+            var_g = sum((v - mean_g) ** 2 for v in vals) / (n_g - 1)
+            se_g = math.sqrt(var_g / n_g)
+            t_g = mean_g / se_g if se_g > 0 else float("nan")
+            p_g = _two_sided_t_pvalue(t_g, n_g - 1)
+            p1_g = p_g / 2 if not math.isnan(p_g) else float("nan")
+            # Block bootstrap p-value for group (two-sided)
+            if n_bootstrap > 0 and n_g >= 5:
+                rng_g = random.Random(42 + hash(group_tag) + h)
+                boot_ms = _block_bootstrap_means(vals, n_bootstrap, block_size, rng_g)
+                n_ext = sum(1 for bm in boot_ms if abs(bm - mean_g) >= abs(mean_g))
+                boot_p_g = n_ext / n_bootstrap
+            else:
+                boot_p_g = float("nan")
+            result[f"caar_{group_tag}_{h}"] = mean_g
+            result[f"se_{group_tag}_{h}"] = se_g
+            result[f"t_{group_tag}_{h}"] = t_g
+            result[f"p_{group_tag}_{h}"] = p_g
+            result[f"p1_{group_tag}_{h}"] = p1_g
+            result[f"boot_p_{group_tag}_{h}"] = boot_p_g
+
+    return result
+
+
+def _two_sided_t_pvalue(t_stat: float, df: int) -> float:
+    """Approximate two-sided p-value for t-distribution without scipy."""
+    if math.isnan(t_stat) or df < 1:
+        return float("nan")
+    # Use normal approximation for large df
+    x = abs(t_stat)
+    if df > 100:
+        # Normal approximation
+        p = 2 * _normal_cdf_complement(x)
+    else:
+        # Abramowitz & Stegun 26.7.1:
+        # p_two_sided = I_x(df/2, 1/2) where x = df/(df+t^2)
+        p = _regularized_beta(0.5 * df, 0.5, df / (df + x * x))
+    return min(max(p, 0.0), 1.0)
+
+
+def _normal_cdf_complement(x: float) -> float:
+    """P(Z > x) for standard normal, Abramowitz & Stegun approximation."""
+    if x < 0:
+        return 1.0 - _normal_cdf_complement(-x)
+    t = 1.0 / (1.0 + 0.2316419 * x)
+    poly = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))))
+    return poly * math.exp(-0.5 * x * x) / math.sqrt(2 * math.pi)
+
+
+def _regularized_beta(a: float, b: float, x: float) -> float:
+    """Regularized incomplete beta function I_x(a, b) via continued fraction."""
+    if x <= 0:
+        return 0.0
+    if x >= 1:
+        return 1.0
+    # Use symmetry relation for faster convergence
+    if x > (a + 1.0) / (a + b + 2.0):
+        return 1.0 - _regularized_beta(b, a, 1.0 - x)
+    # I_x(a,b) = x^a (1-x)^b / (a * B(a,b)) * CF(a,b,x)
+    log_prefix = (a * math.log(x) + b * math.log(1 - x)
+                  - math.log(a)
+                  - _log_beta(a, b))
+    prefix = math.exp(log_prefix)
+    return _betainc_cf(a, b, x) * prefix
+
+
+def _log_beta(a: float, b: float) -> float:
+    """Log of Beta function."""
+    return math.lgamma(a) + math.lgamma(b) - math.lgamma(a + b)
+
+
+def _betainc_cf(a: float, b: float, x: float) -> float:
+    """Continued fraction for regularized incomplete beta."""
+    max_iter = 200
+    eps = 1e-10
+    f = 1.0
+    c = 1.0
+    d = 1.0 - (a + b) * x / (a + 1)
+    if abs(d) < eps:
+        d = eps
+    d = 1.0 / d
+    f = d
+
+    for m in range(1, max_iter + 1):
+        # Even step
+        num = m * (b - m) * x / ((a + 2 * m - 1) * (a + 2 * m))
+        d = 1.0 + num * d
+        if abs(d) < eps:
+            d = eps
+        c = 1.0 + num / c
+        if abs(c) < eps:
+            c = eps
+        d = 1.0 / d
+        f *= d * c
+
+        # Odd step
+        num = -(a + m) * (a + b + m) * x / ((a + 2 * m) * (a + 2 * m + 1))
+        d = 1.0 + num * d
+        if abs(d) < eps:
+            d = eps
+        c = 1.0 + num / c
+        if abs(c) < eps:
+            c = eps
+        d = 1.0 / d
+        delta = d * c
+        f *= delta
+        if abs(delta - 1.0) < eps:
+            break
+
+    return f
+
+
+def _t_critical_95(df: int) -> float:
+    """Approximate 95% (two-sided) critical value for t-distribution."""
+    if df >= 120:
+        return 1.96
+    # Approximation for smaller df
+    # Based on Cornish-Fisher expansion
+    z = 1.959964
+    g1 = (z ** 3 + z) / (4 * df)
+    g2 = (5 * z ** 5 + 16 * z ** 3 + 3 * z) / (96 * df * df)
+    return z + g1 + g2
