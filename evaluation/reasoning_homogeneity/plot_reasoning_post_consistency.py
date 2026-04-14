@@ -5,53 +5,47 @@
 检测智能体"想的"（心智推理）和"说的"（社交帖子）之间的一致程度。
 低一致性意味着潜在的策略性操纵：思考一套，发帖另一套。
 
-指标：
-  - Jaccard 相似度（jieba bigram，去模板后）
-  - NCD 相似度（zlib 压缩距离）
-
-输出：
-  1. 每实验单图：按 ToM 层级的 reasoning-post 一致性时间序列
-  2. 多实验对比箱线图
-  3. JSON 汇总
-
-用法：
-  python plot_reasoning_post_consistency.py \
-    runs/20260329_005147_tom07_tom12_tom21_预测拟合 \
-    runs/20260329_150251_tom01_tom11_tom21_预测拟合 \
-    runs/20260330_211929_tom06_tom13_tom21_预测拟合 \
-    --labels "tom07/12/21,tom01/11/21,tom06/13/21" \
-    --output-dir output/reasoning_homogeneity
+三层去模板 + NCD 压缩距离
 """
 
 import argparse
 import bisect
 import json
+import math
 import os
 import re
-import sys
 import zlib
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
 
+_DAILY_MIN_DOCS = 5
+
+
 # ── CLI ──────────────────────────────────────────────────────────────
 def parse_args():
-    p = argparse.ArgumentParser(description="推理-发帖一致性分析")
+    p = argparse.ArgumentParser(description="推理-发帖一致性分析（三层去模板 NCD）")
     p.add_argument("run_dirs", nargs="+", help="实验目录")
     p.add_argument("--labels", default="", help="逗号分隔的实验标签")
-    p.add_argument("--ngram", type=int, default=2, help="n-gram 大小")
-    p.add_argument("--template-thresh", type=float, default=0.80,
-                   help="出现在 >X%% 文本中的 n-gram 视为模板")
+    p.add_argument("--ngram", type=int, default=2,
+                   help="最小 n-gram 大小 (默认 2)，自动同时使用 n 和 n+1")
+    p.add_argument("--global-thresh", type=float, default=0.80,
+                   help="Layer 1 全局去模板阈值 (默认 0.80)")
+    p.add_argument("--group-thresh", type=float, default=0.60,
+                   help="Layer 2 组级去模板阈值 (默认 0.60)")
+    p.add_argument("--daily-thresh", type=float, default=0.50,
+                   help="Layer 3 逐日去模板阈值 (默认 0.50)")
     p.add_argument("--max-chars", type=int, default=512,
                    help="每条文本截断字符数")
     p.add_argument("--output-dir", default="output")
     p.add_argument("--prefix", default="推理发帖一致性",
-                   help="输出文件名前缀 (默认: 推理发帖一致性)")
+                   help="输出文件名前缀")
+    p.add_argument("--template-thresh", type=float, default=None,
+                   help="[兼容旧版] 等同于 --global-thresh")
     return p.parse_args()
 
 
-# ── sim_time → trading_day ───────────────────────────────────────────
 def _build_time_to_day(run_dir: str):
     centers = []
     with open(os.path.join(run_dir, "broad_index.jsonl")) as f:
@@ -60,7 +54,7 @@ def _build_time_to_day(run_dir: str):
             centers.append((rec["sim_time"], rec["trading_day"]))
     centers.sort()
     times = [c[0] for c in centers]
-    days  = [c[1] for c in centers]
+    days = [c[1] for c in centers]
 
     def mapper(sim_time: float) -> int:
         idx = bisect.bisect_right(times, sim_time)
@@ -71,17 +65,11 @@ def _build_time_to_day(run_dir: str):
         if abs(times[idx] - sim_time) < abs(times[idx - 1] - sim_time):
             return days[idx]
         return days[idx - 1]
+
     return mapper
 
 
-# ── 推理文本提取 ─────────────────────────────────────────────────────
 def _extract_reasoning_parts(llm_output: dict, tom_level: int) -> dict:
-    """
-    返回 { group_suffix: text } 字典。
-    tom1: {"": mental_reasoning}
-    tom2: {"_r1": tom1_reasoning, "_r2": tom2_reasoning}（独立拆分）
-    tom0: {} （跳过）
-    """
     if tom_level == 2:
         parts = {}
         r1 = llm_output.get("tom1_reasoning", "")
@@ -98,24 +86,19 @@ def _extract_reasoning_parts(llm_output: dict, tom_level: int) -> dict:
     return {}
 
 
-# ── 帖子清洗 ────────────────────────────────────────────────────────
 _RETWEET_RE = re.compile(r"\[转发\s*@[A-Za-z0-9_]+\]\s*")
 
+
 def _clean_post(content: str) -> str:
-    """去掉 [转发 @Axx] 前缀，保留原创内容。"""
     return _RETWEET_RE.sub("", content).strip()
 
 
-# ── 加载数据 ────────────────────────────────────────────────────────
 def load_data(run_dir: str, max_chars: int):
-    """
-    返回 { agent_id: { day: { 'reasoning_parts': {suffix: text}, 'posts': [str, ...], 'tom': int } } }
-    跳过 tom0（无有效推理）。
-    """
     mapper = _build_time_to_day(run_dir)
-    data = defaultdict(lambda: defaultdict(lambda: {"reasoning_parts": {}, "posts": [], "tom": 0}))
+    data = defaultdict(
+        lambda: defaultdict(
+            lambda: {"reasoning_parts": {}, "posts": [], "tom": 0}))
 
-    # 1) decisions
     with open(os.path.join(run_dir, "decisions.jsonl")) as f:
         for line in f:
             rec = json.loads(line)
@@ -127,10 +110,10 @@ def load_data(run_dir: str, max_chars: int):
             out = rec.get("llm_output", {})
             parts = _extract_reasoning_parts(out, tl)
             if parts:
-                data[aid][day]["reasoning_parts"] = {k: v[:max_chars] for k, v in parts.items()}
+                data[aid][day]["reasoning_parts"] = {
+                    k: v[:max_chars] for k, v in parts.items()}
                 data[aid][day]["tom"] = tl
 
-    # 2) posts
     with open(os.path.join(run_dir, "posts.jsonl")) as f:
         for line in f:
             rec = json.loads(line)
@@ -145,96 +128,158 @@ def load_data(run_dir: str, max_chars: int):
     return dict(data)
 
 
-# ── jieba 分词 + n-gram ─────────────────────────────────────────────
-def _tokenize(text: str):
+def _tokenize(text: str) -> list[str]:
     import jieba
     return list(jieba.cut(text))
 
 
-def _ngrams(tokens: list, n: int):
-    return set(tuple(tokens[i:i+n]) for i in range(len(tokens) - n + 1))
+def _multi_ngrams(tokens: list[str], sizes: list[int]) -> set[tuple]:
+    result = set()
+    n = len(tokens)
+    for size in sizes:
+        for i in range(n - size + 1):
+            result.add(tuple(tokens[i:i + size]))
+    return result
 
 
-# ── 模板检测（全局 DF 阈值）──────────────────────────────────────────
-def _find_template_ngrams(all_texts: list, ngram_n: int, thresh: float):
-    """返回出现在 >thresh 比例文本中的 n-gram 集合。"""
-    import jieba
-    jieba.setLogLevel(20)
-    from collections import Counter
-    doc_count = Counter()
-    for text in all_texts:
-        tokens = _tokenize(text)
-        ng = _ngrams(tokens, ngram_n)
-        for g in ng:
-            doc_count[g] += 1
-    n_docs = len(all_texts)
-    templates = {g for g, c in doc_count.items() if c / n_docs > thresh}
-    return templates
+def _remove_template_spans(tokens: list[str],
+                           template_ngs: set[tuple],
+                           ngram_sizes: list[int]) -> list[str]:
+    n = len(tokens)
+    is_tpl = [False] * n
+    for size in ngram_sizes:
+        for i in range(n - size + 1):
+            if tuple(tokens[i:i + size]) in template_ngs:
+                for j in range(i, i + size):
+                    is_tpl[j] = True
+    return [t for i, t in enumerate(tokens) if not is_tpl[i]]
 
 
-# ── Jaccard ─────────────────────────────────────────────────────────
-def jaccard(set_a, set_b):
-    if not set_a and not set_b:
-        return 0.0
-    inter = len(set_a & set_b)
-    union = len(set_a | set_b)
-    return inter / union if union else 0.0
-
-
-# ── NCD 相似度 ──────────────────────────────────────────────────────
-def ncd_similarity(a: str, b: str) -> float:
-    ca = len(zlib.compress(a.encode("utf-8")))
-    cb = len(zlib.compress(b.encode("utf-8")))
-    cab = len(zlib.compress((a + b).encode("utf-8")))
-    ncd = (cab - min(ca, cb)) / max(ca, cb) if max(ca, cb) > 0 else 0.0
-    return 1.0 - ncd  # 转为相似度
-
-
-# ── 单实验处理 ──────────────────────────────────────────────────────
 GROUP_DISPLAY = {
     "tom1": "ToM-1",
     "tom2_r1": "ToM-2 一阶推理",
     "tom2_r2": "ToM-2 二阶推理",
 }
 
+
 def analyze_experiment(run_dir: str, label: str, args):
-    """
-    返回 {
-      'label': str,
-      'per_day': { group: { day: {'jaccard': float, 'ncd': float, 'n': int} } },
-      'summary': { group: { 'jaccard_mean', 'jaccard_std', 'ncd_mean', 'ncd_std', 'n_pairs' } },
-      'agent_scores': { group: [ (agent_id, jaccard_mean, ncd_mean, n_days) ] }
-    }
-    """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"处理: {label}  ({run_dir})")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
+
+    import jieba
+    jieba.setLogLevel(20)
 
     data = load_data(run_dir, args.max_chars)
+    ngram_sizes = [args.ngram, args.ngram + 1]
 
-    # 收集所有文本用于模板检测
-    all_texts = []
-    for aid_data in data.values():
-        for day_data in aid_data.values():
-            for txt in day_data["reasoning_parts"].values():
-                if txt:
-                    all_texts.append(txt)
-            all_texts.extend(day_data["posts"])
+    # ── 收集全部文本用于三层模板检测 ─────────────────────────────────
+    class _DocMeta:
+        __slots__ = ("day", "group", "ngrams")
 
-    print(f"  文本总数: {len(all_texts)}（推理+帖子）")
+        def __init__(self, day, group, ngrams):
+            self.day = day
+            self.group = group
+            self.ngrams = ngrams
 
-    # 模板检测
-    templates = _find_template_ngrams(all_texts, args.ngram, args.template_thresh)
-    total_ngrams = set()
-    for t in all_texts[:200]:
-        tokens = _tokenize(t)
-        total_ngrams |= _ngrams(tokens, args.ngram)
-    print(f"  模板 n-gram: {len(templates)} / {len(total_ngrams)} (阈值: >{args.template_thresh*100:.0f}%)")
+    all_metas: list[_DocMeta] = []
+    for aid, days_data in data.items():
+        for day, dd in days_data.items():
+            tom = dd["tom"]
+            if tom == 0:
+                continue
+            tom_group = f"tom{tom}"
+            for text in dd["reasoning_parts"].values():
+                if text:
+                    tokens = _tokenize(text)
+                    all_metas.append(_DocMeta(
+                        day, tom_group, _multi_ngrams(tokens, ngram_sizes)))
+            for post in dd["posts"]:
+                if post:
+                    tokens = _tokenize(post)
+                    all_metas.append(_DocMeta(
+                        day, tom_group, _multi_ngrams(tokens, ngram_sizes)))
 
-    # 按 ToM 层级和天分组计算
-    # 对每个 agent 每天：每段推理 vs concat(posts) 的相似度
-    per_day = defaultdict(lambda: defaultdict(list))   # group -> day -> [scores]
-    agent_scores = defaultdict(lambda: defaultdict(list))  # group -> agent_id -> [scores]
+    total = len(all_metas)
+    if total == 0:
+        return _empty_result(label)
+
+    print(f"  文本总数: {total}（推理+帖子），n-gram 粒度: {ngram_sizes}")
+
+    # ── 三层模板检测 ─────────────────────────────────────────────────
+    print("  Layer 1: 全局去模板…")
+    global_df: Counter = Counter()
+    for m in all_metas:
+        for ng in m.ngrams:
+            global_df[ng] += 1
+    global_tpl = {ng for ng, c in global_df.items()
+                  if c > total * args.global_thresh}
+    print(f"    全局模板: {len(global_tpl)} 个")
+
+    print("  Layer 2: 组级去模板…")
+    group_indices: dict[str, list[int]] = defaultdict(list)
+    for i, m in enumerate(all_metas):
+        group_indices[m.group].append(i)
+
+    group_tpl: dict[str, set] = {}
+    for gk, indices in group_indices.items():
+        gdf: Counter = Counter()
+        for i in indices:
+            for ng in all_metas[i].ngrams:
+                gdf[ng] += 1
+        n_g = len(indices)
+        group_tpl[gk] = {ng for ng, c in gdf.items()
+                         if c > n_g * args.group_thresh
+                         and ng not in global_tpl}
+        print(f"    {gk}: +{len(group_tpl[gk])} 个")
+
+    print("  Layer 3: 逐日去模板…")
+    day_indices: dict[int, list[int]] = defaultdict(list)
+    for i, m in enumerate(all_metas):
+        day_indices[m.day].append(i)
+
+    upper_tpl = set(global_tpl)
+    for v in group_tpl.values():
+        upper_tpl |= v
+
+    daily_tpl: dict[int, set] = {}
+    daily_total = 0
+    for day, indices in day_indices.items():
+        if len(indices) < _DAILY_MIN_DOCS:
+            daily_tpl[day] = set()
+            continue
+        ddf: Counter = Counter()
+        for i in indices:
+            for ng in all_metas[i].ngrams:
+                ddf[ng] += 1
+        n_d = len(indices)
+        new_tpl = {ng for ng, c in ddf.items()
+                   if c > n_d * args.daily_thresh
+                   and ng not in upper_tpl}
+        daily_tpl[day] = new_tpl
+        daily_total += len(new_tpl)
+    print(f"    逐日模板: 共 +{daily_total} 个")
+
+    # ── 逐 (agent, day, suffix) 计算一致性 ──────────────────────────
+    print("  计算一致性…")
+
+    def _get_tpl(tom_group: str, day: int) -> set:
+        return (global_tpl
+                | group_tpl.get(tom_group, set())
+                | daily_tpl.get(day, set()))
+
+    def _ncd_sim(text_a: str, text_b: str) -> float:
+        a_b = text_a.encode("utf-8")
+        b_b = text_b.encode("utf-8")
+        ca = len(zlib.compress(a_b))
+        cb = len(zlib.compress(b_b))
+        if max(ca, cb) == 0:
+            return float("nan")
+        cab = len(zlib.compress(a_b + b_b))
+        return 1.0 - (cab - min(ca, cb)) / max(ca, cb)
+
+    per_day: dict = defaultdict(lambda: defaultdict(list))
+    agent_scores: dict = defaultdict(lambda: defaultdict(list))
 
     for aid, days_data in data.items():
         for day, dd in days_data.items():
@@ -244,87 +289,97 @@ def analyze_experiment(run_dir: str, label: str, args):
             if not reasoning_parts or not posts:
                 continue
 
-            # 合并帖子文本
+            tom_group = f"tom{tom}"
+            tpl = _get_tpl(tom_group, day)
+
             post_text = "\n".join(posts)
             p_tokens = _tokenize(post_text)
-            p_ngrams = _ngrams(p_tokens, args.ngram) - templates
+            p_cleaned = "".join(
+                _remove_template_spans(p_tokens, tpl, ngram_sizes))
 
-            # 对每个推理分量独立比较
             for suffix, reasoning in reasoning_parts.items():
                 group = f"tom{tom}{suffix}"
-
                 r_tokens = _tokenize(reasoning)
-                r_ngrams = _ngrams(r_tokens, args.ngram) - templates
+                r_cleaned = "".join(
+                    _remove_template_spans(r_tokens, tpl, ngram_sizes))
 
-                j = jaccard(r_ngrams, p_ngrams)
-                ncd_sim = ncd_similarity(reasoning, post_text)
+                ncd = _ncd_sim(r_cleaned, p_cleaned)
+                if not math.isnan(ncd):
+                    per_day[group][day].append(ncd)
+                    agent_scores[group][aid].append(ncd)
 
-                per_day[group][day].append({"jaccard": j, "ncd": ncd_sim})
-                agent_scores[group][aid].append({"jaccard": j, "ncd": ncd_sim})
-
-    # 聚合
+    # ── 聚合 ────────────────────────────────────────────────────────
     result_per_day = {}
     result_summary = {}
     result_agents = {}
 
     for group in sorted(per_day.keys()):
         day_agg = {}
-        all_j, all_n = [], []
+        all_vals = []
         for day in sorted(per_day[group].keys()):
-            scores = per_day[group][day]
-            j_vals = [s["jaccard"] for s in scores]
-            n_vals = [s["ncd"] for s in scores]
+            vals = per_day[group][day]
             day_agg[day] = {
-                "jaccard": float(np.mean(j_vals)),
-                "ncd": float(np.mean(n_vals)),
-                "n": len(scores),
+                "ncd_sim": float(np.mean(vals)),
+                "n": len(vals),
             }
-            all_j.extend(j_vals)
-            all_n.extend(n_vals)
+            all_vals.extend(vals)
 
         result_per_day[group] = day_agg
         result_summary[group] = {
-            "jaccard_mean": round(float(np.mean(all_j)), 4),
-            "jaccard_std": round(float(np.std(all_j)), 4),
-            "ncd_mean": round(float(np.mean(all_n)), 4),
-            "ncd_std": round(float(np.std(all_n)), 4),
-            "n_pairs": len(all_j),
+            "ncd_mean": round(float(np.mean(all_vals)), 4),
+            "ncd_std": round(float(np.std(all_vals)), 4),
+            "n_pairs": len(all_vals),
         }
         disp = GROUP_DISPLAY.get(group, group)
-        print(f"  {disp}: Jaccard={result_summary[group]['jaccard_mean']:.4f}±{result_summary[group]['jaccard_std']:.4f}  "
-              f"NCD_sim={result_summary[group]['ncd_mean']:.4f}±{result_summary[group]['ncd_std']:.4f}  "
-              f"(n={result_summary[group]['n_pairs']})")
+        s = result_summary[group]
+        print(f"  {disp}: NCD_sim={s['ncd_mean']:.4f}±{s['ncd_std']:.4f}  "
+              f"(n={s['n_pairs']})")
 
-    # agent 级排序（按一致性从低到高 → 最可能操纵）
     for group in sorted(agent_scores.keys()):
         agents = []
         for aid, scores in agent_scores[group].items():
-            j_mean = float(np.mean([s["jaccard"] for s in scores]))
-            n_mean = float(np.mean([s["ncd"] for s in scores]))
-            agents.append((aid, round(j_mean, 4), round(n_mean, 4), len(scores)))
-        agents.sort(key=lambda x: x[1])  # 按 Jaccard 升序 → 最不一致的在前
+            agents.append(
+                (aid, round(float(np.mean(scores)), 4), len(scores)))
+        agents.sort(key=lambda x: x[1])
         result_agents[group] = agents
 
         disp = GROUP_DISPLAY.get(group, group)
-        print(f"\n  {disp} 最不一致 Top-5 agents（Jaccard↑）:")
-        for aid, jm, nm, nd in agents[:5]:
-            print(f"    Agent {aid:3d}: Jaccard={jm:.4f}  NCD_sim={nm:.4f}  ({nd} days)")
+        print(f"\n  {disp} 最不一致 Top-5 agents（NCD↑）:")
+        for a_id, nm, nd in agents[:5]:
+            print(f"    Agent {a_id:3d}: NCD_sim={nm:.4f}  ({nd} days)")
+
+    template_stats = {
+        "ngram_sizes": ngram_sizes,
+        "global_templates": len(global_tpl),
+        "group_templates": {gk: len(v) for gk, v in group_tpl.items()},
+        "daily_templates_total": daily_total,
+        "total_docs": total,
+    }
 
     return {
         "label": label,
         "per_day": result_per_day,
         "summary": result_summary,
         "agent_scores": result_agents,
+        "template_stats": template_stats,
     }
 
 
+def _empty_result(label: str) -> dict:
+    return {"label": label, "per_day": {}, "summary": {},
+            "agent_scores": {}, "template_stats": {}}
+
+
 # ── 绘图 ────────────────────────────────────────────────────────────
-def plot_single(exp_result, output_dir, safe_label, prefix="推理发帖一致性"):
+def plot_single(exp_result, output_dir, safe_label,
+                prefix="推理发帖一致性"):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     plt.rcParams.update({
-        "font.sans-serif": ["Heiti TC", "Arial Unicode MS", "STHeiti", "SimHei", "Arial"],
+        "font.sans-serif": [
+            "Heiti TC", "Arial Unicode MS", "STHeiti",
+            "SimHei", "Arial"],
         "axes.unicode_minus": False,
     })
 
@@ -333,34 +388,26 @@ def plot_single(exp_result, output_dir, safe_label, prefix="推理发帖一致�
     if not groups:
         return
 
-    fig, axes = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+    fig, ax = plt.subplots(figsize=(14, 5))
     colors = {"tom1": "#2196F3", "tom2_r1": "#FF9800", "tom2_r2": "#FF5722"}
     labels = {"tom1": "ToM-1", "tom2_r1": "ToM-2 一阶", "tom2_r2": "ToM-2 二阶"}
 
     for gk in groups:
         dd = per_day[gk]
         days = sorted(dd.keys())
-        j_vals = [dd[d]["jaccard"] for d in days]
-        n_vals = [dd[d]["ncd"] for d in days]
+        vals = [dd[d]["ncd_sim"] for d in days]
         c = colors.get(gk, "#666")
         lb = labels.get(gk, gk)
+        ax.plot(days, vals, color=c, alpha=0.8, label=lb, linewidth=1.2)
+        ax.fill_between(days, vals, alpha=0.1, color=c)
 
-        axes[0].plot(days, j_vals, color=c, alpha=0.8, label=lb, linewidth=1.2)
-        axes[0].fill_between(days, j_vals, alpha=0.15, color=c)
-        axes[1].plot(days, n_vals, color=c, alpha=0.8, label=lb, linewidth=1.2)
-        axes[1].fill_between(days, n_vals, alpha=0.15, color=c)
-
-    axes[0].set_ylabel("Jaccard (推理↔帖子)")
-    axes[0].set_title(f"{prefix} — {exp_result['label']}")
-    axes[0].legend()
-    axes[0].grid(True, alpha=0.3)
-    axes[0].set_ylim(bottom=0)
-
-    axes[1].set_ylabel("NCD 相似度 (推理↔帖子)")
-    axes[1].set_xlabel("Trading Day")
-    axes[1].legend()
-    axes[1].grid(True, alpha=0.3)
-    axes[1].set_ylim(bottom=0)
+    ax.set_ylabel("1 − NCD (去模板, 推理↔帖子)", fontsize=11)
+    ax.set_xlabel("交易日", fontsize=11)
+    ax.set_title(f"{prefix}（三层去模板 NCD）— {exp_result['label']}",
+                 fontsize=13)
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_ylim(bottom=0)
 
     plt.tight_layout()
     out = os.path.join(output_dir, f"{prefix}_{safe_label}.png")
@@ -374,66 +421,57 @@ def plot_compare(all_results, output_dir, prefix="推理发帖一致性"):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     plt.rcParams.update({
-        "font.sans-serif": ["Heiti TC", "Arial Unicode MS", "STHeiti", "SimHei", "Arial"],
+        "font.sans-serif": [
+            "Heiti TC", "Arial Unicode MS", "STHeiti",
+            "SimHei", "Arial"],
         "axes.unicode_minus": False,
     })
 
-    # 收集所有组
     all_groups = set()
     for r in all_results:
         all_groups |= set(r["summary"].keys())
     groups = sorted(all_groups)
     n_groups = len(groups)
-
     if n_groups == 0:
         return
 
-    # === 图1: 分组柱状图 ===
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    x = np.arange(len(all_results))
-    width = 0.8 / max(n_groups, 1)
     colors = {"tom1": "#2196F3", "tom2_r1": "#FF9800", "tom2_r2": "#FF5722"}
     labels_map = {"tom1": "ToM-1", "tom2_r1": "ToM-2 一阶", "tom2_r2": "ToM-2 二阶"}
 
+    # 柱状图
+    fig, ax = plt.subplots(figsize=(10, 5))
+    x = np.arange(len(all_results))
+    width = 0.8 / max(n_groups, 1)
+
     for gi, gk in enumerate(groups):
-        j_means = []
-        j_stds = []
-        n_means = []
-        n_stds = []
+        means, stds = [], []
         for r in all_results:
             s = r["summary"].get(gk, {})
-            j_means.append(s.get("jaccard_mean", 0))
-            j_stds.append(s.get("jaccard_std", 0))
-            n_means.append(s.get("ncd_mean", 0))
-            n_stds.append(s.get("ncd_std", 0))
-
+            means.append(s.get("ncd_mean", 0))
+            stds.append(s.get("ncd_std", 0))
         offset = (gi - (n_groups - 1) / 2) * width
-        c = colors.get(gk, "#666")
-        lb = labels_map.get(gk, gk)
-        axes[0].bar(x + offset, j_means, width * 0.9, yerr=j_stds,
-                    label=lb, color=c, alpha=0.8, capsize=3)
-        axes[1].bar(x + offset, n_means, width * 0.9, yerr=n_stds,
-                    label=lb, color=c, alpha=0.8, capsize=3)
+        ax.bar(x + offset, means, width * 0.9, yerr=stds,
+               label=labels_map.get(gk, gk),
+               color=colors.get(gk, "#666"), alpha=0.8, capsize=3)
 
-    exp_labels = [r["label"] for r in all_results]
-    for ax, title in zip(axes, ["Jaccard 一致性", "NCD 一致性"]):
-        ax.set_xticks(x)
-        ax.set_xticklabels(exp_labels, fontsize=9)
-        ax.set_title(title)
-        ax.legend()
-        ax.grid(True, alpha=0.3, axis="y")
-        ax.set_ylim(bottom=0)
+    ax.set_xticks(x)
+    ax.set_xticklabels([r["label"] for r in all_results], fontsize=10)
+    ax.set_ylabel("1 − NCD (去模板)", fontsize=11)
+    ax.set_title(f"{prefix} — 多实验对比（三层去模板 NCD）", fontsize=13)
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3, axis="y")
+    ax.set_ylim(bottom=0)
 
-    fig.suptitle(f"{prefix} — 多实验对比", fontsize=13, fontweight="bold")
     plt.tight_layout()
     out = os.path.join(output_dir, f"{prefix}_多实验对比.png")
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  对比图: {out}")
 
-    # === 图2: Agent 散点图 ===
-    fig, axes = plt.subplots(1, len(all_results), figsize=(5 * len(all_results), 5),
-                              squeeze=False)
+    # Agent 散点图（NCD vs 天数）
+    fig, axes = plt.subplots(
+        1, len(all_results),
+        figsize=(5 * len(all_results), 5), squeeze=False)
     for ri, r in enumerate(all_results):
         ax = axes[0][ri]
         for gk in groups:
@@ -442,15 +480,14 @@ def plot_compare(all_results, output_dir, prefix="推理发帖一致性"):
                 continue
             c = colors.get(gk, "#666")
             lb = labels_map.get(gk, gk)
-            aids = [a[0] for a in agents]
-            j_vals = [a[1] for a in agents]
-            n_vals = [a[2] for a in agents]
-            ax.scatter(j_vals, n_vals, c=c, alpha=0.6, s=30, label=lb)
-            # 标注最不一致的 3 个
+            ncd_vals = [a[1] for a in agents]
+            n_days = [a[2] for a in agents]
+            ax.scatter(n_days, ncd_vals, c=c, alpha=0.6, s=30, label=lb)
             for a in agents[:3]:
-                ax.annotate(f"A{a[0]}", (a[1], a[2]), fontsize=7, alpha=0.7)
-        ax.set_xlabel("Jaccard")
-        ax.set_ylabel("NCD sim")
+                ax.annotate(f"A{a[0]}", (a[2], a[1]),
+                            fontsize=7, alpha=0.7)
+        ax.set_xlabel("活跃天数")
+        ax.set_ylabel("NCD sim (去模板)")
         ax.set_title(r["label"])
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
@@ -463,13 +500,16 @@ def plot_compare(all_results, output_dir, prefix="推理发帖一致性"):
     print(f"  散点图: {out}")
 
 
-# ── main ─────────────────────────────────────────────────────────────
 def main():
     args = parse_args()
+    if args.template_thresh is not None:
+        args.global_thresh = args.template_thresh
+
     os.makedirs(args.output_dir, exist_ok=True)
 
-    labels = [l.strip() for l in args.labels.split(",") if l.strip()] \
-             if args.labels else [Path(d).name for d in args.run_dirs]
+    labels = ([l.strip() for l in args.labels.split(",") if l.strip()]
+              if args.labels
+              else [Path(d).name for d in args.run_dirs])
     if len(labels) < len(args.run_dirs):
         labels += [Path(d).name for d in args.run_dirs[len(labels):]]
 
@@ -483,13 +523,13 @@ def main():
     if len(all_results) > 1:
         plot_compare(all_results, args.output_dir, prefix=args.prefix)
 
-    # JSON 汇总
     summary = {}
     for r in all_results:
         summary[r["label"]] = {
             "summary": r["summary"],
+            "template_stats": r.get("template_stats", {}),
             "least_consistent_agents": {
-                gk: [(a[0], a[1], a[2]) for a in agents[:10]]
+                gk: [(a[0], a[1]) for a in agents[:10]]
                 for gk, agents in r["agent_scores"].items()
             },
         }

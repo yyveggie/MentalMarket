@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-有社交 vs 无社交：推理同质性对比（Jaccard + NCD）
+有社交 vs 无社交：推理同质性对比（三层去模板 NCD）
 
-对配对实验的 decisions.jsonl，按 ToM 层级分组，
-计算同组同日所有 agent 推理文本的 pairwise Jaccard / NCD 相似度，
-取全交易日均值后以哑铃图对比有社交与无社交。
+自动发现配对实验（X 与 X_无社交），
+对 decisions.jsonl 中的推理文本做三层去模板后计算 NCD 同质性，
+以哑铃图对比有社交与无社交的差异。
 
 用法：
   cd evaluation/sentiment_social_compare
@@ -15,18 +15,15 @@ from __future__ import annotations
 
 import argparse
 import bisect
-import json
-import os
+import math
 import re
 import sys
 import zlib
-from collections import defaultdict
+from collections import Counter, defaultdict
 from itertools import combinations
 from pathlib import Path
 
 import numpy as np
-
-# ── 路径处理：确保能 import 上级 evaluation 公共模块 ──────────────
 
 _EVAL_DIR = Path(__file__).resolve().parent.parent
 if str(_EVAL_DIR) not in sys.path:
@@ -34,9 +31,11 @@ if str(_EVAL_DIR) not in sys.path:
 
 from metrics_plot_common import configure_chinese_font, read_jsonl, safe_int
 
+_MAX_PAIRS = 300
+_DAILY_MIN_DOCS = 5
 
-# ── sim_time → trading_day 映射 ──────────────────────────────────────
 
+# ── sim_time → trading_day ───────────────────────────────────────────
 def _build_time_to_day(run_dir: Path):
     centers = []
     bi_path = run_dir / "broad_index.jsonl"
@@ -65,28 +64,25 @@ def _build_time_to_day(run_dir: Path):
 
 
 # ── 推理文本提取 ─────────────────────────────────────────────────────
-
-def _extract_reasoning(llm_output: dict, tom_level: int) -> str:
+def _extract_reasoning_parts(llm_output: dict, tom_level: int) -> list[str]:
+    """返回推理文本列表（ToM-2 拆分为两条独立文本，避免拼接膨胀相似度）。"""
     if tom_level == 2:
         parts = []
         for k in ("tom1_reasoning", "tom2_reasoning"):
             v = llm_output.get(k, "")
             if v and not v.startswith("(ToM"):
                 parts.append(v)
-        return "\n".join(parts)
+        return parts
     elif tom_level == 1:
         v = llm_output.get("mental_reasoning", "")
-        return "" if v.startswith("(ToM") else v
-    return ""
+        if v and not v.startswith("(ToM"):
+            return [v]
+    return []
 
 
 # ── 加载推理文本 ─────────────────────────────────────────────────────
-
 def load_reasoning_texts(run_dir: Path, max_chars: int = 512):
-    """
-    返回 { tom_level: { trading_day: [text, ...] } }
-    跳过 tom0（占位推理无意义）。
-    """
+    """返回 { day: { tom_group: [text, ...] } }"""
     mapper = _build_time_to_day(run_dir)
     if mapper is None:
         return {}
@@ -94,124 +90,190 @@ def load_reasoning_texts(run_dir: Path, max_chars: int = 512):
     if not dec_path.exists():
         return {}
 
-    result: dict[int, dict[int, list[str]]] = defaultdict(lambda: defaultdict(list))
+    result: dict[int, dict[str, list[str]]] = defaultdict(
+        lambda: defaultdict(list))
     for r in read_jsonl(dec_path):
         tl = r.get("tom_level", 0)
         if tl == 0:
             continue
         out = r.get("llm_output", {})
-        text = _extract_reasoning(out, tl)
-        if not text:
+        parts = _extract_reasoning_parts(out, tl)
+        if not parts:
             continue
-        text = text[:max_chars]
         day = mapper(float(r["sim_time"]))
-        result[tl][day].append(text)
+        tom_group = f"tom{tl}"
+        for text in parts:
+            result[day][tom_group].append(text[:max_chars])
     return dict(result)
 
 
-# ── jieba 分词 + n-gram ──────────────────────────────────────────────
-
+# ── 分词与 n-gram ────────────────────────────────────────────────────
 def _tokenize(text: str) -> list[str]:
     import jieba
     jieba.setLogLevel(20)
     return list(jieba.cut(text))
 
 
-def _ngrams(tokens: list[str], n: int = 2) -> set[tuple]:
-    return set(tuple(tokens[i:i + n]) for i in range(len(tokens) - n + 1))
+def _multi_ngrams(tokens: list[str], sizes: list[int]) -> set[tuple]:
+    result = set()
+    n = len(tokens)
+    for size in sizes:
+        for i in range(n - size + 1):
+            result.add(tuple(tokens[i:i + size]))
+    return result
 
 
-# ── Jaccard ──────────────────────────────────────────────────────────
+def _remove_template_spans(tokens: list[str],
+                           template_ngs: set[tuple],
+                           ngram_sizes: list[int]) -> list[str]:
+    n = len(tokens)
+    is_tpl = [False] * n
+    for size in ngram_sizes:
+        for i in range(n - size + 1):
+            if tuple(tokens[i:i + size]) in template_ngs:
+                for j in range(i, i + size):
+                    is_tpl[j] = True
+    return [t for i, t in enumerate(tokens) if not is_tpl[i]]
 
-def jaccard(set_a: set, set_b: set) -> float:
-    if not set_a and not set_b:
-        return 0.0
-    inter = len(set_a & set_b)
-    union = len(set_a | set_b)
-    return inter / union if union else 0.0
 
-
-# ── NCD 相似度 ───────────────────────────────────────────────────────
-
-def ncd_similarity(a: str, b: str) -> float:
-    ca = len(zlib.compress(a.encode("utf-8")))
-    cb = len(zlib.compress(b.encode("utf-8")))
-    cab = len(zlib.compress((a + b).encode("utf-8")))
-    ncd = (cab - min(ca, cb)) / max(ca, cb) if max(ca, cb) > 0 else 0.0
-    return 1.0 - ncd
+def _sample_pairs(n: int) -> list[tuple[int, int]]:
+    if n < 2:
+        return []
+    total = n * (n - 1) // 2
+    if total <= _MAX_PAIRS:
+        return list(combinations(range(n), 2))
+    pairs: set[tuple[int, int]] = set()
+    while len(pairs) < _MAX_PAIRS:
+        i, j = sorted(np.random.choice(n, 2, replace=False))
+        pairs.add((i, j))
+    return list(pairs)
 
 
 # ── 计算单实验同质性 ─────────────────────────────────────────────────
+def compute_homogeneity(day_group_texts: dict,
+                        ngram_n: int = 2,
+                        global_thresh: float = 0.80,
+                        group_thresh: float = 0.60,
+                        daily_thresh: float = 0.50) -> float | None:
+    """三层去模板 → NCD 同质性，返回全交易日均值或 None。"""
+    import jieba
+    jieba.setLogLevel(20)
 
-def compute_homogeneity(tom_day_texts: dict[int, dict[int, list[str]]],
-                        ngram_n: int = 2, max_pairs: int = 500,
-                        template_thresh: float = 0.10):
-    """
-    合并所有 ToM 层级，按天计算全体 agent 推理文本的 pairwise 同质性。
-    先做模板 n-gram 过滤（去掉出现在 >template_thresh 比例文档中的 n-gram），
-    返回 { 'jaccard_mean': float, 'ncd_mean': float } 或 None。
-    """
-    # 合并所有 ToM 到 day -> [text]
-    day_texts: dict[int, list[str]] = defaultdict(list)
-    for tl_days in tom_day_texts.values():
-        for day, texts in tl_days.items():
-            day_texts[day].extend(texts)
+    ngram_sizes = [ngram_n, ngram_n + 1]
 
-    if not day_texts:
+    class _Doc:
+        __slots__ = ("day", "gk", "tokens", "ngrams")
+
+        def __init__(self, day, gk, tokens, ngrams):
+            self.day = day
+            self.gk = gk
+            self.tokens = tokens
+            self.ngrams = ngrams
+
+    docs: list[_Doc] = []
+    for day in sorted(day_group_texts.keys()):
+        for gk in sorted(day_group_texts[day].keys()):
+            for text in day_group_texts[day][gk]:
+                tokens = _tokenize(text)
+                ngrams = _multi_ngrams(tokens, ngram_sizes)
+                docs.append(_Doc(day, gk, tokens, ngrams))
+
+    total = len(docs)
+    if total < 4:
         return None
 
-    # ── 模板 n-gram 检测：收集全部文本的 n-gram 文档频率 ──
-    all_texts_flat = [t for texts in day_texts.values() for t in texts]
-    from collections import Counter
-    doc_count: Counter = Counter()
-    for t in all_texts_flat:
-        ng = _ngrams(_tokenize(t), ngram_n)
-        for g in ng:
-            doc_count[g] += 1
-    n_docs = len(all_texts_flat)
-    template_ngrams = {g for g, c in doc_count.items() if c / n_docs > template_thresh}
-    print(f"    模板 n-gram: {len(template_ngrams)}/{len(doc_count)} (阈值>{template_thresh*100:.0f}%)")
+    # L1: 全局
+    global_df: Counter = Counter()
+    for doc in docs:
+        for ng in doc.ngrams:
+            global_df[ng] += 1
+    global_tpl = {ng for ng, c in global_df.items()
+                  if c > total * global_thresh}
 
-    rng = np.random.default_rng(42)
-    day_jaccards = []
-    day_ncds = []
+    # L2: 组级
+    group_indices: dict[str, list[int]] = defaultdict(list)
+    for i, doc in enumerate(docs):
+        group_indices[doc.gk].append(i)
 
-    for day in sorted(day_texts):
-        texts = day_texts[day]
-        n = len(texts)
-        if n < 2:
+    group_tpl: dict[str, set] = {}
+    for gk, indices in group_indices.items():
+        gdf: Counter = Counter()
+        for i in indices:
+            for ng in docs[i].ngrams:
+                gdf[ng] += 1
+        n_g = len(indices)
+        group_tpl[gk] = {ng for ng, c in gdf.items()
+                         if c > n_g * group_thresh
+                         and ng not in global_tpl}
+
+    # L3: 逐日
+    day_indices: dict[int, list[int]] = defaultdict(list)
+    for i, doc in enumerate(docs):
+        day_indices[doc.day].append(i)
+
+    upper_tpl = set(global_tpl)
+    for v in group_tpl.values():
+        upper_tpl |= v
+
+    daily_tpl: dict[int, set] = {}
+    for day, indices in day_indices.items():
+        if len(indices) < _DAILY_MIN_DOCS:
+            daily_tpl[day] = set()
             continue
+        ddf: Counter = Counter()
+        for i in indices:
+            for ng in docs[i].ngrams:
+                ddf[ng] += 1
+        n_d = len(indices)
+        daily_tpl[day] = {ng for ng, c in ddf.items()
+                          if c > n_d * daily_thresh
+                          and ng not in upper_tpl}
 
-        # 过滤掉模板 n-gram
-        ngram_sets = [_ngrams(_tokenize(t), ngram_n) - template_ngrams for t in texts]
+    tpl_total = (len(global_tpl)
+                 + sum(len(v) for v in group_tpl.values())
+                 + sum(len(v) for v in daily_tpl.values()))
+    print(f"    三层模板: L1={len(global_tpl)} L2={sum(len(v) for v in group_tpl.values())} "
+          f"L3={sum(len(v) for v in daily_tpl.values())} (共{tpl_total})")
 
-        all_pairs = list(combinations(range(n), 2))
-        if len(all_pairs) > max_pairs:
-            indices = rng.choice(len(all_pairs), max_pairs, replace=False)
-            selected = [all_pairs[i] for i in indices]
-        else:
-            selected = all_pairs
+    # 去模板 NCD
+    cleaned_bytes: list[bytes] = []
+    for doc in docs:
+        all_tpl = (global_tpl
+                   | group_tpl.get(doc.gk, set())
+                   | daily_tpl.get(doc.day, set()))
+        remaining = _remove_template_spans(doc.tokens, all_tpl, ngram_sizes)
+        cleaned_bytes.append("".join(remaining).encode("utf-8"))
 
-        jaccards = []
-        ncds = []
-        for i, j in selected:
-            jaccards.append(jaccard(ngram_sets[i], ngram_sets[j]))
-            ncds.append(ncd_similarity(texts[i], texts[j]))
+    comp_sizes = [len(zlib.compress(b, level=6)) for b in cleaned_bytes]
 
-        day_jaccards.append(np.mean(jaccards))
-        day_ncds.append(np.mean(ncds))
+    def _ncd_sim(gi: int, gj: int) -> float:
+        ca, cb = comp_sizes[gi], comp_sizes[gj]
+        if ca == 0 and cb == 0:
+            return float("nan")
+        cab = len(zlib.compress(
+            cleaned_bytes[gi] + cleaned_bytes[gj], level=6))
+        denom = max(ca, cb)
+        if denom == 0:
+            return float("nan")
+        return 1.0 - (cab - min(ca, cb)) / denom
 
-    if not day_jaccards:
+    day_ncds = []
+    for day, indices in day_indices.items():
+        n = len(indices)
+        pairs = _sample_pairs(n)
+        if not pairs:
+            continue
+        sims = [_ncd_sim(indices[i], indices[j]) for i, j in pairs]
+        valid = [s for s in sims if not math.isnan(s)]
+        if valid:
+            day_ncds.append(float(np.mean(valid)))
+
+    if not day_ncds:
         return None
-
-    return {
-        "jaccard_mean": round(float(np.mean(day_jaccards)), 2),
-        "ncd_mean": round(float(np.mean(day_ncds)), 2),
-    }
+    return round(float(np.mean(day_ncds)), 4)
 
 
 # ── 配对实验发现 ─────────────────────────────────────────────────────
-
 def find_social_pairs(runs_root: Path) -> list[tuple[str, Path, Path]]:
     dirs = {d.name: d for d in runs_root.iterdir() if d.is_dir()}
     pairs = []
@@ -230,12 +292,7 @@ def find_social_pairs(runs_root: Path) -> list[tuple[str, Path, Path]]:
 
 
 # ── 哑铃图绘制 ───────────────────────────────────────────────────────
-
-def plot_dumbbell(data: list[dict], metric_key: str, metric_label: str,
-                  title: str, output: str):
-    """
-    data: [{'label': str, 'tom': int, 'social': float, 'nosocial': float}, ...]
-    """
+def plot_dumbbell(data: list[dict], output: str):
     configure_chinese_font()
     import matplotlib
     matplotlib.use("Agg")
@@ -250,16 +307,17 @@ def plot_dumbbell(data: list[dict], metric_key: str, metric_label: str,
     nosocial_vals = np.array([d["nosocial"] for d in data])
 
     x = np.arange(n)
-
     fig, ax = plt.subplots(figsize=(max(7, 1.8 * n), 5.5))
 
-    # 竖线
     for i in range(n):
         ax.plot([x[i], x[i]], [social_vals[i], nosocial_vals[i]],
-                color="#bfbfbf", linewidth=2.8, zorder=1, solid_capstyle="round")
+                color="#bfbfbf", linewidth=2.8, zorder=1,
+                solid_capstyle="round")
 
-    ax.scatter(x, social_vals, s=140, color="#0969da", zorder=3, label="有社交")
-    ax.scatter(x, nosocial_vals, s=140, color="#cf222e", zorder=3, marker="D", label="无社交")
+    ax.scatter(x, social_vals, s=140, color="#0969da", zorder=3,
+               label="有社交")
+    ax.scatter(x, nosocial_vals, s=140, color="#cf222e", zorder=3,
+               marker="D", label="无社交")
 
     for i in range(n):
         sv, nv = social_vals[i], nosocial_vals[i]
@@ -273,16 +331,16 @@ def plot_dumbbell(data: list[dict], metric_key: str, metric_label: str,
             s_off, n_off = (0, -14), (0, 10)
             s_va, n_va = "top", "bottom"
 
-        ax.annotate(f"{sv:.2f}", (x[i], sv), textcoords="offset points",
+        ax.annotate(f"{sv:.4f}", (x[i], sv), textcoords="offset points",
                     xytext=s_off, ha="center", va=s_va, fontsize=10,
                     color="#0969da", fontweight="bold")
-        ax.annotate(f"{nv:.2f}", (x[i], nv), textcoords="offset points",
+        ax.annotate(f"{nv:.4f}", (x[i], nv), textcoords="offset points",
                     xytext=n_off, ha="center", va=n_va, fontsize=10,
                     color="#cf222e", fontweight="bold")
 
         mid_y = (sv + nv) / 2
         color = "#0969da" if diff > 0 else "#cf222e" if diff < 0 else "#656d76"
-        ax.annotate(f"Δ={sign}{diff:.2f}", (x[i], mid_y),
+        ax.annotate(f"Δ={sign}{diff:.4f}", (x[i], mid_y),
                     textcoords="offset points", xytext=(30, 0),
                     ha="left", va="center", fontsize=9, color=color,
                     bbox=dict(boxstyle="round,pad=0.2", facecolor="#f6f8fa",
@@ -295,8 +353,9 @@ def plot_dumbbell(data: list[dict], metric_key: str, metric_label: str,
 
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=10)
-    ax.set_ylabel(metric_label, fontsize=11)
-    ax.set_title(title, fontsize=14, fontweight="bold", pad=12)
+    ax.set_ylabel("1 − NCD (去模板, 全交易日均值)", fontsize=11)
+    ax.set_title("有社交 vs 无社交：推理同质性对比（三层去模板 NCD）",
+                 fontsize=14, fontweight="bold", pad=12)
     ax.yaxis.grid(True, linestyle="--", alpha=0.35)
     ax.set_axisbelow(True)
     ax.spines["top"].set_visible(False)
@@ -311,13 +370,15 @@ def plot_dumbbell(data: list[dict], metric_key: str, metric_label: str,
 
 
 # ── main ─────────────────────────────────────────────────────────────
-
 def main():
-    parser = argparse.ArgumentParser(description="有社交 vs 无社交 推理同质性对比")
-    parser.add_argument("--runs-root", default="../../runs", help="runs 目录")
-    parser.add_argument("--max-chars", type=int, default=512, help="推理文本截断字符数")
-    parser.add_argument("--max-pairs", type=int, default=500, help="每日最大采样配对数")
-    parser.add_argument("--ngram", type=int, default=2, help="n-gram 大小")
+    parser = argparse.ArgumentParser(
+        description="有社交 vs 无社交 推理同质性对比（三层去模板 NCD）")
+    parser.add_argument("--runs-root", default="../../runs",
+                        help="runs 目录")
+    parser.add_argument("--max-chars", type=int, default=512,
+                        help="推理文本截断字符数")
+    parser.add_argument("--ngram", type=int, default=2,
+                        help="最小 n-gram 大小 (自动同时使用 n 和 n+1)")
     args = parser.parse_args()
 
     runs_root = Path(args.runs_root).resolve()
@@ -328,40 +389,33 @@ def main():
 
     print(f"找到 {len(pairs)} 组配对:")
 
-    jaccard_data = []
     ncd_data = []
-
     for label, social_dir, nosocial_dir in pairs:
         print(f"\n--- {label} ---")
 
         print(f"  有社交: {social_dir.name}")
         s_texts = load_reasoning_texts(social_dir, args.max_chars)
-        s_homo = compute_homogeneity(s_texts, args.ngram, args.max_pairs)
+        s_ncd = compute_homogeneity(s_texts, args.ngram,
+                                    group_thresh=1.01, daily_thresh=1.01)
 
         print(f"  无社交: {nosocial_dir.name}")
         n_texts = load_reasoning_texts(nosocial_dir, args.max_chars)
-        n_homo = compute_homogeneity(n_texts, args.ngram, args.max_pairs)
+        n_ncd = compute_homogeneity(n_texts, args.ngram,
+                                    group_thresh=1.01, daily_thresh=1.01)
 
-        if s_homo is None or n_homo is None:
+        if s_ncd is None or n_ncd is None:
             print(f"  [SKIP] {label}: 缺少有效推理文本")
             continue
 
-        sj, nj = s_homo["jaccard_mean"], n_homo["jaccard_mean"]
-        sn, nn = s_homo["ncd_mean"], n_homo["ncd_mean"]
-        print(f"  Jaccard: 有社交={sj:.2f}  无社交={nj:.2f}  Δ={sj - nj:+.2f}")
-        print(f"  NCD:     有社交={sn:.2f}  无社交={nn:.2f}  Δ={sn - nn:+.2f}")
-        jaccard_data.append({"label": label, "social": sj, "nosocial": nj})
-        ncd_data.append({"label": label, "social": sn, "nosocial": nn})
+        print(f"  NCD: 有社交={s_ncd:.4f}  无社交={n_ncd:.4f}  "
+              f"Δ={s_ncd - n_ncd:+.4f}")
+        ncd_data.append({"label": label, "social": s_ncd, "nosocial": n_ncd})
 
     out_dir = Path(__file__).resolve().parent
-    if jaccard_data:
-        plot_dumbbell(jaccard_data, "jaccard", "Jaccard 同质性（全交易日均值）",
-                      "有社交 vs 无社交：推理 Jaccard 同质性对比",
-                      str(out_dir / "reasoning_homogeneity_jaccard_compare.png"))
     if ncd_data:
-        plot_dumbbell(ncd_data, "ncd", "NCD 同质性（全交易日均值）",
-                      "有社交 vs 无社交：推理 NCD 同质性对比",
-                      str(out_dir / "reasoning_homogeneity_ncd_compare.png"))
+        plot_dumbbell(
+            ncd_data,
+            str(out_dir / "reasoning_homogeneity_ncd_compare.png"))
 
 
 if __name__ == "__main__":

@@ -1,21 +1,11 @@
-# 推理同质性分析（Reasoning Homogeneity Analysis）
+# 推理-发帖一致性分析（Reasoning–Post Consistency）
 
-## 实验目的
+## 目的
 
-量化不同心智推理层级（ToM-0/1/2）的智能体在推理内容上的**同质性**（相似程度），
-检验高阶心智推理是否真正带来了认知多样性。
+检测智能体是否存在**策略性操纵发帖**——即内心推理（thinking）和公开帖子（posting）
+内容不一致。低一致性意味着 agent "想的"和"说的"不同，可能在有意误导其他交易者。
 
-## 实验设计
-
-对三个"预测拟合"实验的 `decisions.jsonl` 中的推理文本进行分析：
-
-| 实验 | 配置 | ToM-0 | ToM-1 | ToM-2 |
-|------|------|-------|-------|-------|
-| tom07/12/21 | `20260329_005147` | 70 agents | 20 agents | 10 agents |
-| tom01/11/21 | `20260329_150251` | 70 agents | 20 agents | 10 agents |
-| tom06/13/21 | `20260330_211929` | 60 agents | 30 agents | 10 agents |
-
-### 推理文本字段
+## 推理文本字段
 
 | ToM 层级 | 字段 | 含义 |
 |----------|------|------|
@@ -31,175 +21,62 @@
 
 ## 分析方法
 
-### 方法一：TF-IDF 去模板 + Jaccard 相似度（字符级）
+### 三层去模板策略
 
-1. **jieba 分词** → 生成 bigram（二元词组）集合
-2. **TF-IDF 去模板**：出现在 >80% 文本中的 n-gram 视为系统模板，删除
-3. **两两 Jaccard**：同一天、同一组的所有 agent 两两比较
+LLM 生成的推理/帖子文本包含大量结构性重复（系统句式模板、LLM 组特有句式、当日共享行情引用），
+需要逐层剥离才能准确衡量推理与帖子之间的真实一致度。
 
-$$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
+| 层级 | 范围 | 默认阈值 | 目标 |
+|------|------|----------|------|
+| Layer 1 全局 | 全部文本（推理+帖子） | >80% | 系统级句式模板、常见连接词 |
+| Layer 2 组级 | 同 ToM 组 | >60% | LLM 组特有的句式模板 |
+| Layer 3 逐日 | 同天所有文本 | >50% | 当日共享行情数据、新闻引用（最小 5 条） |
 
-**优点**：直接排除系统提示词的影响，只衡量"独立思考"部分的词汇重叠。
+三层逐层递进，不重复计数。
 
-### 方法二：NCD 压缩距离
+### 多粒度 n-gram
 
-1. 用 zlib 压缩每条文本和拼接文本
-2. 计算归一化压缩距离
+同时使用 bigram + trigram，更精准捕捉 3~5 个词的模板短语。
+
+### 去模板 NCD 压缩距离
+
+1. 从 token 序列中**剥离被标记为模板的 span**
+2. 用 zlib 压缩去模板后的推理文本和帖子文本
+3. 计算归一化压缩距离
 
 $$\text{NCD}(A,B) = \frac{C(AB) - \min(C(A), C(B))}{\max(C(A), C(B))}$$
 
-图表中显示 $1 - \text{NCD}$（相似度方向）。
-
-**优点**：关心字符序列结构（包括用词顺序和句式），不依赖分词，语言无关。
-
-### 采样策略
-
-当组内 agent 数 >30 时（$C(n,2)$ > 435），随机采样 300 对，避免计算爆炸。
+图表中显示 $1 - \text{NCD}$（相似度方向）。值越低 = 推理与帖子越不一致 = 越可能在策略性操纵。
 
 ---
 
-## 实验结果
-
-### Jaccard 相似度（去模板后）
-
-| 实验 | ToM-1 | ToM-2 一阶(r1) | ToM-2 二阶(r2) | r2 vs r1 |
-|------|-------|----------------|----------------|----------|
-| tom07/12/21 | 0.166 | 0.317 | **0.297** | -6.3% |
-| tom01/11/21 | 0.141 | 0.150 | **0.092** | **-38.7%** |
-| tom06/13/21 | 0.193 | 0.203 | **0.101** | **-50.2%** |
-
-### NCD 相似度 (1 − NCD)
-
-| 实验 | ToM-1 | ToM-2 一阶(r1) | ToM-2 二阶(r2) | r2 vs r1 |
-|------|-------|----------------|----------------|----------|
-| tom07/12/21 | 0.320 | 0.388 | **0.369** | -4.9% |
-| tom01/11/21 | 0.374 | 0.405 | **0.347** | **-14.3%** |
-| tom06/13/21 | 0.429 | 0.464 | **0.359** | **-22.6%** |
-
----
-
-## 核心发现
-
-### 1. ToM-2 的二阶推理确实更具多样性
-
-在 3 个实验中的 2 个（tom01 和 tom06），ToM-2 二阶推理（`tom2_r2`）的 Jaccard
-同质性比一阶推理（`tom2_r1`）低 39%~50%，说明二阶推理（"我认为别人认为我会做什么"）
-确实产生了更丰富的策略叙事。
-
-### 2. ToM-2 一阶推理趋于同质
-
-ToM-2 的一阶推理（`tom2_r1`：预测他人行为）在所有实验中相似度略高于 ToM-1 的
-`mental_reasoning`，说明面对相同市场信息时，对"他人可能行为"的判断会趋同。
-
-### 3. 整体同质性偏低（Jaccard 0.08~0.19）
-
-去模板后的 Jaccard 远低于 embedding 相似度（0.73~0.89），证实了高 embedding 
-相似度主要来自系统提示词的共享语义，而非推理内容的真正趋同。
-
-### 4. 两种指标交叉验证一致
-
-Jaccard 和 NCD 的排序一致：二阶推理 < 一阶推理 ≤ ToM-1，增强了结论可信度。
-
----
-
----
-
-## 分析二：推理-发帖一致性（Reasoning–Post Consistency）
-
-### 目的
-
-检测智能体是否存在**策略性操纵发帖**——即内心推理（thinking）和公开帖子（posting）
-内容不一致。低一致性意味着 agent "想的"和"说的"不同，可能在有意误导其他交易者。
-
-### 方法
-
-对每个 agent 每一天，将其 **推理文本** 与 **当天所有帖子拼合文本** 做 Jaccard 和 NCD 比较。
-跳过没有帖子或没有有效推理的 agent-day 对。
-
-### 结果
-
-| 实验 | ToM-1 Jaccard | ToM-2 Jaccard | ToM-2 vs ToM-1 |
-|------|---------------|---------------|-----------------|
-| tom07/12/21 | 0.068 | **0.042** | **-38.8%** |
-| tom01/11/21 | 0.079 | **0.069** | **-12.7%** |
-| tom06/13/21 | 0.116 | **0.100** | **-13.8%** |
-
-| 实验 | ToM-1 NCD_sim | ToM-2 NCD_sim | ToM-2 vs ToM-1 |
-|------|---------------|---------------|-----------------|
-| tom07/12/21 | 0.216 | **0.140** | **-35.2%** |
-| tom01/11/21 | 0.244 | **0.217** | **-11.1%** |
-| tom06/13/21 | 0.303 | **0.268** | **-11.6%** |
-
-### 发现
-
-1. **整体一致性很低**（Jaccard 0.04~0.12），推理和帖子的词汇重叠很少——
-   agent 发帖时显著改写了内容，不是简单地把推理复制粘贴出去。
-
-2. **ToM-2 比 ToM-1 更不一致**：三个实验中 ToM-2 的推理-发帖 Jaccard 一致性
-   均低于 ToM-1，降幅 13%~39%。说明**二阶心智推理者更倾向于隐藏真实想法**，
-   发帖内容与内心推演的偏离更大。
-
-3. **不一致性 Top agents 稳定**：部分 agent（如 Agent 3、74）在多个实验中
-   反复出现在最不一致 Top-5 中，暗示特定角色配置促进了"言行不一"行为。
-
----
-
-## 文件清单
-
-### 同质性分析
+## 输出文件
 
 | 文件 | 说明 |
 |------|------|
-| `推理同质性_字符级_tom07_12_21.png` | tom07/12/21 实验的 Jaccard + NCD 时间序列 |
-| `推理同质性_字符级_tom01_11_21.png` | tom01/11/21 实验的 Jaccard + NCD 时间序列 |
-| `推理同质性_字符级_tom06_13_21.png` | tom06/13/21 实验的 Jaccard + NCD 时间序列 |
-| `推理同质性_字符级_多实验对比.png` | 三实验对比 |
-| `推理同质性_字符级_汇总.json` | 字符级指标 JSON 汇总 |
-| `推理同质性_汇总.json` | Embedding 指标 JSON 汇总（参考用） |
-
-### 一致性分析
-
-| 文件 | 说明 |
-|------|------|
-| `推理发帖一致性_tom07_12_21.png` | tom07/12/21 实验的一致性时间序列 |
-| `推理发帖一致性_tom01_11_21.png` | tom01/11/21 实验的一致性时间序列 |
-| `推理发帖一致性_tom06_13_21.png` | tom06/13/21 实验的一致性时间序列 |
-| `推理发帖一致性_多实验对比.png` | 分组柱状图对比 |
-| `推理发帖一致性_Agent分布.png` | Agent 散点图（Jaccard vs NCD） |
-| `推理发帖一致性_汇总.json` | 一致性分析 JSON 汇总（含最不一致 Top-10 agents） |
+| `推理发帖一致性_{label}.png` | 各实验的 NCD 一致性时间序列 |
+| `推理发帖一致性_多实验对比.png` | 柱状图对比 |
+| `推理发帖一致性_Agent分布.png` | Agent 散点图（NCD sim vs 活跃天数） |
+| `推理发帖一致性_汇总.json` | 汇总统计（含模板检测报告 + 最不一致 Top-10 agents） |
 
 ## 代码位置
 
 | 脚本 | 说明 |
 |------|------|
-| `evaluation/plot_reasoning_homogeneity_char.py` | 字符级同质性分析（Jaccard + NCD） |
-| `evaluation/plot_reasoning_homogeneity.py` | Embedding 同质性分析（sentence-transformers） |
-| `evaluation/plot_reasoning_post_consistency.py` | 推理-发帖一致性分析 |
+| `evaluation/reasoning_homogeneity/plot_reasoning_post_consistency.py` | 推理-发帖一致性分析（三层去模板 NCD） |
 
 ## 运行命令
 
 ```bash
-# 字符级同质性（推荐，快速）
-python evaluation/plot_reasoning_homogeneity_char.py \
-  runs/20260329_005147_tom07_tom12_tom21_预测拟合 \
-  runs/20260329_150251_tom01_tom11_tom21_预测拟合 \
-  runs/20260330_211929_tom06_tom13_tom21_预测拟合 \
-  --labels "tom07/12/21,tom01/11/21,tom06/13/21" \
-  --output-dir output/reasoning_homogeneity
+python evaluation/reasoning_homogeneity/plot_reasoning_post_consistency.py \
+  runs/ToM1 runs/ToM2 \
+  --labels "ToM1,ToM2" \
+  --output-dir evaluation/reasoning_homogeneity \
+  --prefix "推理发帖一致性"
 
-# 推理-发帖一致性
-python evaluation/plot_reasoning_post_consistency.py \
-  runs/20260329_005147_tom07_tom12_tom21_预测拟合 \
-  runs/20260329_150251_tom01_tom11_tom21_预测拟合 \
-  runs/20260330_211929_tom06_tom13_tom21_预测拟合 \
-  --labels "tom07/12/21,tom01/11/21,tom06/13/21" \
-  --output-dir output/reasoning_homogeneity
-
-# Embedding 同质性（较慢，需下载模型）
-python evaluation/plot_reasoning_homogeneity.py \
-  runs/20260329_005147_tom07_tom12_tom21_预测拟合 \
-  runs/20260329_150251_tom01_tom11_tom21_预测拟合 \
-  runs/20260330_211929_tom06_tom13_tom21_预测拟合 \
-  --labels "tom07/12/21,tom01/11/21,tom06/13/21" \
-  --output-dir output/reasoning_homogeneity
+# 自定义去模板阈值
+python evaluation/reasoning_homogeneity/plot_reasoning_post_consistency.py \
+  runs/ToM1 runs/ToM2 \
+  --global-thresh 0.75 --group-thresh 0.55 --daily-thresh 0.40 \
+  --output-dir evaluation/reasoning_homogeneity
 ```

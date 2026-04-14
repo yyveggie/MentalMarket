@@ -294,8 +294,12 @@ def _get_sentiment_classifier():
     if _SENT_CLASSIFIER is None:
         from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline as hf_pipeline
         model_name = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        except (OSError, Exception):
+            tokenizer = AutoTokenizer.from_pretrained(model_name, local_files_only=True)
+            model = AutoModelForSequenceClassification.from_pretrained(model_name, local_files_only=True)
         import torch
         if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             device = "mps"
@@ -342,16 +346,42 @@ def classify_news_sentiment_batch(titles: list[str]) -> list[float]:
 def classify_event_day_sentiment(
     news_list: list[dict],
 ) -> dict[int, str]:
-    """Classify each event day's net sentiment using a transformer model.
+    """Classify each event day's net sentiment.
+
+    优先使用预标注的 sentiment 字段（由 batch_classify_news_sentiment.py 生成），
+    无预标注时 fallback 到 Transformer 模型。
 
     Accepts news_list items with either 'title' or 'content' field,
     and 'day' or 'trading_day' for the day number.
 
     Returns {day: 'positive'/'negative'/'neutral'}.
-    Sentiment score per headline is in [-1, 1]; day score = mean of its headlines.
-    Day label: >0 → positive, <0 → negative, =0 → neutral.
     """
     from collections import defaultdict
+
+    has_pre_labeled = sum(1 for item in news_list if "sentiment" in item)
+    use_pre_labeled = has_pre_labeled > len(news_list) * 0.5
+
+    if use_pre_labeled:
+        _LABEL_SCORE = {"positive": 1.0, "negative": -1.0, "neutral": 0.0}
+        day_scores: dict[int, list[float]] = defaultdict(list)
+        for item in news_list:
+            d = item.get("day") or item.get("trading_day")
+            if not isinstance(d, (int, float)):
+                continue
+            label = str(item.get("sentiment", "neutral")).strip().lower()
+            day_scores[int(d)].append(_LABEL_SCORE.get(label, 0.0))
+
+        result: dict[int, str] = {}
+        for day, scores in day_scores.items():
+            avg = sum(scores) / len(scores) if scores else 0.0
+            if avg > 0:
+                result[day] = "positive"
+            elif avg < 0:
+                result[day] = "negative"
+            else:
+                result[day] = "neutral"
+        return result
+
     day_titles: dict[int, list[str]] = defaultdict(list)
     for item in news_list:
         d = item.get("day") or item.get("trading_day")
@@ -361,12 +391,11 @@ def classify_event_day_sentiment(
         if title:
             day_titles[int(d)].append(title)
 
-    # Batch all unique titles at once for efficiency
     all_titles = list({t for titles in day_titles.values() for t in titles})
     if all_titles:
-        classify_news_sentiment_batch(all_titles)  # populates cache
+        classify_news_sentiment_batch(all_titles)
 
-    result: dict[int, str] = {}
+    result = {}
     for day, titles in day_titles.items():
         scores = [_SENT_CACHE.get(t, 0.0) for t in titles]
         avg = sum(scores) / len(scores) if scores else 0.0
@@ -679,6 +708,50 @@ def compute_car_significance(
             result[f"drift_{tag}"] = "positive_drift" if d_mean > 0 else "negative_drift"
         else:
             result[f"drift_{tag}"] = "none"
+
+    # ── Sign Test (non-parametric: proportion of positive CARs) ──
+    for h in horizons:
+        vals = car_vals_by_h.get(h, [])
+        n = len(vals)
+        if n < 5:
+            result[f"sign_pos_pct_{h}"] = float("nan")
+            result[f"sign_p_{h}"] = float("nan")
+            continue
+        n_pos = sum(1 for v in vals if v > 0)
+        pos_pct = n_pos / n
+        z_sign = (n_pos - 0.5 * n) / math.sqrt(0.25 * n)
+        result[f"sign_pos_pct_{h}"] = pos_pct
+        result[f"sign_p_{h}"] = 2 * _normal_cdf_complement(abs(z_sign))
+
+    # ── Corrado Rank Test (non-parametric, Corrado 1989) ──
+    for h in horizons:
+        vals = car_vals_by_h.get(h, [])
+        n = len(vals)
+        if n < 5:
+            result[f"rank_t_{h}"] = float("nan")
+            result[f"rank_p_{h}"] = float("nan")
+            continue
+        sorted_vals = sorted(range(n), key=lambda i: vals[i])
+        ranks = [0.0] * n
+        for rank_pos, orig_idx in enumerate(sorted_vals):
+            ranks[orig_idx] = (rank_pos + 1) / (n + 1) - 0.5
+        avg_rank = sum(ranks) / n
+        rank_var = sum((r - avg_rank) ** 2 for r in ranks) / n
+        rank_t = avg_rank / math.sqrt(rank_var / n) if rank_var > 0 else 0.0
+        result[f"rank_t_{h}"] = rank_t
+        result[f"rank_p_{h}"] = 2 * _normal_cdf_complement(abs(rank_t))
+
+    # ── Absorption Ratio: how much of h=5 reaction is captured by h=1 ──
+    if 1 in car_vals_by_h and 5 in car_vals_by_h:
+        vals_1 = car_vals_by_h[1]
+        vals_5 = car_vals_by_h[5]
+        if vals_1 and vals_5:
+            abs_mean_1 = sum(abs(v) for v in vals_1) / len(vals_1)
+            abs_mean_5 = sum(abs(v) for v in vals_5) / len(vals_5)
+            result["absorption_ratio"] = (abs_mean_1 / abs_mean_5
+                                          if abs_mean_5 > 1e-10 else float("nan"))
+        else:
+            result["absorption_ratio"] = float("nan")
 
     # ── Ex-ante sentiment-grouped tests ──
     # Group by news sentiment label (truly ex-ante, no look-ahead bias).

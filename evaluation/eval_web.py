@@ -3101,6 +3101,19 @@ def api_efficiency_ranking():
                     if tests.get(f"boot_p_{grp}_{h}", 1) < alpha:
                         sig_group.append(f"{label}h{h}")
 
+            absorption = tests.get("absorption_ratio", float("nan"))
+            if math.isnan(absorption):
+                absorption = None
+
+            any_sign_sig = any(
+                tests.get(f"sign_p_{h}", 1) < alpha for h in [1, 3, 5])
+            any_rank_sig = any(
+                tests.get(f"rank_p_{h}", 1) < alpha for h in [1, 3, 5])
+
+            if any_sign_sig or any_rank_sig:
+                if eff_label == "efficient":
+                    eff_label = "inefficient_nonparam"
+
             rows.append({
                 "run": run_name,
                 "n_events": n,
@@ -3116,6 +3129,11 @@ def api_efficiency_ranking():
                 "p_1": round(tests.get("p_value_1", 1), 4),
                 "p_3": round(tests.get("p_value_3", 1), 4),
                 "p_5": round(tests.get("p_value_5", 1), 4),
+                "sign_p_1": round(tests.get("sign_p_1", 1), 4),
+                "sign_p_5": round(tests.get("sign_p_5", 1), 4),
+                "rank_p_1": round(tests.get("rank_p_1", 1), 4),
+                "rank_p_5": round(tests.get("rank_p_5", 1), 4),
+                "absorption": round(absorption, 4) if absorption is not None else None,
                 "efficient": eff_label,
                 "efficient_05": eff_label_05,
                 "sig_horizons": sig_h,
