@@ -568,13 +568,16 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "x_key": "trading_day",
         "metrics": {
             "like_events": "点赞事件数",
+            "dislike_events": "点踩事件数",
             "follow_events": "新增关注数",
+            "unfollow_events": "取关事件数",
             "unique_likers": "独立点赞人数",
-            "avg_likes_given": "人均点赞数",
             "like_targets_unique": "被赞独立人数",
             "total_posts": "总帖数",
             "agent_posts": "Agent 原创帖数",
             "retweet_posts": "转发帖数",
+            "avg_posts_per_agent": "每日人均原创帖数",
+            "avg_social_actions_per_agent": "每日人均社交操作数",
             "avg_likes_per_post": "每帖平均获赞",
             "unique_posters": "独立发帖人数",
             "posting_rate": "发帖率(%)",
@@ -583,13 +586,16 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "computed": True,
         "desc": {
             "like_events": "当日该 ToM 层级 Agent 发出的点赞总数。↑社交活跃、信息流通快 ↓社交沉寂",
+            "dislike_events": "当日该 ToM 层级 Agent 发出的点踩总数",
             "follow_events": "当日新增关注事件数。↑网络扩张/意见领袖涌现 ↓网络稳定",
+            "unfollow_events": "当日取消关注事件数。↑社交关系不稳定/意见分歧 ↓网络结构稳定",
             "unique_likers": "当日至少点赞一次的独立 Agent 数。反映社交参与面的广度",
-            "avg_likes_given": "活跃 Agent 的人均点赞次数。↑深度参与互动 ↓浅层浏览",
             "like_targets_unique": "当日被至少一次点赞的独立 Agent 数。反映注意力分布——少则集中于KOL，多则分散",
             "total_posts": "帖子总数。混合 ToM 实验按层级自动分组",
             "agent_posts": "Agent 主动发布的原创观点帖数",
             "retweet_posts": "转发帖数",
+            "avg_posts_per_agent": "每日人均原创帖数（每天该层级原创帖数 ÷ 该层级 Agent 总数）",
+            "avg_social_actions_per_agent": "每日人均社交操作数 = (点赞+点踩+关注+取关+转发) ÷ 该层级 Agent 总数（不含原创帖，与人均原创帖数互不重叠）",
             "avg_likes_per_post": "每帖平均获赞数",
             "unique_posters": "至少发帖一次的独立 Agent 数",
             "posting_rate": "发帖 Agent 占该组总 Agent 的百分比(%)",
@@ -693,22 +699,7 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
             "social_like_pct": "社交行为中点赞占比",
         },
     },
-    "social_trading_nexus": {
-        "label": "社交-交易因果",
-        "x_key": "trading_day",
-        "metrics": {
-            "social_trade_ratio": "阅帖后交易率(%)",
-            "avg_perceived_posts": "平均感知帖数",
-            "avg_engagement": "平均互动感知量",
-        },
-        "group_key": "tom_level",
-        "computed": True,
-        "desc": {
-            "social_trade_ratio": "看到≥1帖(任意来源)的Agent中做出买/卖的比例",
-            "avg_perceived_posts": "每个Agent平均感知到的帖子数。反映信息触达密度",
-            "avg_engagement": "每个Agent平均感知到的互动(点赞)总量。反映社交信号的强度",
-        },
-    },
+
     "bubble_rd_rad": {
         "label": "泡沫度量 RD/RAD",
         "x_key": "trading_day",
@@ -823,38 +814,6 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "desc": {
             "mean_return_pct": "仿真最后一天收益率算术平均值（%）。tom_level=all 为全体，其余按 ToM 层级分组",
             "median_return_pct": "仿真最后一天收益率中位数（%）。横轴为各实验的心智阶数比例",
-        },
-    },
-    "reasoning_homogeneity": {
-        "label": "推理同质性（Jaccard + NCD）",
-        "x_key": "trading_day",
-        "metrics": {
-            "jaccard_sim": "Jaccard 相似度",
-            "ncd_sim": "NCD 相似度(1-NCD)",
-            "agent_count": "样本量",
-        },
-        "group_key": "tom_level",
-        "computed": True,
-        "desc": {
-            "jaccard_sim": "同组同日 Agent 推理文本的字符 bigram Jaccard 平均相似度。↑推理趋同 ↓多样性高。ToM2 拆分为 r1(一阶)和 r2(二阶)",
-            "ncd_sim": "归一化压缩距离相似度(1-NCD)。关注字符序列结构和句式。↑相似 ↓差异大",
-            "agent_count": "当日该组参与比较的推理文本数量",
-        },
-    },
-    "reasoning_post_consistency": {
-        "label": "推理-发帖一致性",
-        "x_key": "trading_day",
-        "metrics": {
-            "jaccard_consistency": "Jaccard 一致性",
-            "ncd_consistency": "NCD 一致性",
-            "agent_count": "样本量",
-        },
-        "group_key": "tom_level",
-        "computed": True,
-        "desc": {
-            "jaccard_consistency": "推理文本与帖子内容的 Jaccard 相似度。↑言行一致 ↓策略性隐藏真实想法。ToM-2 通常低于 ToM-1",
-            "ncd_consistency": "推理与帖子的压缩距离相似度。↑结构相似 ↓差异大",
-            "agent_count": "当日有推理+帖子的 Agent 数",
         },
     },
     "tom0_ratio_vs_index": {
@@ -1819,7 +1778,7 @@ def _compute_return_tom_ranking(run_dir: Path) -> list[dict]:
 
 
 def _compute_avg_return(run_dir: Path) -> list[dict]:
-    """个体人均收益率统计（含全体汇总 + 按 ToM 分组）。"""
+    """个体人均收益率统计（按 ToM 分组 + 全体汇总）。"""
     by_tom_rows = _compute_avg_return_impl(run_dir, by_tom=True)
     all_rows = _compute_avg_return_impl(run_dir, by_tom=False)
     for row in all_rows:
@@ -2119,9 +2078,19 @@ def _compute_social_overview(run_dir: Path) -> list[dict]:
         d = diffusion_map.get(key)
         if d:
             for k in ("total_posts", "agent_posts", "retweet_posts",
-                       "avg_likes_per_post", "unique_posters", "posting_rate"):
+                       "avg_posts_per_agent", "avg_retweets_per_agent",
+                       "avg_likes_per_post",
+                       "unique_posters", "posting_rate"):
                 if k in d:
                     row[k] = d[k]
+        row["avg_social_actions_per_agent"] = round(
+            row.get("avg_likes_per_agent", 0)
+            + row.get("avg_dislikes_per_agent", 0)
+            + row.get("avg_follows_per_agent", 0)
+            + row.get("avg_unfollows_per_agent", 0)
+            + row.get("avg_retweets_per_agent", 0),
+            2,
+        )
     return activity_rows
 
 
@@ -2149,9 +2118,6 @@ def _compute_sentiment_confidence(run_dir: Path) -> list[dict]:
     return sentiment_rows
 
 
-def _compute_social_trading_nexus(run_dir: Path) -> list[dict]:
-    from metric_social import compute_social_trading_nexus
-    return compute_social_trading_nexus(run_dir)
 
 
 def _compute_reputation_system(run_dir: Path) -> list[dict]:
@@ -2489,16 +2455,6 @@ def _compute_tom_vs_avg_return(run_dir: Path) -> list[dict]:
     return result
 
 
-def _compute_reasoning_homogeneity(run_dir: Path) -> list[dict]:
-    from metric_reasoning import compute_reasoning_homogeneity
-    return compute_reasoning_homogeneity(run_dir)
-
-
-def _compute_reasoning_post_consistency(run_dir: Path) -> list[dict]:
-    from metric_reasoning import compute_reasoning_post_consistency
-    return compute_reasoning_post_consistency(run_dir)
-
-
 def _compute_tom0_ratio_vs_index(run_dir: Path) -> list[dict]:
     """以 ToM 0 比例为 X 轴，输出大盘终值、收益率和波动率（单行）。"""
     import math
@@ -2576,7 +2532,6 @@ _COMPUTE_DISPATCH: dict = {
     "emh_semi_strong": _compute_emh_semi_strong,
     "social_overview": _compute_social_overview,
     "sentiment_confidence": _compute_sentiment_confidence,
-    "social_trading_nexus": _compute_social_trading_nexus,
     "reputation_system": _compute_reputation_system,
     "kol_market_impact": _compute_kol_market_impact,
     "tool_usage": _compute_tool_usage,
@@ -2587,8 +2542,6 @@ _COMPUTE_DISPATCH: dict = {
     "tom_vs_index": _compute_tom_vs_index,
     "tom_vs_avg_return": _compute_tom_vs_avg_return,
     "tom0_ratio_vs_index": _compute_tom0_ratio_vs_index,
-    "reasoning_homogeneity": _compute_reasoning_homogeneity,
-    "reasoning_post_consistency": _compute_reasoning_post_consistency,
 }
 
 
@@ -2805,7 +2758,7 @@ def api_categories():
         entry = {
             "label": cat["label"],
             "metrics": cat["metrics"],
-            "group_key": cat["group_key"],
+            "group_key": cat.get("group_key"),
             "computed": bool(cat.get("computed")),
             "desc": cat.get("desc", {}),
             "x_type": cat.get("x_type"),
@@ -2893,12 +2846,11 @@ def api_data():
                 gv = str(r.get(group_key, ""))
                 grouped.setdefault(gv, []).append(r)
 
-            single_group = len(grouped) == 1
             for gv, g_rows in sorted(grouped.items()):
                 _rows = g_rows if preserve_order else sorted(g_rows, key=lambda x: x.get(x_key, 0))
                 for metric in selected_metrics:
                     metric_label = cat['metrics'].get(metric, metric)
-                    label = metric_label if single_group else f"{gv}_{metric_label}"
+                    label = f"{gv}_{metric_label}"
                     se_key = f"{metric}_se"
                     points = []
                     for r in _rows:
@@ -2917,12 +2869,11 @@ def api_data():
             for r in rows:
                 gv = str(r.get(group_key, ""))
                 grouped.setdefault(gv, []).append(r)
-            single_group = len(grouped) == 1
             for gv, g_rows in sorted(grouped.items()):
                 _rows = g_rows if preserve_order else sorted(g_rows, key=lambda x: x.get(x_key, 0))
                 for metric in selected_metrics:
                     metric_label = cat['metrics'].get(metric, metric)
-                    label = metric_label if single_group else f"{gv}_{metric_label}"
+                    label = f"{gv}_{metric_label}"
                     se_key = f"{metric}_se"
                     points = []
                     for r in _rows:

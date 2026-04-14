@@ -61,6 +61,10 @@ def parse_args():
     p.add_argument("--max-chars", type=int, default=512,
                    help="每条推理文本截断到前 N 个字符")
     p.add_argument("--output-dir", default="output")
+    p.add_argument("--prefix", default="推理同质性_字符级",
+                   help="输出文件名前缀 (默认: 推理同质性_字符级)")
+    p.add_argument("--include-single", action="store_true",
+                   help="同时输出每个实验的单独图（默认只输出对比图）")
     return p.parse_args()
 
 
@@ -298,7 +302,7 @@ def compute_ncd_homogeneity(day_group_texts: dict):
 
 # ── 绘图 ──────────────────────────────────────────────────────────────
 def plot_single_run(jaccard_intra, jaccard_inter, ncd_intra, ncd_inter,
-                    label, output_dir):
+                    label, output_dir, prefix="推理同质性_字符级"):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -348,7 +352,7 @@ def plot_single_run(jaccard_intra, jaccard_inter, ncd_intra, ncd_inter,
     fig.suptitle(f"字符级推理同质性 — {label}", fontsize=13, y=1.02)
     os.makedirs(output_dir, exist_ok=True)
     safe = label.replace("/", "_").replace(" ", "_")
-    png_path = os.path.join(output_dir, f"推理同质性_字符级_{safe}.png")
+    png_path = os.path.join(output_dir, f"{prefix}_{safe}.png")
     fig.tight_layout()
     fig.savefig(png_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -356,20 +360,15 @@ def plot_single_run(jaccard_intra, jaccard_inter, ncd_intra, ncd_inter,
     return png_path
 
 
-def plot_multi_compare(all_jaccard, all_ncd, labels, output_dir):
-    """多实验对比：Jaccard 一行，NCD 一行"""
+def plot_multi_compare(all_jaccard, all_ncd, labels, output_dir, prefix="推理同质性_字符级"):
+    """多实验对比：仅 2 个子图（Jaccard / 1−NCD），所有实验合并展示"""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     plt.rcParams["font.sans-serif"] = ["Arial Unicode MS", "SimHei", "Microsoft YaHei"]
     plt.rcParams["axes.unicode_minus"] = False
 
-    tom_levels = sorted(set(
-        tl for ji, _ in all_jaccard for tl in ji.keys()
-    ))
-    _DISPLAY = {"tom1": "ToM-1", "tom2_r1": "ToM-2 一阶", "tom2_r2": "ToM-2 二阶"}
-    n_cols = len(tom_levels) + 1
-    fig, axes = plt.subplots(2, n_cols, figsize=(6 * n_cols, 9), sharey=True)
+    fig, (ax_j, ax_n) = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 
     linestyles = ["-", "--", "-.", ":"]
     colors_run = ["#2196F3", "#FF9800", "#E91E63", "#4CAF50", "#9C27B0"]
@@ -386,50 +385,28 @@ def plot_multi_compare(all_jaccard, all_ncd, labels, output_dir):
                 linestyle=linestyles[ri % len(linestyles)],
                 linewidth=1.5, alpha=0.85)
 
-    # Row 0 = Jaccard
-    for ti, tl in enumerate(tom_levels):
-        ax = axes[0][ti]
-        for ri, ((ji, jinter), lbl) in enumerate(zip(all_jaccard, labels)):
-            if tl in ji:
-                _plot_line(ax, ji[tl], lbl, ri)
-        ax.set_title(f"{_DISPLAY.get(tl, tl)} Jaccard", fontsize=10)
-        ax.legend(fontsize=7)
-        ax.grid(True, alpha=0.3)
-        ax.set_ylim(-0.05, 1.05)
+    # 左图 = Jaccard（使用全体 inter 数据）
+    for ri, ((_, jinter), lbl) in enumerate(zip(all_jaccard, labels)):
+        _plot_line(ax_j, jinter, lbl, ri)
+    ax_j.set_ylabel("相似度", fontsize=11)
+    ax_j.set_title("Jaccard 相似度", fontsize=12)
+    ax_j.set_xlabel("交易日", fontsize=11)
+    ax_j.legend(fontsize=9)
+    ax_j.grid(True, alpha=0.3)
+    ax_j.set_ylim(-0.05, 1.05)
 
-    ax = axes[0][-1]
-    for ri, ((ji, jinter), lbl) in enumerate(zip(all_jaccard, labels)):
-        _plot_line(ax, jinter, lbl, ri)
-    ax.set_title("全体 Jaccard", fontsize=10)
-    ax.legend(fontsize=7)
-    ax.grid(True, alpha=0.3)
+    # 右图 = NCD（使用全体 inter 数据）
+    for ri, ((_, ninter), lbl) in enumerate(zip(all_ncd, labels)):
+        _plot_line(ax_n, ninter, lbl, ri)
+    ax_n.set_title("1 − NCD 相似度", fontsize=12)
+    ax_n.set_xlabel("交易日", fontsize=11)
+    ax_n.legend(fontsize=9)
+    ax_n.grid(True, alpha=0.3)
+    ax_n.set_ylim(-0.05, 1.05)
 
-    # Row 1 = NCD
-    for ti, tl in enumerate(tom_levels):
-        ax = axes[1][ti]
-        for ri, ((ni, ninter), lbl) in enumerate(zip(all_ncd, labels)):
-            if tl in ni:
-                _plot_line(ax, ni[tl], lbl, ri)
-        ax.set_title(f"{_DISPLAY.get(tl, tl)} 1−NCD", fontsize=10)
-        ax.legend(fontsize=7)
-        ax.grid(True, alpha=0.3)
-        ax.set_ylim(-0.05, 1.05)
-        ax.set_xlabel("交易日", fontsize=9)
-
-    ax = axes[1][-1]
-    for ri, ((ni, ninter), lbl) in enumerate(zip(all_ncd, labels)):
-        _plot_line(ax, ninter, lbl, ri)
-    ax.set_title("全体 1−NCD", fontsize=10)
-    ax.legend(fontsize=7)
-    ax.grid(True, alpha=0.3)
-    ax.set_xlabel("交易日", fontsize=9)
-
-    axes[0][0].set_ylabel("Jaccard 相似度", fontsize=10)
-    axes[1][0].set_ylabel("1 − NCD 相似度", fontsize=10)
-
-    fig.suptitle("字符级推理同质性对比", fontsize=13)
+    fig.suptitle(prefix, fontsize=14)
     os.makedirs(output_dir, exist_ok=True)
-    png_path = os.path.join(output_dir, "推理同质性_字符级_多实验对比.png")
+    png_path = os.path.join(output_dir, f"{prefix}_多实验对比.png")
     fig.tight_layout()
     fig.savefig(png_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -465,7 +442,8 @@ def main():
         all_ncd.append((ni, ninter))
 
         # 单实验图
-        plot_single_run(ji, jinter, ni, ninter, lbl, args.output_dir)
+        if args.include_single:
+            plot_single_run(ji, jinter, ni, ninter, lbl, args.output_dir, prefix=args.prefix)
 
         # 汇总
         summary = {"label": lbl}
@@ -494,10 +472,10 @@ def main():
 
     # 多实验对比图
     if len(args.run_dirs) > 1:
-        plot_multi_compare(all_jaccard, all_ncd, labels, args.output_dir)
+        plot_multi_compare(all_jaccard, all_ncd, labels, args.output_dir, prefix=args.prefix)
 
     # JSON
-    json_path = os.path.join(args.output_dir, "推理同质性_字符级_汇总.json")
+    json_path = os.path.join(args.output_dir, f"{args.prefix}_汇总.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(all_json, f, ensure_ascii=False, indent=2)
     print(f"\nJSON 汇总: {json_path}")

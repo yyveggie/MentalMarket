@@ -1,0 +1,26 @@
+1. 字符级推理同质性（Jaccard + NCD）
+python evaluation/reasoning_homogeneity/plot_reasoning_homogeneity_char.py \
+  runs/ToM1 \
+  runs/ToM2 \
+  --labels "ToM1,ToM2" \
+  --output-dir output/reasoning_homogeneity \
+  --prefix "ToM1，ToM2 心智推理内容相似度趋势图"
+
+
+2. Embedding 级推理同质性（sentence-transformers）
+python evaluation/reasoning_homogeneity/plot_reasoning_homogeneity.py \
+  runs/20260401_203521_ToM07_ToM12_ToM21_资金均等幂律分布 \
+  runs/20260407_205311_ToM06_ToM13_ToM21_资金均等幂律分布 \
+  runs/20260411_194458_ToM01_ToM11_ToM21_资金均等幂律分布 \
+  --labels "tom07/12/21,tom06/13/21,tom01/11/21" \
+  --output-dir output/reasoning_homogeneity
+
+
+
+3. 推理-发帖一致性分析
+python evaluation/reasoning_homogeneity/plot_reasoning_post_consistency.py \
+  runs/ToM1 \
+  runs/ToM2 \
+  --labels "toM1,ToM2" \
+  --output-dir output/reasoning_homogeneity
+  --prefix "ToM1，ToM2 心智推理-发帖一致性分析"

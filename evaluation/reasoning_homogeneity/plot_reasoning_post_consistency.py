@@ -46,6 +46,8 @@ def parse_args():
     p.add_argument("--max-chars", type=int, default=512,
                    help="每条文本截断字符数")
     p.add_argument("--output-dir", default="output")
+    p.add_argument("--prefix", default="推理发帖一致性",
+                   help="输出文件名前缀 (默认: 推理发帖一致性)")
     return p.parse_args()
 
 
@@ -317,7 +319,7 @@ def analyze_experiment(run_dir: str, label: str, args):
 
 
 # ── 绘图 ────────────────────────────────────────────────────────────
-def plot_single(exp_result, output_dir, safe_label):
+def plot_single(exp_result, output_dir, safe_label, prefix="推理发帖一致性"):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -349,7 +351,7 @@ def plot_single(exp_result, output_dir, safe_label):
         axes[1].fill_between(days, n_vals, alpha=0.15, color=c)
 
     axes[0].set_ylabel("Jaccard (推理↔帖子)")
-    axes[0].set_title(f"推理-发帖一致性 — {exp_result['label']}")
+    axes[0].set_title(f"{prefix} — {exp_result['label']}")
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
     axes[0].set_ylim(bottom=0)
@@ -361,13 +363,13 @@ def plot_single(exp_result, output_dir, safe_label):
     axes[1].set_ylim(bottom=0)
 
     plt.tight_layout()
-    out = os.path.join(output_dir, f"推理发帖一致性_{safe_label}.png")
+    out = os.path.join(output_dir, f"{prefix}_{safe_label}.png")
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  图表: {out}")
 
 
-def plot_compare(all_results, output_dir):
+def plot_compare(all_results, output_dir, prefix="推理发帖一致性"):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -422,9 +424,9 @@ def plot_compare(all_results, output_dir):
         ax.grid(True, alpha=0.3, axis="y")
         ax.set_ylim(bottom=0)
 
-    fig.suptitle("推理-发帖一致性 — 多实验对比", fontsize=13, fontweight="bold")
+    fig.suptitle(f"{prefix} — 多实验对比", fontsize=13, fontweight="bold")
     plt.tight_layout()
-    out = os.path.join(output_dir, "推理发帖一致性_多实验对比.png")
+    out = os.path.join(output_dir, f"{prefix}_多实验对比.png")
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  对比图: {out}")
@@ -453,9 +455,9 @@ def plot_compare(all_results, output_dir):
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
 
-    fig.suptitle("Agent 推理-发帖一致性分布", fontsize=13, fontweight="bold")
+    fig.suptitle(f"{prefix} — Agent分布", fontsize=13, fontweight="bold")
     plt.tight_layout()
-    out = os.path.join(output_dir, "推理发帖一致性_Agent分布.png")
+    out = os.path.join(output_dir, f"{prefix}_Agent分布.png")
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  散点图: {out}")
@@ -475,11 +477,11 @@ def main():
     for rd, lb in zip(args.run_dirs, labels):
         safe = lb.replace("/", "_").replace(" ", "_")
         result = analyze_experiment(rd, lb, args)
-        plot_single(result, args.output_dir, safe)
+        plot_single(result, args.output_dir, safe, prefix=args.prefix)
         all_results.append(result)
 
     if len(all_results) > 1:
-        plot_compare(all_results, args.output_dir)
+        plot_compare(all_results, args.output_dir, prefix=args.prefix)
 
     # JSON 汇总
     summary = {}
@@ -491,7 +493,7 @@ def main():
                 for gk, agents in r["agent_scores"].items()
             },
         }
-    out = os.path.join(args.output_dir, "推理发帖一致性_汇总.json")
+    out = os.path.join(args.output_dir, f"{args.prefix}_汇总.json")
     with open(out, "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
     print(f"\nJSON 汇总: {out}")

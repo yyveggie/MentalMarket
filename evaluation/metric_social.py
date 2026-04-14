@@ -29,7 +29,9 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
     # 按 (day, tom) 聚合
     # key = (trading_day, tom_level)
     day_tom_likes: dict[tuple[int, int], list[int]] = defaultdict(list)  # liker agent ids
+    day_tom_dislikes: dict[tuple[int, int], int] = defaultdict(int)
     day_tom_follows: dict[tuple[int, int], int] = defaultdict(int)
+    day_tom_unfollows: dict[tuple[int, int], int] = defaultdict(int)
     day_tom_like_targets: dict[tuple[int, int], set[int]] = defaultdict(set)
 
     for r in rows:
@@ -46,10 +48,14 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
             target = r.get("target_agent_id")
             if target is not None:
                 day_tom_like_targets[key].add(target)
+        elif event == "dislike":
+            day_tom_dislikes[key] += 1
         elif event == "follow":
             day_tom_follows[key] += 1
+        elif event == "unfollow":
+            day_tom_unfollows[key] += 1
 
-    all_keys = set(day_tom_likes.keys()) | set(day_tom_follows.keys())
+    all_keys = set(day_tom_likes.keys()) | set(day_tom_dislikes.keys()) | set(day_tom_follows.keys()) | set(day_tom_unfollows.keys())
     if not all_keys:
         return []
 
@@ -79,7 +85,9 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
             likers = day_tom_likes.get(key, [])
             unique_likers = len(set(likers))
             like_count = len(likers)
+            dislike_count = day_tom_dislikes.get(key, 0)
             follow_count = day_tom_follows.get(key, 0)
+            unfollow_count = day_tom_unfollows.get(key, 0)
             targets_unique = len(day_tom_like_targets.get(key, set()))
             n_in_tom = tom_agent_counts.get(tom, total_agents)
 
@@ -87,9 +95,14 @@ def compute_social_activity(run_dir: Path) -> list[dict]:
                 "trading_day": day,
                 "tom_level": tom,
                 "like_events": like_count,
+                "dislike_events": dislike_count,
                 "follow_events": follow_count,
+                "unfollow_events": unfollow_count,
                 "unique_likers": unique_likers,
-                "avg_likes_given": round(like_count / n_in_tom, 4),
+                "avg_likes_per_agent": round(like_count / n_in_tom, 2),
+                "avg_dislikes_per_agent": round(dislike_count / n_in_tom, 2),
+                "avg_follows_per_agent": round(follow_count / n_in_tom, 2),
+                "avg_unfollows_per_agent": round(unfollow_count / n_in_tom, 2),
                 "like_targets_unique": targets_unique,
             })
 
@@ -178,7 +191,7 @@ def compute_info_diffusion(run_dir: Path) -> list[dict]:
             "agent_posts": agent_posts,
             "retweet_posts": retweet_posts,
             "news_posts": news_posts,
-            "retweet_ratio": round(retweet_posts / max(1, agent_posts), 3),
+            "retweet_ratio": round(retweet_posts / max(1, agent_posts), 2),
             "avg_likes_per_post": avg_likes,
             "max_post_likes": max_likes,
             "unique_posters": unique_posters,
@@ -278,6 +291,8 @@ def compute_info_diffusion_by_tom(run_dir: Path) -> list[dict]:
                 "total_posts": total,
                 "agent_posts": agent_posts,
                 "retweet_posts": retweet_posts,
+                "avg_posts_per_agent": round(agent_posts / n_agents_in_tom, 2),
+                "avg_retweets_per_agent": round(retweet_posts / n_agents_in_tom, 2),
                 "avg_likes_per_post": avg_likes,
                 "unique_posters": unique_posters,
                 "posting_rate": round(unique_posters / n_agents_in_tom * 100, 1),
@@ -370,7 +385,7 @@ def compute_sentiment_dynamics(run_dir: Path, window: int = 30) -> list[dict]:
         cross_div = None
         if len(tom_means) >= 2:
             tm_mean = sum(tom_means) / len(tom_means)
-            cross_div = round((sum((m - tm_mean) ** 2 for m in tom_means) / (len(tom_means) - 1)) ** 0.5, 4)
+            cross_div = round((sum((m - tm_mean) ** 2 for m in tom_means) / (len(tom_means) - 1)) ** 0.5, 2)
 
         # 极端化率
         n_extreme = sum(1 for v in vals if abs(v) > 0.7)
@@ -389,20 +404,20 @@ def compute_sentiment_dynamics(run_dir: Path, window: int = 30) -> list[dict]:
                 c0 = sum((v - wm) ** 2 for v in win_sent)
                 if c0 > 1e-15:
                     c1 = sum((win_sent[i] - wm) * (win_sent[i - 1] - wm) for i in range(1, len(win_sent)))
-                    acf1 = round(c1 / c0, 4)
+                    acf1 = round(c1 / c0, 2)
 
             # Sentiment-return correlation
             win_ret = [day_return.get(d) for d in win_days]
             if all(v is not None for v in win_ret):
                 sr_corr_val = _pearson(win_sent, [v for v in win_ret if v is not None])
                 if sr_corr_val is not None:
-                    sr_corr = round(sr_corr_val, 4)
+                    sr_corr = round(sr_corr_val, 2)
 
         row: dict = {
             "trading_day": day,
-            "sentiment_mean": round(mean_s, 4),
-            "sentiment_std": round(std_s, 4),
-            "sentiment_consensus": round(1.0 / (1.0 + std_s), 4),
+            "sentiment_mean": round(mean_s, 2),
+            "sentiment_std": round(std_s, 2),
+            "sentiment_consensus": round(1.0 / (1.0 + std_s), 2),
             "extreme_ratio": extreme_r,
         }
         if cross_div is not None:
@@ -559,13 +574,13 @@ def compute_reputation_system(run_dir: Path) -> list[dict]:
         high_ratio = round(sum(1 for s in scores if s >= 0.7) / n * 100, 1)
 
         acc_vals = list(agent_acc.values())
-        avg_acc = round(sum(acc_vals) / len(acc_vals), 4) if acc_vals else None
+        avg_acc = round(sum(acc_vals) / len(acc_vals), 2) if acc_vals else None
 
         row: dict = {
             "trading_day": day,
-            "avg_reputation": round(mean_r, 4),
-            "reputation_std": round(std_r, 4),
-            "reputation_gini": round(gini, 4),
+            "avg_reputation": round(mean_r, 2),
+            "reputation_std": round(std_r, 2),
+            "reputation_gini": round(gini, 2),
             "high_rep_ratio": high_ratio,
             "update_count": len(updates),
         }
@@ -711,7 +726,7 @@ def compute_kol_market_impact(
                 "kol_post_count": tom_kol_posts,
             }
             if tom_kol_sents:
-                row["kol_sentiment_mean"] = round(sum(tom_kol_sents) / len(tom_kol_sents), 4)
+                row["kol_sentiment_mean"] = round(sum(tom_kol_sents) / len(tom_kol_sents), 2)
             if total_day_likes > 0:
                 row["kol_like_share"] = round(tom_kol_likes / total_day_likes * 100, 1)
             result.append(row)

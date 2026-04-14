@@ -342,6 +342,57 @@ let selectedMetrics = new Set();
 let selectedGroups = new Set();
 let availableGroups = [];
 let chartInstances = [];
+/* ── 双击柱/数据点编辑数值（仅当前页有效） ── */
+function _enableDblClickEdit(chart) {
+  let _lastClickTime = 0;
+  let _lastClickSI = -1;
+  let _lastClickDI = -1;
+  chart.on('click', function(params) {
+    if (params.componentType !== 'series') return;
+    const now = Date.now();
+    if (now - _lastClickTime < 400 && params.seriesIndex === _lastClickSI && params.dataIndex === _lastClickDI) {
+      _lastClickTime = 0;
+      let curVal;
+      if (params.data != null && typeof params.data === 'object' && !Array.isArray(params.data)) {
+        curVal = params.data.value;
+      } else if (Array.isArray(params.data)) {
+        curVal = params.data[1];
+      } else {
+        curVal = params.data;
+      }
+      if (curVal == null || typeof curVal !== 'number') return;
+      const input = prompt('编辑数值（仅当前页有效）', curVal);
+      if (input === null) return;
+      const newVal = parseFloat(input);
+      if (isNaN(newVal)) return;
+      const opt = chart.getOption();
+      const seriesArr = opt.series.map((s, i) => {
+        if (i !== params.seriesIndex) return {};
+        const d = (s.data || []).slice();
+        const item = d[params.dataIndex];
+        if (item != null && typeof item === 'object' && !Array.isArray(item)) {
+          d[params.dataIndex] = { ...item, value: newVal };
+        } else if (Array.isArray(item)) {
+          d[params.dataIndex] = [item[0], newVal];
+        } else {
+          d[params.dataIndex] = newVal;
+        }
+        return { data: d };
+      });
+      chart.setOption({ series: seriesArr });
+    } else {
+      _lastClickTime = now;
+      _lastClickSI = params.seriesIndex;
+      _lastClickDI = params.dataIndex;
+    }
+  });
+}
+// 代理 push，自动对每个新增 chart 挂载双击编辑
+const _origPush = chartInstances.push.bind(chartInstances);
+chartInstances.push = function(...args) {
+  args.forEach(c => { if (c && typeof c.on === 'function') _enableDblClickEdit(c); });
+  return _origPush(...args);
+};
 const chartDefaultAxisNames = new WeakMap(); // chart -> {x: [names], y: [names]}
 const runAliases = {};  // {runName: alias}
 const metricAliases = {};  // {'catKey:metricKey': customLabel}
@@ -423,12 +474,7 @@ function _smartFmt(v) {
   if (v == null) return '';
   const a = Math.abs(v);
   if (a === 0) return '0';
-  if (a >= 100)  return v.toFixed(1);
-  if (a >= 1)    return v.toFixed(2);
-  if (a >= 0.01) return v.toFixed(4);
-  // 极小值：找到第一个有效数字后再保留2位
-  const digits = Math.max(2, -Math.floor(Math.log10(a)) + 2);
-  return v.toFixed(Math.min(digits, 8));
+  return v.toFixed(2);
 }
 
 /* Y 轴 nameGap 自动调整：根据刻度标签最大宽度动态设置间距 */
@@ -939,7 +985,7 @@ async function generateChart() {
             const pts = (data.series[rn] || {})[sKey] || [];
             const yVals = pts.map(p => p.y);
             const v = _aggregate(yVals, xMode);
-            return v != null ? Math.round(v * 10000) / 10000 : null;
+            return v != null ? Math.round(v * 100) / 100 : null;
           });
           seriesList.push({
             type: 'bar', xAxisIndex: i, yAxisIndex: i,
@@ -1030,8 +1076,7 @@ async function generateChart() {
             const yVals = points.map(p => p.y);
             let aggVal = _aggregate(yVals, xMode);
             if (aggVal == null) continue;
-            aggVal = Math.round(aggVal * 10000) / 10000;
-
+            aggVal = Math.round(aggVal * 100) / 100;
             let xLabel;
             if (hasGroup) {
               xLabel = seriesLabel.replace(`_${metricLabel}`, '').replace(new RegExp(`_${metricLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`), '');
@@ -1105,7 +1150,7 @@ async function generateChart() {
           const yVals = points.map(p => p.y);
           let aggVal = _aggregate(yVals, xMode);
           if (aggVal == null) continue;
-          aggVal = Math.round(aggVal * 10000) / 10000;
+          aggVal = Math.round(aggVal * 100) / 100;
 
           // 提取 group label（去掉尾部的 _metricLabel）
           let xLabel;
@@ -2443,7 +2488,7 @@ function _swapSeriesAndRefresh(chart, container, idxA, idxB) {
 
 function clearCharts() {
   chartInstances.forEach(c => c.dispose());
-  chartInstances = [];
+  chartInstances.length = 0;
   const area = document.getElementById('chartArea');
   // 只移除图表容器，保留已保存画廊
   area.querySelectorAll('.chart-container').forEach(el => el.remove());
@@ -3295,7 +3340,7 @@ function resetYRange() {
   };
   const origPushCI = chartInstances.push;
   chartInstances.push = function(...args) {
-    const result = _origPush.apply(this, args);
+    const result = origPushCI.apply(this, args);
     args.forEach(c => { if (c && c.on) _patchChart(c); });
     return result;
   };

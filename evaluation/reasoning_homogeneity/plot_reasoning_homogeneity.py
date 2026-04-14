@@ -50,6 +50,8 @@ def parse_args():
     p.add_argument("--output-dir", default="output", help="输出目录")
     p.add_argument("--max-tokens", type=int, default=256,
                    help="每条推理文本截断到前 N 个字符（降低显存/内存）")
+    p.add_argument("--prefix", default="推理同质性",
+                   help="输出文件名前缀 (默认: 推理同质性)")
     return p.parse_args()
 
 
@@ -182,7 +184,7 @@ def compute_homogeneity(day_tom_texts: dict, model, batch_size: int):
 
 
 # ── 绘图 ──────────────────────────────────────────────────────────────
-def plot_single_run(intra, inter, label, output_dir):
+def plot_single_run(intra, inter, label, output_dir, prefix="推理同质性"):
     """为单个实验画同质性时间序列"""
     import matplotlib
     matplotlib.use("Agg")
@@ -222,7 +224,7 @@ def plot_single_run(intra, inter, label, output_dir):
 
     os.makedirs(output_dir, exist_ok=True)
     safe = label.replace("/", "_").replace(" ", "_")
-    png_path = os.path.join(output_dir, f"推理同质性_{safe}.png")
+    png_path = os.path.join(output_dir, f"{prefix}_{safe}.png")
     fig.tight_layout()
     fig.savefig(png_path, dpi=150)
     plt.close(fig)
@@ -230,7 +232,7 @@ def plot_single_run(intra, inter, label, output_dir):
     return png_path
 
 
-def plot_multi_run_compare(all_results, labels, output_dir):
+def plot_multi_run_compare(all_results, labels, output_dir, prefix="推理同质性"):
     """
     多实验对比图：每个 ToM 层级一个子图，各实验为不同线型。
     """
@@ -294,7 +296,7 @@ def plot_multi_run_compare(all_results, labels, output_dir):
     axes[0].set_ylabel("平均 Pairwise 余弦相似度", fontsize=10)
 
     os.makedirs(output_dir, exist_ok=True)
-    png_path = os.path.join(output_dir, "推理同质性_多实验对比.png")
+    png_path = os.path.join(output_dir, f"{prefix}_多实验对比.png")
     fig.tight_layout()
     fig.savefig(png_path, dpi=150)
     plt.close(fig)
@@ -327,7 +329,7 @@ def main():
         all_results.append((intra, inter))
 
         # 单实验图
-        plot_single_run(intra, inter, lbl, args.output_dir)
+        plot_single_run(intra, inter, lbl, args.output_dir, prefix=args.prefix)
 
         # 汇总统计
         run_summary = {"label": lbl}
@@ -351,10 +353,10 @@ def main():
 
     # 多实验对比图
     if len(args.run_dirs) > 1:
-        plot_multi_run_compare(all_results, labels, args.output_dir)
+        plot_multi_run_compare(all_results, labels, args.output_dir, prefix=args.prefix)
 
     # JSON 结果
-    json_path = os.path.join(args.output_dir, "推理同质性_汇总.json")
+    json_path = os.path.join(args.output_dir, f"{args.prefix}_汇总.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(all_json, f, ensure_ascii=False, indent=2)
     print(f"\nJSON 汇总: {json_path}")
