@@ -370,6 +370,37 @@ def build_equal_weight_close_by_day(
     return build_weighted_close_by_day(close_by_symbol_day, symbols, max_day, weights=None)
 
 
+def build_aligned_broad(
+    real_close: dict[str, dict[int, float]],
+    sim_close: dict[str, dict[int, float]],
+    symbols: list[str],
+    max_day: int,
+    weights: dict[str, float] | None = None,
+) -> tuple[dict[int, float], dict[int, float]]:
+    """逐天取 real/sim 都有数据的 symbol 交集后再加权，确保两边成分完全一致。"""
+    broad_real: dict[int, float] = {}
+    broad_sim: dict[int, float] = {}
+    for day in range(1, max_day + 1):
+        common = [
+            s for s in symbols
+            if day in real_close.get(s, {}) and day in sim_close.get(s, {})
+        ]
+        if not common:
+            continue
+        if weights is None:
+            broad_real[day] = sum(real_close[s][day] for s in common) / len(common)
+            broad_sim[day] = sum(sim_close[s][day] for s in common) / len(common)
+        else:
+            w_sum = sum(weights.get(s, 0.0) for s in common)
+            if w_sum <= 0:
+                broad_real[day] = sum(real_close[s][day] for s in common) / len(common)
+                broad_sim[day] = sum(sim_close[s][day] for s in common) / len(common)
+            else:
+                broad_real[day] = sum(weights.get(s, 0.0) * real_close[s][day] for s in common) / w_sum
+                broad_sim[day] = sum(weights.get(s, 0.0) * sim_close[s][day] for s in common) / w_sum
+    return broad_real, broad_sim
+
+
 def build_daily_fit_curve_for_symbol(
     symbol: str,
     real_close_by_symbol_day: dict[str, dict[int, float]],

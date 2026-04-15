@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Backward-compatible shim. Split into data_loader / metric_fit_accuracy / plot_fit_accuracy."""
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "prediction_fit"))
+
 from data_loader import (  # noqa: F401
     _build_nonseed_close_map,
     aligned_real_sim_with_day,
@@ -18,6 +23,7 @@ from data_loader import (  # noqa: F401
 from metric_fit_accuracy import (  # noqa: F401
     BROAD_EQW_SYMBOL,
     DailyCurves,
+    build_aligned_broad,
     build_daily_fit_curve_for_symbol,
     build_daily_metric_curves,
     build_equal_weight_close_by_day,

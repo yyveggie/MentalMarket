@@ -1,0 +1,134 @@
+{
+  "run_dir": "../../runs/ToM06_ToM13_ToM21_预测拟合",
+  "real_curve_file": "../../data/index_volatility_curves.json",
+  "max_day_used": 65,
+  "alignment_policy": {
+    "calendar_source": "union of all real-index dates (include closed days)",
+    "pairing": "strict real/sim intersection on all-day index",
+    "closed_day_excluded": false,
+    "include_closed_days": true,
+    "closed_dates_hint_count": 0,
+    "calendar_news_file": "../../data/news2.json",
+    "forward_fill_sim_on_missing_day": false,
+    "return_pair_rule": "only consecutive day pairs (d and d-1)",
+    "forward1_rule": "proxy sign(sim_return_{t-1}) vs sign(real_return_t) on consecutive d-2,d-1,d"
+  },
+  "curve_scope": {
+    "fit_accuracy_curves_png": "aggregated over selected symbols",
+    "fit_accuracy_curves_by_symbol_png": "per symbol fit curves + synthetic broad index curve",
+    "broad_curve_enabled": true,
+    "broad_curve_definition": "market-cap weighted composite from stock_profile.csv (fallback: equal-weight)"
+  },
+  "overall": {
+    "same_day_acc": 52.34375,
+    "same_day_n": 640,
+    "forward1_acc": 48.73015873015873,
+    "forward1_n": 630,
+    "fit_pct": 11.488169790614197,
+    "fit_n": 640,
+    "rmse": 0.025222438622484255,
+    "r_squared": 0.20154144297252935
+  },
+  "per_symbol": {
+    "CGEI": {
+      "same_day_acc": 51.5625,
+      "same_day_n": 64,
+      "forward1_acc": 52.38095238095238,
+      "forward1_n": 63,
+      "fit_pct": 0.0,
+      "fit_n": 64,
+      "rmse": 0.024897506330714577,
+      "r_squared": 0.0015320972667055995
+    },
+    "CPEI": {
+      "same_day_acc": 51.5625,
+      "same_day_n": 64,
+      "forward1_acc": 55.55555555555556,
+      "forward1_n": 63,
+      "fit_pct": 25.819619458471927,
+      "fit_n": 64,
+      "rmse": 0.020368453502796865,
+      "r_squared": 0.09734945018735877
+    },
+    "EREI": {
+      "same_day_acc": 46.875,
+      "same_day_n": 64,
+      "forward1_acc": 55.55555555555556,
+      "forward1_n": 63,
+      "fit_pct": 0.0,
+      "fit_n": 64,
+      "rmse": 0.01939129691961008,
+      "r_squared": 0.5250807547664009
+    },
+    "FSEI": {
+      "same_day_acc": 56.25,
+      "same_day_n": 64,
+      "forward1_acc": 47.61904761904762,
+      "forward1_n": 63,
+      "fit_pct": 12.01530238347939,
+      "fit_n": 64,
+      "rmse": 0.014337387158930178,
+      "r_squared": 0.4506039948592127
+    },
+    "IEEI": {
+      "same_day_acc": 50.0,
+      "same_day_n": 64,
+      "forward1_acc": 44.44444444444444,
+      "forward1_n": 63,
+      "fit_pct": 16.56491994577505,
+      "fit_n": 64,
+      "rmse": 0.0184843948312474,
+      "r_squared": 0.0193201561284757
+    },
+    "MEI": {
+      "same_day_acc": 64.0625,
+      "same_day_n": 64,
+      "forward1_acc": 47.61904761904762,
+      "forward1_n": 63,
+      "fit_pct": 0.0,
+      "fit_n": 64,
+      "rmse": 0.02418296958137025,
+      "r_squared": 0.3571689117607499
+    },
+    "REEI": {
+      "same_day_acc": 48.4375,
+      "same_day_n": 64,
+      "forward1_acc": 39.682539682539684,
+      "forward1_n": 63,
+      "fit_pct": 6.307522293917437,
+      "fit_n": 64,
+      "rmse": 0.026693492879879387,
+      "r_squared": 0.14427738890312816
+    },
+    "TLEI": {
+      "same_day_acc": 57.8125,
+      "same_day_n": 64,
+      "forward1_acc": 41.26984126984127,
+      "forward1_n": 63,
+      "fit_pct": 17.162003570006505,
+      "fit_n": 64,
+      "rmse": 0.018058850069249226,
+      "r_squared": 0.02215540263957373
+    },
+    "TSEI": {
+      "same_day_acc": 43.75,
+      "same_day_n": 64,
+      "forward1_acc": 55.55555555555556,
+      "forward1_n": 63,
+      "fit_pct": 18.618603815493216,
+      "fit_n": 64,
+      "rmse": 0.04085331760868971,
+      "r_squared": 0.06726943601937554
+    },
+    "TTEI": {
+      "same_day_acc": 53.125,
+      "same_day_n": 64,
+      "forward1_acc": 47.61904761904762,
+      "forward1_n": 63,
+      "fit_pct": 18.393726438998467,
+      "fit_n": 64,
+      "rmse": 0.03333503047332573,
+      "r_squared": 0.3306568371943123
+    }
+  }
+}

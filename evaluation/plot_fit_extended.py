@@ -44,7 +44,7 @@ from data_loader import (
     _build_nonseed_close_map,
 )
 from metrics_plot_common import read_jsonl
-from metric_fit_accuracy import build_weighted_close_by_day
+from metric_fit_accuracy import build_aligned_broad, build_weighted_close_by_day
 
 
 def _compute_for_run(run_dir: Path, real_curves: str, profile_csv: str) -> dict:
@@ -77,10 +77,9 @@ def _compute_for_run(run_dir: Path, real_curves: str, profile_csv: str) -> dict:
 
     broad = {}
     if len(symbols) >= 2:
-        br = build_weighted_close_by_day(real_close, symbols, max_day, weights=profile_weights)
-        bs = build_weighted_close_by_day(sim_close, symbols, max_day, weights=profile_weights)
+        br, bs = build_aligned_broad(real_close, sim_close, symbols, max_day, weights=profile_weights)
         if br and bs:
-            ba = [(d, br[d], bs[d]) for d in sorted(set(br) & set(bs))]
+            ba = [(d, br[d], bs[d]) for d in sorted(br)]
             broad = compute_extended_for_symbol(ba)
 
     overall = compute_overall_extended(

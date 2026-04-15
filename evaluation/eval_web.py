@@ -664,8 +664,8 @@ COMPUTED_CATEGORIES: dict[str, dict] = {
         "group_key": "tom_level",
         "computed": True,
         "desc": {
-            "kol_count": "该 ToM 层级在 KOL(累计获赞 Top20%) 中的数量",
-            "kol_pct": "KOL(累计获赞 Top20%)中该 ToM 层级的占比(%)",
+            "kol_count": "该 ToM 层级中粉丝数达到 KOL 阈值的 Agent 数量",
+            "kol_pct": "KOL(粉丝数≥阈值)中该 ToM 层级的占比(%)",
             "kol_post_count": "该 ToM 层级 KOL 的当日发帖数",
             "kol_sentiment_mean": "该 ToM 层级 KOL 的当日平均情绪(-1~1)",
             "kol_like_share": "该 ToM 层级 KOL 当日获赞占全市场的比例(%)",
@@ -1175,7 +1175,7 @@ def _compute_real_vs_sim(run_dir: Path) -> list[dict]:
             load_closed_dates_from_calendar_news,
             aligned_real_sim_with_day,
         )
-        from metric_fit_accuracy import build_weighted_close_by_day
+        from metric_fit_accuracy import build_weighted_close_by_day, build_aligned_broad
     except ImportError:
         return []
 
@@ -1224,11 +1224,10 @@ def _compute_real_vs_sim(run_dir: Path) -> list[dict]:
                 "sim_norm": round(s_val / base_s * 100, 4),
             })
 
-    # 大盘（等权）
-    broad_real = build_weighted_close_by_day(real_close, symbols, max_day, weights=None)
-    broad_sim = build_weighted_close_by_day(sim_close, symbols, max_day, weights=None)
+    # 大盘（等权）—— 逐天取 real/sim 交集成分
+    broad_real, broad_sim = build_aligned_broad(real_close, sim_close, symbols, max_day, weights=None)
     if broad_real and broad_sim:
-        common_days = sorted(set(broad_real) & set(broad_sim))
+        common_days = sorted(broad_real)
         if common_days:
             br0 = broad_real[common_days[0]]
             bs0 = broad_sim[common_days[0]]
@@ -1372,11 +1371,10 @@ def _compute_fit_accuracy(run_dir: Path) -> list[dict]:
 
     # 大盘综合曲线 → 独立 symbol="大盘" 行
     try:
-        from metric_fit_accuracy import build_weighted_close_by_day as _build_broad
-        broad_real = _build_broad(real_close, symbols, max_day, weights=None)
-        broad_sim = _build_broad(sim_close, symbols, max_day, weights=None)
+        from metric_fit_accuracy import build_aligned_broad as _build_aligned_broad
+        broad_real, broad_sim = _build_aligned_broad(real_close, sim_close, symbols, max_day, weights=None)
         if broad_real and broad_sim:
-            common_days = sorted(set(broad_real) & set(broad_sim))
+            common_days = sorted(broad_real)
             if common_days:
                 br0 = broad_real[common_days[0]]
                 bs0 = broad_sim[common_days[0]]

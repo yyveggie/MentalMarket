@@ -596,7 +596,7 @@ def compute_reputation_system(run_dir: Path) -> list[dict]:
 # ──────────────────────────────────────────────────────────────
 
 def compute_kol_market_impact(
-    run_dir: Path, kol_top_pct: float = 0.2
+    run_dir: Path,
 ) -> list[dict]:
     """
     基于引擎实时记录的 kol_emerge/kol_lost 事件重建每日 KOL 集合，

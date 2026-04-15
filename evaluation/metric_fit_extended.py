@@ -35,6 +35,7 @@ from data_loader import (
 )
 from metrics_plot_common import read_jsonl
 from metric_fit_accuracy import (
+    build_aligned_broad,
     build_weighted_close_by_day,
     BROAD_EQW_SYMBOL,
 )
@@ -288,13 +289,12 @@ def main():
         if metrics:
             per_symbol[sym] = metrics
 
-    # 大盘合成
+    # 大盘合成（逐天取 real/sim 交集成分，确保两边一致）
     if len(symbols) >= 2:
-        broad_real = build_weighted_close_by_day(real_close, symbols, max_day, weights=profile_weights)
-        broad_sim = build_weighted_close_by_day(sim_close, symbols, max_day, weights=profile_weights)
+        broad_real, broad_sim = build_aligned_broad(real_close, sim_close, symbols, max_day, weights=profile_weights)
         if broad_real and broad_sim:
             broad_aligned = []
-            for d in sorted(set(broad_real) & set(broad_sim)):
+            for d in sorted(broad_real):
                 broad_aligned.append((d, broad_real[d], broad_sim[d]))
             bm = compute_extended_for_symbol(broad_aligned)
             if bm:
