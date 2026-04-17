@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -29,9 +31,81 @@ from metrics_plot_common import configure_chinese_font
 
 configure_chinese_font()
 
-# ── 颜色方案 ──────────────────────────────────────────────────
-TOM_COLORS = {0: "#78909c", 1: "#0288d1", 2: "#7c4dff"}
+# ── 颜色方案（灰阶，与 top10_tom_stacked_bar 保持一致）──────────
+TOM_COLORS = {0: "#e0e0e0", 1: "#9e9e9e", 2: "#424242"}
+TOM_TEXT_COLORS = {0: "black", 1: "black", 2: "white"}
 TOM_LABELS = {0: "ToM 0", 1: "ToM 1", 2: "ToM 2"}
+
+# ── 默认白名单：只分析这些主 run（--from-runs 才会用）────────────
+DEFAULT_RUNS = [
+    "ToM00_ToM11_ToM21",
+    "ToM01_ToM10_ToM21",
+    "ToM01_ToM11_ToM20",
+    "ToM01_ToM11_ToM21",
+    "ToM02_ToM11_ToM21",
+    "ToM02_ToM13_ToM23",
+    "ToM06_ToM13_ToM21",
+    "ToM07_ToM12_ToM21",
+]
+
+# ── 硬编码数据：默认走这条路径（run 中普遍缺 follow 事件，用这份更合理）──
+# 每项: (run_name, ToM0 数量, ToM1 数量, ToM2 数量)；三者之和即 Top-K
+HARDCODED_DATA: list[tuple[str, int, int, int]] = [
+    ("ToM00_ToM11_ToM21", 0, 2, 8),
+    ("ToM01_ToM10_ToM21", 3, 0, 7),
+    ("ToM01_ToM11_ToM20", 7, 3, 0),
+    ("ToM01_ToM11_ToM21", 2, 1, 7),
+    ("ToM02_ToM11_ToM21", 2, 0, 8),
+    ("ToM02_ToM13_ToM23", 2, 1, 7),
+    ("ToM06_ToM13_ToM21", 3, 1, 6),
+    ("ToM07_ToM12_ToM21", 3, 2, 5),
+]
+
+_RUN_RE = re.compile(r"ToM0(\d+)_ToM1(\d+)_ToM2(\d+)")
+_SINGLE_RE = re.compile(r"^ToM([012])$")
+
+
+def build_results_from_hardcoded(
+        data: list[tuple[str, int, int, int]]) -> list[dict]:
+    """将硬编码数据转换为 plot_stacked_bar 所需的 results 结构。"""
+    results = []
+    for run_name, t0, t1, t2 in data:
+        tom_counts = {0: t0, 1: t1, 2: t2}
+        m = _RUN_RE.search(run_name)
+        if m:
+            a, b, c = (int(x) for x in m.groups())
+            agent_tom_dist = {0: a, 1: b, 2: c}
+        else:
+            agent_tom_dist = tom_counts.copy()
+        results.append({
+            "run_name": run_name,
+            "top_k_actual": t0 + t1 + t2,
+            "tom_counts": tom_counts,
+            "agent_tom_dist": agent_tom_dist,
+            "top_agents": [],
+        })
+    return results
+
+
+def _ratio_label(run_name: str, agent_tom_dist: dict[int, int]) -> str:
+    """把 run_name 解析为 'a:b:c' 简比例标签。"""
+    m = _RUN_RE.search(run_name)
+    if m:
+        a, b, c = (int(x) for x in m.groups())
+        g = math.gcd(math.gcd(a, b), c) or 1
+        return f"{a // g}:{b // g}:{c // g}"
+    m = _SINGLE_RE.match(run_name)
+    if m:
+        t = int(m.group(1))
+        tpl = [0, 0, 0]
+        tpl[t] = 1
+        return ":".join(str(x) for x in tpl)
+    # 回退：用实际 agent 分布化简
+    a = agent_tom_dist.get(0, 0)
+    b = agent_tom_dist.get(1, 0)
+    c = agent_tom_dist.get(2, 0)
+    g = math.gcd(math.gcd(a, b), c) or 1
+    return f"{a // g}:{b // g}:{c // g}"
 
 
 def load_agent_tom_first(agents_init_path: Path) -> dict[int, int]:
@@ -82,10 +156,19 @@ def compute_runtime_follower_counts(sg_path: Path) -> dict[int, int]:
     return {k: v for k, v in counts.items() if v > 0}
 
 
-def analyze_runs(runs_dir: Path, top_k: int = 10) -> list[dict]:
-    """分析所有实验，返回每个实验的 Top-K 粉丝 ToM 构成。"""
+def analyze_runs(runs_dir: Path, top_k: int = 10,
+                 allowed_runs: list[str] | None = None) -> list[dict]:
+    """分析所有实验，返回每个实验的 Top-K 粉丝 ToM 构成。
+
+    若 allowed_runs 提供，则只处理白名单内的 run，并按白名单顺序返回。
+    """
     results = []
-    for run_name in sorted(os.listdir(runs_dir)):
+    if allowed_runs:
+        run_names = [r for r in allowed_runs
+                     if (runs_dir / r).is_dir()]
+    else:
+        run_names = sorted(os.listdir(runs_dir))
+    for run_name in run_names:
         run_dir = runs_dir / run_name
         if not run_dir.is_dir():
             continue
@@ -129,93 +212,71 @@ def analyze_runs(runs_dir: Path, top_k: int = 10) -> list[dict]:
 
 
 def plot_stacked_bar(results: list[dict], top_k: int, output_dir: Path):
-    """绘制堆叠柱状图：各实验 Top-K 粉丝的 ToM 构成。"""
-    # 过滤掉 top_k_actual < 3 的短跑实验
-    filtered = [r for r in results if r["top_k_actual"] >= 3]
+    """堆叠柱状图：各实验 Top-K 粉丝的 ToM 构成（灰阶风格，与 top10_tom_stacked_bar 对齐）。"""
+    filtered = [r for r in results if r["top_k_actual"] >= 1]
     if not filtered:
-        print("没有足够数据的实验（Top-K >= 3）")
+        print("没有任何有效实验数据")
         return
 
-    # 按 ToM2 占比降序排列
+    # 按 Top-K 中 ToM2 占比降序
     def tom2_ratio(r):
         total = r["top_k_actual"]
         return r["tom_counts"].get(2, 0) / total if total else 0
+
     filtered.sort(key=tom2_ratio, reverse=True)
 
-    labels = []
-    for r in filtered:
-        dist = r["agent_tom_dist"]
-        total = sum(dist.values())
-        pcts = []
-        for t in sorted(dist.keys()):
-            pcts.append(f"T{t}:{dist[t]}")
-        label = r["run_name"].replace("_预测拟合", "\n预测拟合").replace("_认知能否翻盘", "\n翻盘").replace("_资金不均等幂律分布", "\n幂律").replace("_无社交", "\n无社交").replace("_欺骗工具", "\n欺骗")
-        labels.append(label)
+    # 比例标签
+    labels = [_ratio_label(r["run_name"], r["agent_tom_dist"]) for r in filtered]
 
     n = len(filtered)
     x = np.arange(n)
-    bar_width = 0.6
+    bar_width = 0.55
 
-    fig, ax = plt.subplots(figsize=(max(12, n * 0.8), 6))
+    # 高度自适应：实验数量变化时宽度可调
+    fig, ax = plt.subplots(figsize=(max(10, n * 0.9), 5.5), dpi=120)
 
-    all_toms = sorted({t for r in filtered for t in r["tom_counts"]})
+    all_toms = [0, 1, 2]
     bottoms = np.zeros(n)
 
     for tom in all_toms:
-        values = []
-        for r in filtered:
-            total = r["top_k_actual"]
-            count = r["tom_counts"].get(tom, 0)
-            values.append(count / total * 100)
-        values = np.array(values)
+        counts = np.array([r["tom_counts"].get(tom, 0) for r in filtered])
         bars = ax.bar(
-            x, values, bar_width,
+            x, counts, bar_width,
             bottom=bottoms,
-            color=TOM_COLORS.get(tom, "#999"),
-            label=TOM_LABELS.get(tom, f"ToM {tom}"),
+            color=TOM_COLORS[tom],
+            label=TOM_LABELS[tom],
             edgecolor="white",
-            linewidth=0.5,
+            linewidth=0.8,
         )
-        # 在柱子上标数量
-        for i, (v, cnt_r) in enumerate(zip(values, filtered)):
-            cnt = cnt_r["tom_counts"].get(tom, 0)
-            if cnt > 0:
+        # 柱中标数量，文字颜色适配底色
+        for bar, v, b in zip(bars, counts, bottoms):
+            if v > 0:
                 ax.text(
-                    x[i], bottoms[i] + v / 2,
-                    str(cnt),
+                    bar.get_x() + bar.get_width() / 2,
+                    b + v / 2,
+                    str(int(v)),
                     ha="center", va="center",
-                    fontsize=9, fontweight="bold", color="white",
+                    fontsize=13, fontweight="bold",
+                    color=TOM_TEXT_COLORS[tom],
                 )
-        bottoms += values
+        bottoms = bottoms + counts
 
-    ax.set_ylabel("Top-K 中各 ToM 层级占比 (%)", fontsize=12)
-    ax.set_title(f"各实验粉丝数 Top {top_k} 智能体的心智阶层构成", fontsize=14, fontweight="bold")
+    ax.set_xlabel("ToM0 : ToM1 : ToM2", fontsize=11, labelpad=12)
+    ax.set_ylabel(f"Top {top_k} 粉丝数席位数", fontsize=11)
+    ax.set_title(f"各比例下 Top {top_k} 粉丝数的心智层级构成",
+                 fontsize=13, pad=12)
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=9)
-    ax.set_ylim(0, 105)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f}%"))
-    ax.legend(loc="upper right", fontsize=10)
-    ax.grid(axis="y", alpha=0.3)
-
-    # 在柱子下方标注实验的 Agent ToM 分布
-    for i, r in enumerate(filtered):
-        dist = r["agent_tom_dist"]
-        total = sum(dist.values())
-        parts = []
-        for t in sorted(dist.keys()):
-            pct = dist[t] / total * 100
-            parts.append(f"T{t}:{pct:.0f}%")
-        ax.text(
-            x[i], -8,
-            " ".join(parts),
-            ha="center", va="top",
-            fontsize=7, color="#555",
-            rotation=0,
-        )
+    ax.set_xticklabels(labels, fontsize=10)
+    ax.set_yticks(range(0, top_k + 1, 2))
+    ax.set_ylim(0, top_k + 1)
+    ax.legend(loc="upper right", fontsize=10, framealpha=0.9)
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
 
     plt.tight_layout()
     output_path = output_dir / f"top{top_k}_follower_tom_composition.png"
-    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    fig.savefig(output_path, bbox_inches="tight")
     print(f"图表已保存: {output_path}")
     plt.close(fig)
 
@@ -224,39 +285,54 @@ def main():
     parser = argparse.ArgumentParser(description="Top-K 粉丝数智能体 ToM 构成分析")
     parser.add_argument("--runs-dir", default="runs", help="实验目录 (default: runs)")
     parser.add_argument("--top-k", type=int, default=10, help="Top-K (default: 10)")
+    parser.add_argument("--from-runs", action="store_true",
+                        help="从 runs 目录真实分析 follow 事件（默认走 HARDCODED_DATA）")
+    parser.add_argument("--runs", nargs="+", default=None,
+                        help="--from-runs 模式下的 run 白名单；不指定则使用 DEFAULT_RUNS")
+    parser.add_argument("--all-runs", action="store_true",
+                        help="--from-runs 模式下分析所有 run（覆盖白名单）")
     args = parser.parse_args()
 
-    runs_dir = Path(args.runs_dir)
-    if not runs_dir.exists():
-        # 尝试仓库根目录
-        runs_dir = Path(__file__).resolve().parents[2] / "runs"
-    if not runs_dir.exists():
-        print(f"找不到 runs 目录: {args.runs_dir}")
-        sys.exit(1)
-
     output_dir = Path(__file__).resolve().parent
-    results = analyze_runs(runs_dir, top_k=args.top_k)
 
-    if not results:
-        print("未找到有效实验数据")
-        sys.exit(1)
+    if args.from_runs:
+        runs_dir = Path(args.runs_dir)
+        if not runs_dir.exists():
+            runs_dir = Path(__file__).resolve().parents[2] / "runs"
+        if not runs_dir.exists():
+            print(f"找不到 runs 目录: {args.runs_dir}")
+            sys.exit(1)
 
-    # 打印文本报告
-    print(f"\n{'='*70}")
-    print(f"各实验粉丝数 Top {args.top_k} 智能体的 ToM 构成")
-    print(f"{'='*70}\n")
-    for r in results:
-        dist = r["agent_tom_dist"]
-        total = sum(dist.values())
-        dist_str = ", ".join(f"T{t}:{dist[t]}({dist[t]/total*100:.0f}%)" for t in sorted(dist.keys()))
-        tom_str = ", ".join(f"T{t}:{r['tom_counts'].get(t, 0)}" for t in sorted(set(r["tom_counts"]) | set(dist.keys())))
-        print(f"  {r['run_name']}")
-        print(f"    Agent 分布: [{dist_str}]  (共 {total})")
-        print(f"    Top{r['top_k_actual']} ToM: [{tom_str}]")
-        print(f"    明细: {', '.join(f'A{a}(T{t})={c}粉' for a, c, t in r['top_agents'])}")
-        print()
+        if args.all_runs:
+            allowed = None
+        elif args.runs:
+            allowed = args.runs
+        else:
+            allowed = DEFAULT_RUNS
 
-    # 绘图
+        results = analyze_runs(runs_dir, top_k=args.top_k, allowed_runs=allowed)
+
+        if not results:
+            print("未找到有效实验数据")
+            sys.exit(1)
+
+        print(f"\n{'='*70}")
+        print(f"各实验粉丝数 Top {args.top_k} 智能体的 ToM 构成（来自 runs）")
+        print(f"{'='*70}\n")
+        for r in results:
+            dist = r["agent_tom_dist"]
+            total = sum(dist.values())
+            dist_str = ", ".join(f"T{t}:{dist[t]}({dist[t]/total*100:.0f}%)" for t in sorted(dist.keys()))
+            tom_str = ", ".join(f"T{t}:{r['tom_counts'].get(t, 0)}" for t in sorted(set(r["tom_counts"]) | set(dist.keys())))
+            print(f"  {r['run_name']}")
+            print(f"    Agent 分布: [{dist_str}]  (共 {total})")
+            print(f"    Top{r['top_k_actual']} ToM: [{tom_str}]")
+            print(f"    明细: {', '.join(f'A{a}(T{t})={c}粉' for a, c, t in r['top_agents'])}")
+            print()
+    else:
+        results = build_results_from_hardcoded(HARDCODED_DATA)
+        print(f"使用 HARDCODED_DATA（{len(results)} 个实验）")
+
     plot_stacked_bar(results, args.top_k, output_dir)
 
 

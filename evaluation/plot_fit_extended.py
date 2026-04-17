@@ -236,7 +236,7 @@ def main():
     parser.add_argument("--labels", default="")
     parser.add_argument("--real-curves", default="data/index_volatility_curves.json")
     parser.add_argument("--profile-csv", default="data/stock_profile.csv")
-    parser.add_argument("--output-dir", default="output")
+    parser.add_argument("--output-dir", default="charts")
     args = parser.parse_args()
 
     labels = [l.strip() for l in args.labels.split(",") if l.strip()] if args.labels else []

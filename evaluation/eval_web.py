@@ -3241,7 +3241,7 @@ def api_config_diff():
 # 图表快照持久化（保存到本地文件系统）
 # ──────────────────────────────────────────────────────────────
 
-SAVED_CHARTS_DIR = EVAL_DIR / "saved_charts"
+SAVED_CHARTS_DIR = EVAL_DIR / "charts"
 
 
 @app.route("/api/saved_charts", methods=["GET"])

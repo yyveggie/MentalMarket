@@ -50,6 +50,19 @@ _COMPILED_GROUPS: dict[str, list[re.Pattern]] = {
 DECISIONS_FILE = "decisions.jsonl"
 OUT_DIR = Path(__file__).parent
 
+# 目标实验：4 组 ToM 配置 × (有社交 / 无社交)，共 8 个
+TARGET_EXPERIMENTS: list[tuple[str, str]] = [
+    ("ToM0", "ToM0·有社交"),
+    ("ToM0_无社交", "ToM0·无社交"),
+    ("ToM1", "ToM1·有社交"),
+    ("ToM1_无社交", "ToM1·无社交"),
+    ("ToM2", "ToM2·有社交"),
+    ("ToM2_无社交", "ToM2·无社交"),
+    ("ToM01_ToM11_ToM21", "1:1:1·有社交"),
+    ("ToM01_ToM11_ToM21_无社交", "1:1:1·无社交"),
+]
+_LABEL_OF = dict(TARGET_EXPERIMENTS)
+
 
 # ── 数据读取 & 分析 ────────────────────────────────────
 
@@ -147,14 +160,16 @@ def analyze_experiment(run_dir: Path) -> dict | None:
 
 
 def analyze_all(runs_dir: Path) -> dict:
-    results = {}
-    for name in sorted(os.listdir(runs_dir)):
-        d = runs_dir / name
+    """仅分析 TARGET_EXPERIMENTS 中列出的实验，保持固定顺序。"""
+    results: dict = {}
+    for raw_name, _pretty in TARGET_EXPERIMENTS:
+        d = runs_dir / raw_name
         if not d.is_dir():
+            print(f"[WARN] 缺少实验目录: {raw_name}", file=sys.stderr)
             continue
         r = analyze_experiment(d)
         if r:
-            results[name] = r
+            results[raw_name] = r
     return results
 
 
@@ -227,60 +242,70 @@ def plot_hit_rate_comparison(all_stats: dict, out_path: Path) -> None:
     print(f"命中率对比图已保存: {out_path}")
 
 
+_EXP_COLORS: dict[str, str] = {
+    "ToM1":                     "#1f77b4",  # 深蓝
+    "ToM1_无社交":               "#aec7e8",  # 浅蓝
+    "ToM2":                     "#9467bd",  # 深紫
+    "ToM2_无社交":               "#c5b0d5",  # 浅紫
+    "ToM01_ToM11_ToM21":        "#2ca02c",  # 深绿
+    "ToM01_ToM11_ToM21_无社交":  "#98df8a",  # 浅绿
+}
+
+
 def plot_group_breakdown(all_stats: dict, out_path: Path) -> None:
     """
-    并排热力图：左=ToM1，右=ToM2，行=实验，列=关键词分组，格值=命中次数。
-    仅保留同时含 ToM1 和 ToM2 的实验。
+    聚合热力图：2 行（ToM1 / ToM2） × 8 列（关键词分组），
+    格值为全实验命中决策条数加和，颜色深浅编码数量级。
     """
     groups = list(KEYWORD_GROUPS.keys())
-    # 保留含 ToM1 或 ToM2 的实验
     experiments = [exp for exp, m in all_stats.items() if 1 in m or 2 in m]
     if not experiments:
         return
 
-    n_exp = len(experiments)
-    n_grp = len(groups)
+    # 聚合：对所有实验加和
+    mat = np.zeros((2, len(groups)), dtype=int)
+    for exp in experiments:
+        for r, tom in enumerate((1, 2)):
+            if tom not in all_stats[exp]:
+                continue
+            gh = all_stats[exp][tom]["group_hits"]
+            for j, g in enumerate(groups):
+                mat[r, j] += gh.get(g, 0)
 
-    mat1 = np.zeros((n_exp, n_grp))
-    mat2 = np.zeros((n_exp, n_grp))
-    for i, exp in enumerate(experiments):
-        for tom, mat in [(1, mat1), (2, mat2)]:
-            if tom in all_stats[exp]:
-                gh = all_stats[exp][tom]["group_hits"]
-                for j, g in enumerate(groups):
-                    mat[i, j] = gh.get(g, 0)
+    vmax = max(mat.max(), 1)
 
-    vmax = max(mat1.max(), mat2.max(), 1)
+    fig, ax = plt.subplots(figsize=(12, 3.4), dpi=120)
+    im = ax.imshow(mat, cmap="YlOrRd", aspect="auto", vmin=0, vmax=vmax)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(max(16, n_grp * 2.8), max(8, n_exp * 0.5)),
-                                   sharey=True)
+    ax.set_xticks(range(len(groups)))
+    ax.set_xticklabels(groups, rotation=20, ha="right", fontsize=10)
+    ax.set_yticks([0, 1])
+    ax.set_yticklabels(["ToM1", "ToM2"], fontsize=11)
 
-    for ax, mat, title, tom_label in [
-        (ax1, mat1, "ToM1 推理", "ToM1"),
-        (ax2, mat2, "ToM2 推理", "ToM2"),
-    ]:
-        im = ax.imshow(mat, cmap="YlOrRd", aspect="auto", vmin=0, vmax=vmax)
-        ax.set_xticks(range(n_grp))
-        ax.set_xticklabels(groups, rotation=30, ha="right", fontsize=9)
-        ax.set_yticks(range(n_exp))
-        ax.set_yticklabels(experiments, fontsize=8)
-        ax.set_title(title, fontsize=12)
+    # 单元格数值标注
+    for i in range(2):
+        for j in range(len(groups)):
+            v = int(mat[i, j])
+            if v > 0:
+                ax.text(j, i, f"{v:,}", ha="center", va="center",
+                        fontsize=9,
+                        color="white" if v > vmax * 0.55 else "black")
 
-        for i in range(n_exp):
-            for j in range(n_grp):
-                val = int(mat[i, j])
-                if val > 0:
-                    ax.text(j, i, str(val), ha="center", va="center", fontsize=7,
-                            color="white" if val > vmax * 0.6 else "black")
+    ax.set_title("ToM1 vs ToM2 操纵关键词总命中次数（全实验加和）",
+                 fontsize=13, pad=10)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_visible(False)
+    ax.tick_params(length=0)
 
-    fig.suptitle("ToM1 vs ToM2 各操纵关键词分组命中次数对比", fontsize=14, fontweight="bold")
-    # 在右上角放置 colorbar，避免与主图重叠
-    cbar_ax = fig.add_axes([0.92, 0.55, 0.015, 0.35])  # [left, bottom, width, height]
-    fig.colorbar(im, cax=cbar_ax, label="命中次数")
-    fig.subplots_adjust(left=0.12, right=0.90, wspace=0.08, top=0.93, bottom=0.15)
+    cbar = fig.colorbar(im, ax=ax, shrink=0.9, pad=0.02)
+    cbar.set_label("命中次数", fontsize=10)
+
+    plt.tight_layout()
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"分组热力图已保存: {out_path}")
+    print(f"聚合热力图已保存: {out_path}")
 
 
 def plot_tom1_vs_tom2_radar(all_stats: dict, out_path: Path) -> None:
@@ -341,7 +366,6 @@ def main() -> None:
         sys.exit(1)
 
     print_report(all_stats)
-    plot_hit_rate_comparison(all_stats, OUT_DIR / "manipulation_hit_rate.png")
     plot_group_breakdown(all_stats, OUT_DIR / "manipulation_group_heatmap.png")
 
 

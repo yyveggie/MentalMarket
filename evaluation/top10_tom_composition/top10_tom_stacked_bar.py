@@ -1,4 +1,4 @@
-"""堆叠柱状图：各配比下 Top10 收益率的心智构成，展示 ToM2 即使少数也占多数席位。"""
+"""堆叠柱状图：各配比下 Top10 收益率的心智构成，灰度友好。"""
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -27,71 +27,47 @@ DATA = [
 
 
 def _tom2_ratio(row):
-    """ToM2 实际占比，用于排序。"""
     a, b, c = (int(x) for x in row[0].split(":"))
     return c / (a + b + c)
 
 
 def main():
-    # 按 ToM2 Top10 数量降序排列
     ordered = sorted(DATA, key=lambda r: r[3], reverse=True)
 
     labels = [r[0] for r in ordered]
-    tom0 = [r[1] for r in ordered]
-    tom1 = [r[2] for r in ordered]
-    tom2 = [r[3] for r in ordered]
+    tom0 = np.array([r[1] for r in ordered])
+    tom1 = np.array([r[2] for r in ordered])
+    tom2 = np.array([r[3] for r in ordered])
 
     x = np.arange(len(labels))
     width = 0.55
 
     fig, ax = plt.subplots(figsize=(10, 5.5), dpi=120)
 
-    # 堆叠柱
-    c0 = "#60a5fa"  # 蓝 - ToM0
-    c1 = "#fbbf24"  # 黄 - ToM1
-    c2 = "#f87171"  # 红 - ToM2
+    # 灰度三档：浅→中→深，黑白打印清晰
+    g0, g1, g2 = "#e0e0e0", "#9e9e9e", "#424242"  # 浅灰/中灰/深灰
+    txt0, txt1, txt2 = "black", "black", "white"    # 文字颜色随底色
 
-    bars0 = ax.bar(x, tom0, width, label="ToM 0", color=c0, edgecolor="white", linewidth=0.8)
-    bars1 = ax.bar(x, tom1, width, bottom=tom0, label="ToM 1", color=c1, edgecolor="white", linewidth=0.8)
-    bottom2 = [a + b for a, b in zip(tom0, tom1)]
-    bars2 = ax.bar(x, tom2, width, bottom=bottom2, label="ToM 2", color=c2, edgecolor="white", linewidth=0.8)
+    bars0 = ax.bar(x, tom0, width, label="ToM 0", color=g0, edgecolor="white", linewidth=0.8)
+    bars1 = ax.bar(x, tom1, width, bottom=tom0, label="ToM 1", color=g1, edgecolor="white", linewidth=0.8)
+    bottom2 = tom0 + tom1
+    bars2 = ax.bar(x, tom2, width, bottom=bottom2, label="ToM 2", color=g2, edgecolor="white", linewidth=0.8)
 
-    # 在每段上标注数量（>0 时显示）
-    for bars, vals, bottoms in [
-        (bars0, tom0, [0] * len(labels)),
-        (bars1, tom1, tom0),
-        (bars2, tom2, bottom2),
+    # 标注数量（无背景框，文字颜色适配底色）
+    for bars, vals, bottoms, tc in [
+        (bars0, tom0, np.zeros(len(labels)), txt0),
+        (bars1, tom1, tom0, txt1),
+        (bars2, tom2, bottom2, txt2),
     ]:
         for bar, v, b in zip(bars, vals, bottoms):
             if v > 0:
-                ax.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    b + v / 2,
-                    str(v),
-                    ha="center",
-                    va="center",
-                    fontsize=11,
-                    fontweight="bold",
-                    color="#1e293b",
-                )
+                ax.text(bar.get_x() + bar.get_width() / 2, b + v / 2,
+                        str(v), ha="center", va="center", fontsize=13,
+                        fontweight="bold", color=tc)
 
-    # 在每根柱子下方标注 ToM2 实际占比（紧贴比例标签下方）
-    for i, lab in enumerate(labels):
-        ratio = _tom2_ratio(ordered[i])
-        ax.annotate(
-            f"{ratio:.0%}",
-            xy=(x[i], 0),
-            xytext=(0, -22),
-            textcoords="offset points",
-            ha="center",
-            va="top",
-            fontsize=8,
-            color="#64748b",
-        )
-
-    ax.set_xlabel("智能体配比（ToM0 : ToM1 : ToM2）", fontsize=11, labelpad=32)
+    ax.set_xlabel("ToM0 : ToM1 : ToM2", fontsize=11, labelpad=12)
     ax.set_ylabel("Top 10 收益率席位数", fontsize=11)
-    ax.set_title("各配比下 Top 10 收益率的心智层级构成", fontsize=13, pad=12)
+    ax.set_title("各比例下 Top 10 收益率的心智层级构成", fontsize=13, pad=12)
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=10)
     ax.set_yticks(range(0, 11, 2))
