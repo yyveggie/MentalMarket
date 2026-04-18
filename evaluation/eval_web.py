@@ -1046,16 +1046,24 @@ def _compute_behavioral_continuous(run_dir: Path) -> list[dict]:
     from collections import defaultdict
     from metrics_plot_common import safe_float, safe_int
 
+    # 瞬时量（每条记录即一次独立采样）：直接全记录平均
     avg_fields = [
         ("turnover_rate", "avg_turnover"),
         ("portfolio_hhi", "avg_hhi"),
         ("max_unrealized_loss_pct", "avg_max_unrealized_loss"),
         ("lsv_herding", "avg_lsv_herding"),
         ("recent_skewness", "avg_recent_skewness"),
+    ]
+    # 累积量（λ 是对历史已实现盈亏的累计均值的比值）：
+    # 同一 (agent, day) 只取末条记录的 λ，避免高换手 agent 对均值的权重偏差；
+    # 这与方法 A（每 agent 末期 λ）在"每日"粒度上的等价形式保持口径统一。
+    cum_fields = [
         ("lambda_estimate", "avg_lambda_estimate"),
     ]
 
     buckets: dict[tuple[int, int], dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    # 用于累积量：{(day, tom): {agent_id: (sim_time_last, {src: val})}}
+    cum_last: dict[tuple[int, int], dict[int, tuple[float, dict[str, float]]]] = defaultdict(dict)
     for row in _iter_jsonl(fpath):
         day = safe_int(row.get("trading_day"))
         if day is None or day <= 0:
@@ -1067,11 +1075,31 @@ def _compute_behavioral_continuous(run_dir: Path) -> list[dict]:
             v = safe_float(row.get(src))
             if v is not None:
                 buckets[key][src].append(v)
+        # 累积量：记录 (agent, day) 最新一条
+        aid = safe_int(row.get("agent_id"))
+        if aid is not None:
+            tm = safe_float(row.get("sim_time")) or 0.0
+            cur_vals: dict[str, float] = {}
+            for src, _ in cum_fields:
+                v = safe_float(row.get(src))
+                if v is not None:
+                    cur_vals[src] = v
+            if cur_vals:
+                old = cum_last[key].get(aid)
+                if old is None or tm >= old[0]:
+                    cum_last[key][aid] = (tm, cur_vals)
+
+    # 把累积量的每 agent 末条填入 buckets
+    for key, agents in cum_last.items():
+        for (_tm, vals) in agents.values():
+            for src, v in vals.items():
+                buckets[key][src].append(v)
 
     result = []
+    all_fields = avg_fields + cum_fields
     for (day, tom), data in sorted(buckets.items()):
         row: dict = {"trading_day": day, "tom_level": tom}
-        for src, dst in avg_fields:
+        for src, dst in all_fields:
             vals = data.get(src, [])
             row[dst] = round(sum(vals) / len(vals), 4) if vals else None
         result.append(row)
