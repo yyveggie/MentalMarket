@@ -1,6 +1,9 @@
 # Run logs/results
 runs/
 
+# Evaluation outputs (plots, caches, analysis scripts — not shipped with repo)
+evaluation/
+
 # Papers
 论文，不必看/
 
