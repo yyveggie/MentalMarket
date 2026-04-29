@@ -152,8 +152,8 @@ for r in results:
     print(f"  {r['short_label']:20s}  平均收益率: {r['avg_return']:+8.2f}%  人均交易次数: {r['avg_trades']:.1f}")
 
 # ===== 画图 =====
-out = Path("output")
-out.mkdir(exist_ok=True)
+out = Path(__file__).resolve().parent / "_outputs"
+out.mkdir(parents=True, exist_ok=True)
 labels = [r["label"] for r in results]
 colors = ["#e74c3c", "#3498db", "#2ecc71"]
 

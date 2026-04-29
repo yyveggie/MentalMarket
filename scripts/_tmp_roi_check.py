@@ -70,8 +70,8 @@ for label, run_dir in runs:
     avg = sum(rois) / len(rois)
     print(f"{label.replace(chr(10),' ')}: avg_ROI={avg:.2f}%, n={len(rois)}")
 
-out = Path("output")
-out.mkdir(exist_ok=True)
+out = Path(__file__).resolve().parent / "_outputs"
+out.mkdir(parents=True, exist_ok=True)
 colors = ["#e74c3c", "#3498db", "#2ecc71"]
 
 # ===== ROI 对比图：箱线图 + 散点 + 平均值标注 =====

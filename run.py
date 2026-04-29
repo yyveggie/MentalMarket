@@ -238,10 +238,16 @@ async def main():
     reputation_tracker = ReputationTracker(
         eval_delay=float(social_cfg.get("reputation_eval_delay", 3600)),
         window_size=int(social_cfg.get("reputation_window", 20)),
-        initial_reputation=float(social_cfg.get("reputation_initial", 0.5)),
+        initial_reputation=float(social_cfg.get("reputation_initial", 1.0)),
         neutral_threshold=float(social_cfg.get("reputation_neutral_threshold", 0.2)),
-        min_window=int(social_cfg.get("reputation_min_window", 5)),
+        min_window=int(social_cfg.get("reputation_min_window", 3)),
         max_pending=int(social_cfg.get("reputation_max_pending", 50000)),
+        correct_weight=float(social_cfg.get("reputation_correct_weight", 0.3)),
+        wrong_weight=float(social_cfg.get("reputation_wrong_weight", 0.3)),
+        like_weight=float(social_cfg.get("reputation_like_weight", 0.05)),
+        dislike_weight=float(social_cfg.get("reputation_dislike_weight", 0.05)),
+        retweet_weight=float(social_cfg.get("reputation_retweet_weight", 0.1)),
+        decay_rate=float(social_cfg.get("reputation_decay_rate", 0.97)),
     ) if reputation_enabled else None
     social_board = SocialBoard(
         max_posts=int(social_cfg.get("max_posts", 5000)),
@@ -421,15 +427,13 @@ async def main():
     # 初始化社交图谱（在 Agent 初始化之后）
     if social_graph is not None:
         tom_levels = {aid: a.tom_level for aid, a in agent_mgr.agents.items()}
+        # 先绑定声誉追踪器，保证 init_agents 内部触发的 KOL 复核能读到正确声誉
+        social_graph.set_reputation_tracker(reputation_tracker)
         social_graph.init_agents(
             agent_ids=list(agent_mgr.agents.keys()),
             tom_levels=tom_levels,
-            kol_follower_threshold=int(social_cfg.get("kol_follower_threshold", 30)),
-            kol_influence=float(social_cfg.get("kol_influence", 5.0)),
-            base_influence_by_tom={
-                int(k): float(v)
-                for k, v in social_cfg.get("base_influence_by_tom", {0: 1.0, 1: 1.5, 2: 2.0}).items()
-            },
+            kol_reputation_threshold=float(social_cfg.get("kol_reputation_threshold", 5.0)),
+            kol_reputation_loss_threshold=float(social_cfg.get("kol_reputation_loss_threshold", 3.0)),
             follow_random_min=int(social_cfg.get("follow_random_min", 3)),
             follow_random_max=int(social_cfg.get("follow_random_max", 5)),
         )

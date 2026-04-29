@@ -8,7 +8,8 @@ const kolAgents = computed(() => graph.value.kol_agents || [])
 const topFollowed = computed(() => graph.value.top_by_followers || [])
 const stats = computed(() => ({
   kolCount: graph.value.kol_count ?? 0,
-  kolThreshold: graph.value.kol_threshold ?? 0,
+  kolUpThreshold: graph.value.kol_reputation_threshold ?? graph.value.kol_threshold ?? 0,
+  kolDownThreshold: graph.value.kol_reputation_loss_threshold ?? 0,
 }))
 </script>
 
@@ -18,7 +19,7 @@ const stats = computed(() => ({
 
     <div class="kol-stats">
       <span>{{ stats.kolCount }} 位 KOL</span>
-      <span>门槛 ≥{{ stats.kolThreshold }} 粉</span>
+      <span>声誉 ≥{{ stats.kolUpThreshold }} 升，跌破 {{ stats.kolDownThreshold }} 降</span>
     </div>
 
     <div v-if="kolAgents.length" class="section">
@@ -28,7 +29,7 @@ const stats = computed(() => ({
           <span class="agent-id">A{{ a.agent_id }}</span>
           <span class="badge kol-badge">KOL</span>
           <span class="metric">{{ a.followers }} 粉</span>
-          <span class="metric influence">{{ a.influence }}</span>
+          <span class="metric reputation">声誉 {{ a.reputation }}</span>
         </div>
       </div>
     </div>
@@ -41,7 +42,7 @@ const stats = computed(() => ({
           <span class="agent-id">A{{ a.agent_id }}</span>
           <span v-if="a.is_kol" class="badge kol-badge">KOL</span>
           <span class="metric">{{ a.followers }} 粉</span>
-          <span class="metric influence">{{ a.influence }}</span>
+          <span class="metric reputation">声誉 {{ a.reputation }}</span>
         </div>
       </div>
     </div>
@@ -121,7 +122,7 @@ const stats = computed(() => ({
   font-family: var(--font-mono);
 }
 
-.metric.influence {
+.metric.reputation {
   color: var(--accent-2);
   margin-left: auto;
 }

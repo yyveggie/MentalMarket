@@ -11,7 +11,8 @@ const stats = computed(() => ({
   totalFollows: graph.value.total_follows ?? 0,
   avgFollowing: graph.value.avg_following ?? 0,
   kolCount: graph.value.kol_count ?? 0,
-  kolThreshold: graph.value.kol_threshold ?? 0,
+  kolUpThreshold: graph.value.kol_reputation_threshold ?? graph.value.kol_threshold ?? 0,
+  kolDownThreshold: graph.value.kol_reputation_loss_threshold ?? 0,
 }))
 
 const filterMode = ref<'all' | 'kol' | 'tom0' | 'tom1' | 'tom2'>('all')
@@ -20,7 +21,7 @@ interface GNode extends d3.SimulationNodeDatum {
   id: number
   tom: number
   followers: number
-  influence: number
+  reputation: number
   is_kol: boolean
 }
 
@@ -99,8 +100,8 @@ function doRender() {
     .filter((e) => nodeMap.has(e.source) && nodeMap.has(e.target))
     .map((e) => ({ source: nodeMap.get(e.source)!, target: nodeMap.get(e.target)! }))
 
-  const maxInfluence = Math.max(...nodes.map((n) => n.influence), 1)
-  const rScale = d3.scaleSqrt().domain([0, maxInfluence]).range([4, 16])
+  const maxReputation = Math.max(...nodes.map((n) => n.reputation), 1)
+  const rScale = d3.scaleSqrt().domain([0, maxReputation]).range([4, 16])
 
   nodes.forEach((n, i) => {
     const saved = savedPositions.get(n.id)
@@ -120,7 +121,7 @@ function doRender() {
     .force('charge', d3.forceManyBody().strength(-500))
     .force('x', d3.forceX(width / 2).strength(0.03))
     .force('y', d3.forceY(height / 2).strength(0.03))
-    .force('collision', d3.forceCollide().radius((d: any) => rScale(d.influence) + 6))
+    .force('collision', d3.forceCollide().radius((d: any) => rScale(d.reputation) + 6))
     .alphaDecay(0.02)
 
   const g = svg.append('g')
@@ -154,14 +155,14 @@ function doRender() {
     .selectAll('circle')
     .data(nodes)
     .join('circle')
-    .attr('r', (d) => rScale(d.influence))
+    .attr('r', (d) => rScale(d.reputation))
     .attr('fill', (d) => TOM_COLORS[d.tom] ?? '#78909c')
     .attr('fill-opacity', 0.85)
     .attr('stroke', (d) => d.is_kol ? '#ff9800' : '#fff')
     .attr('stroke-width', (d) => d.is_kol ? 2.5 : 1)
     .style('cursor', 'pointer')
 
-  node.append('title').text((d) => `A${d.id} | ToM${d.tom} | ${d.followers}粉丝 | 影响力${d.influence}`)
+  node.append('title').text((d) => `A${d.id} | ToM${d.tom} | ${d.followers}粉丝 | 声誉${d.reputation}`)
 
   const labelGroup = g.append('g')
     .selectAll('g')
@@ -174,13 +175,13 @@ function doRender() {
     .attr('font-size', '9px')
     .attr('font-weight', '600')
     .attr('fill', '#131722')
-    .attr('dy', (d) => -rScale(d.influence) - 6)
+    .attr('dy', (d) => -rScale(d.reputation) - 6)
     .text((d) => `A${d.id}`)
 
   labelGroup.append('text')
     .attr('font-size', '7px')
     .attr('fill', '#787b86')
-    .attr('dy', (d) => -rScale(d.influence) + 2)
+    .attr('dy', (d) => -rScale(d.reputation) + 2)
     .text((d) => `${d.followers}粉`)
 
   sim.on('tick', () => {

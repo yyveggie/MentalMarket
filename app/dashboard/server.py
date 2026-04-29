@@ -1688,8 +1688,11 @@ class RealtimeDashboard:
                 reverse=True,
             )
             graph_top_n = self._social_graph_top_n
+            rep_tracker = self.agent_manager.social_board.reputation_tracker
+            def _rep_of(aid: int) -> float:
+                return float(rep_tracker.get_reputation(aid)) if rep_tracker is not None else 0.0
             top_by_followers = sorted(profiles, key=lambda p: p.follower_count, reverse=True)[:graph_top_n]
-            top_nodes = sorted(profiles, key=lambda p: p.influence_score, reverse=True)[:graph_top_n]
+            top_nodes = sorted(profiles, key=lambda p: _rep_of(p.agent_id), reverse=True)[:graph_top_n]
             top_ids = {p.agent_id for p in top_nodes}
             graph_edges: list[dict] = []
             for p in top_nodes:
@@ -1701,7 +1704,7 @@ class RealtimeDashboard:
                     "id": p.agent_id,
                     "tom": getattr(self.agent_manager.agents.get(p.agent_id), "tom_level", 0),
                     "followers": p.follower_count,
-                    "influence": round(p.influence_score, 2),
+                    "reputation": round(_rep_of(p.agent_id), 3),
                     "is_kol": p.is_kol,
                 }
                 for p in top_nodes
@@ -1711,13 +1714,27 @@ class RealtimeDashboard:
                 "total_follows": total_follows,
                 "avg_following": round(total_follows / max(1, len(profiles)), 1),
                 "kol_count": len(kol_list),
-                "kol_threshold": graph._kol_follower_threshold,
+                "kol_reputation_threshold": graph._kol_reputation_threshold,
+                "kol_reputation_loss_threshold": graph._kol_reputation_loss_threshold,
+                # 兼容键：旧前端读取 kol_threshold，现统一指向声誉阈值
+                "kol_threshold": graph._kol_reputation_threshold,
                 "kol_agents": [
-                    {"agent_id": p.agent_id, "followers": p.follower_count, "following": p.following_count, "influence": round(p.influence_score, 2)}
+                    {
+                        "agent_id": p.agent_id,
+                        "followers": p.follower_count,
+                        "following": p.following_count,
+                        "reputation": round(_rep_of(p.agent_id), 3),
+                    }
                     for p in kol_list[:graph_top_n]
                 ],
                 "top_by_followers": [
-                    {"agent_id": p.agent_id, "followers": p.follower_count, "following": p.following_count, "influence": round(p.influence_score, 2), "is_kol": p.is_kol}
+                    {
+                        "agent_id": p.agent_id,
+                        "followers": p.follower_count,
+                        "following": p.following_count,
+                        "reputation": round(_rep_of(p.agent_id), 3),
+                        "is_kol": p.is_kol,
+                    }
                     for p in top_by_followers
                 ],
                 "graph_nodes": graph_nodes,
