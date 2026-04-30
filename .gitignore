@@ -3,6 +3,7 @@ runs/
 
 # Evaluation outputs (plots, caches, analysis scripts — not shipped with repo)
 evaluation/
+scripts/
 
 # Papers
 论文，不必看/
