@@ -30,6 +30,7 @@ node_modules/
 eva.txt
 
 .run.md
+run.md
 data/agents_initial_holdings_100.json
 data/agents_initial_holdings.json
 data/all_entity_mapping.json
