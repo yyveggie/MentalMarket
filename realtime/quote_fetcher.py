@@ -1,8 +1,3 @@
-"""akshare 雪球实时行情拉取。
-
-使用 akshare 的 stock_individual_spot_xq 接口获取个股实时快照。
-"""
-
 from __future__ import annotations
 
 import logging
@@ -14,8 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class AkshareQuoteFetcher:
-    """通过 akshare（雪球源）拉取个股实时报价。"""
-
     def __init__(self, symbols: list[str], max_history: int = 200):
         self.symbols = symbols
         self.max_history = max_history
@@ -24,11 +17,6 @@ class AkshareQuoteFetcher:
         }
 
     def fetch(self) -> dict[str, dict[str, Any]]:
-        """拉取所有标的的最新报价。
-
-        Returns:
-            {symbol: {"timestamp": str, "current": float, "change_pct": float, ...}}
-        """
         import akshare as ak
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -39,7 +27,6 @@ class AkshareQuoteFetcher:
                 if df is None or df.empty:
                     logger.warning("akshare 返回空数据: %s", symbol)
                     continue
-                # DataFrame 通常是 item/value 两列，转为 dict
                 record: dict[str, Any] = {"timestamp": now, "symbol": symbol}
                 for _, row in df.iterrows():
                     key = str(row.iloc[0]).strip()
@@ -52,12 +39,10 @@ class AkshareQuoteFetcher:
         return results
 
     def get_recent(self, symbol: str, n: int = 10) -> list[dict[str, Any]]:
-        """返回某标的最近 n 条报价（从新到旧）。"""
         items = list(self.history.get(symbol, []))
         return items[-n:][::-1]
 
     def format_quote_text(self, quotes: dict[str, dict[str, Any]]) -> str:
-        """将拉取到的报价格式化为可读文本，供 LLM prompt 使用。"""
         if not quotes:
             return "（暂无报价数据）"
         lines: list[str] = []

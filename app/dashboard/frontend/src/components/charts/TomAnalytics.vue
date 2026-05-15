@@ -158,7 +158,6 @@ watch(() => store.tomSummary, renderAll, { deep: true })
 <template>
   <div class="card">
 
-    <!-- Charts: 4 columns -->
     <div class="chart-row">
       <div class="chart-cell">
         <div class="chart-label">分布</div>
@@ -178,7 +177,6 @@ watch(() => store.tomSummary, renderAll, { deep: true })
       </div>
     </div>
 
-    <!-- Performance table -->
     <div class="perf-table-wrap">
       <table class="perf-table">
         <thead>

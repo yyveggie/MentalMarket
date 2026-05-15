@@ -88,7 +88,6 @@ export const useMarketStore = defineStore('market', () => {
     return holdings.value.find((h) => h.agent_id === id)
   }
 
-  /** 从后端 full_state 更新全部状态 */
   function applyFullState(state: MarketState) {
     simTime.value = state.sim_time
     tradingDay.value = state.trading_day
@@ -128,7 +127,6 @@ export const useMarketStore = defineStore('market', () => {
     rebuildAgentVisuals()
   }
 
-  /** 增量：新成交 */
   function applyTradeEvent(trade: TradeRecord) {
     const sym = trade.symbol.toUpperCase()
     const cda = cdaBySymbol.value[sym]
@@ -138,7 +136,6 @@ export const useMarketStore = defineStore('market', () => {
     }
   }
 
-  /** 增量：新决策 */
   function applyDecisionEvent(decision: IncrementalDecision) {
     recentDecisions.value.push({
       sim_time: decision.sim_time,

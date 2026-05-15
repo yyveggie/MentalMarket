@@ -55,7 +55,6 @@ const tomClass = computed(() => `badge-tom${agent.value?.tom_level ?? 0}`)
       </div>
 
       <div class="panel-body">
-        <!-- 财务概要 -->
         <section class="section">
           <h3 class="section-title">💰 财务状况</h3>
           <div class="stat-grid">
@@ -77,7 +76,6 @@ const tomClass = computed(() => `badge-tom${agent.value?.tom_level ?? 0}`)
           </div>
         </section>
 
-        <!-- 心智状态 -->
         <section v-if="agent.tom_level > 0 && agentDecisions.length > 0 && agentDecisions[0].reasoning" class="section">
           <h3 class="section-title">🧠 最近心智推理</h3>
           <div class="mind-block">
@@ -86,7 +84,6 @@ const tomClass = computed(() => `badge-tom${agent.value?.tom_level ?? 0}`)
           </div>
         </section>
 
-        <!-- 推理链 -->
         <section class="section">
           <h3 class="section-title">🔗 推理历史</h3>
           <ReasoningChain :decisions="agentDecisions" />

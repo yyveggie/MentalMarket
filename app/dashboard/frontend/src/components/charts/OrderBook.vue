@@ -118,7 +118,6 @@ const symbolEntries = computed(() => {
 <template>
   <div class="card">
 
-    <!-- 内嵌价格走势图 -->
     <div class="price-trend-section">
       <div class="card-title" style="margin-bottom:4px">价格走势</div>
       <svg ref="priceSvg" class="price-svg" />

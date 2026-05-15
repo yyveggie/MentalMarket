@@ -115,7 +115,6 @@ const recentActivity = computed(() => {
         </div>
       </div>
 
-      <!-- 最近活动 -->
       <div v-if="recentActivity.length" class="recent-strip">
         <span class="recent-label">最近动态</span>
         <div

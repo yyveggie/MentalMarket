@@ -14,10 +14,6 @@ interface FlowParticle {
 const BUY_COLOR = 0x26a69a
 const SELL_COLOR = 0xef5350
 
-/**
- * 订单流动画管理器。
- * 管理从 Agent 头像飞向订单簿中心的粒子效果。
- */
 export class OrderFlowManager {
   private container: Container
   private particles: FlowParticle[] = []
@@ -34,9 +30,6 @@ export class OrderFlowManager {
     this.centerY = y
   }
 
-  /**
-   * 生成一条订单流动画：从 Agent 位置飞向中心
-   */
   emit(fromX: number, fromY: number, action: 'buy' | 'sell', quantity: number) {
     const count = Math.min(Math.max(1, Math.floor(quantity / 10)), 5)
     const color = action === 'buy' ? BUY_COLOR : SELL_COLOR
@@ -61,9 +54,6 @@ export class OrderFlowManager {
     }
   }
 
-  /**
-   * 生成成交碰撞效果：在中心位置爆发粒子
-   */
   emitTradeExplosion(price: number) {
     const burstCount = 8
     for (let i = 0; i < burstCount; i++) {
@@ -88,7 +78,6 @@ export class OrderFlowManager {
     }
   }
 
-  /** 每帧调用，驱动所有粒子动画 */
   tick() {
     const toRemove: number[] = []
 
@@ -102,7 +91,7 @@ export class OrderFlowManager {
       }
 
       const t = Math.min(p.progress, 1)
-      const ease = t * t * (3 - 2 * t) // smoothstep
+      const ease = t * t * (3 - 2 * t)
       p.gfx.position.set(
         p.sx + (p.tx - p.sx) * ease,
         p.sy + (p.ty - p.sy) * ease,

@@ -1,9 +1,3 @@
-"""
-多服务商 LLM API 异步负载均衡器。
-支持 OpenAI / Anthropic / Google / DeepSeek，按 ToM 阶数路由模型，
-使用 asyncio.Semaphore 做并发控制。
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -22,28 +16,22 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ProviderConfig:
-    name: str                    # openai / anthropic / google / deepseek
+    name: str
     base_url: str
     api_key: str
     model: str
-    max_concurrency: int = 20   # 每个服务商的并发上限
+    max_concurrency: int = 20
     timeout: float = 60.0
-    extra_body: dict = field(default_factory=dict)  # 额外请求体参数（如 enable_thinking）
+    extra_body: dict = field(default_factory=dict)
 
 
 @dataclass
 class APIBalancer:
-    """
-    按 ToM 阶数将请求路由到不同的 LLM 服务商 (LangChain 重构版)。
-    """
-
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
     _semaphores: dict[str, asyncio.Semaphore] = field(default_factory=dict, repr=False)
     _models: dict[str, BaseChatModel] = field(default_factory=dict, repr=False)
-    # ToM 阶数 → 服务商名称列表（轮询）
     routing: dict[int, list[str]] = field(default_factory=dict)
     _counters: dict[str, int] = field(default_factory=dict, repr=False)
-    # 公共系统 prompt 缓存
     _system_cache: Optional[str] = None
     _system_cache_by_tom: dict[int, str] = field(default_factory=dict, repr=False)
     _bound_model_cache: dict[tuple, Any] = field(default_factory=dict, repr=False)
@@ -78,7 +66,6 @@ class APIBalancer:
         status = self._extract_status_code(err)
         name = type(err).__name__
         if status is not None:
-            # 429 限流与 5xx 服务端异常可重试；其余 4xx 一般是请求内容/参数问题。
             if status == 429 or 500 <= status < 600:
                 return True
             if 400 <= status < 500:
@@ -103,12 +90,10 @@ class APIBalancer:
         self.providers[cfg.name] = cfg
 
     async def init(self):
-        """初始化信号量和 LangChain Chat 模型"""
         for name, cfg in self.providers.items():
             self._semaphores[name] = asyncio.Semaphore(cfg.max_concurrency)
             self._counters[name] = 0
 
-            # 显式传参可避免 LangChain 对 model_kwargs 的参数归类告警。
             chat_kwargs: dict[str, Any] = {}
             if cfg.extra_body:
                 chat_kwargs["extra_body"] = dict(cfg.extra_body)
@@ -128,7 +113,6 @@ class APIBalancer:
         pass
 
     def set_system_cache(self, system_prompt: str | dict[int, str]):
-        """设置系统 prompt，支持全局字符串或按 ToM 分层配置。"""
         if isinstance(system_prompt, dict):
             self._system_cache_by_tom = {int(k): str(v) for k, v in system_prompt.items()}
             self._system_cache = None
@@ -137,7 +121,6 @@ class APIBalancer:
             self._system_cache_by_tom = {}
 
     def _pick_provider(self, tom_level: int) -> ProviderConfig:
-        """根据 ToM 阶数轮询选择服务商（按阶数独立计数，确保均匀分配）"""
         candidates = self.routing.get(tom_level)
         if not candidates:
             all_names = list(self.providers.keys())
@@ -210,7 +193,6 @@ class APIBalancer:
                         last_err = api_err
                         retryable = self._is_retryable_error(api_err)
                         status_code = self._extract_status_code(api_err)
-                        # 仅对 4xx(非429) 打印 prompt/messages，便于定位请求内容问题。
                         if self._should_dump_prompt(api_err):
                             print("\033[91m===== LLM 400 BadRequestError: PROMPT/MESSAGES THAT CAUSED ERROR =====\033[0m")
                             print(f"[ToM Level: {tom_level}] Provider: {provider.name}  Model: {provider.model}  Round: {round_info}")
@@ -267,7 +249,6 @@ class APIBalancer:
 
 
 def build_balancer_from_config(api_config: dict) -> APIBalancer:
-    """从配置字典创建负载均衡器"""
     infer_cfg = api_config.get("inference", {})
     default_timeout = float(infer_cfg.get("request_timeout", 90.0))
     balancer = APIBalancer(
@@ -282,7 +263,6 @@ def build_balancer_from_config(api_config: dict) -> APIBalancer:
     )
 
     for provider_cfg in api_config.get("providers", []):
-        # 支持从环境变量读取 API key
         api_key = provider_cfg.get("api_key", "")
         if api_key.startswith("$"):
             api_key = os.environ.get(api_key[1:], "")
@@ -298,7 +278,6 @@ def build_balancer_from_config(api_config: dict) -> APIBalancer:
         )
         balancer.add_provider(cfg)
 
-    # 路由规则
     routing = api_config.get("routing", {})
     for level_str, names in routing.items():
         balancer.routing[int(level_str)] = names

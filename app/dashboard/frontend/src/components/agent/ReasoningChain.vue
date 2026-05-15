@@ -57,13 +57,11 @@ function toolIcon(name: string): string {
           </span>
         </div>
 
-        <!-- 推理 -->
         <div v-if="d.reasoning" class="node-block belief">
           <span class="block-label">💭 推理</span>
           <p>{{ d.reasoning }}</p>
         </div>
 
-        <!-- 工具调用 -->
         <div v-if="d.tool_trace?.length" class="node-tools">
           <div v-for="(tool, ti) in d.tool_trace" :key="ti" class="tool-detail">
             <div class="tool-header">

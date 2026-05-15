@@ -18,7 +18,6 @@ const newsPosts = computed(() => store.socialNews)
 
 <template>
   <div class="feed-row">
-    <!-- 最新帖子 -->
     <div class="feed-col">
       <div class="feed-header">最新帖子</div>
       <div class="feed-scroll">
@@ -31,7 +30,6 @@ const newsPosts = computed(() => store.socialNews)
       </div>
     </div>
 
-    <!-- 热门帖子 -->
     <div class="feed-col">
       <div class="feed-header">热门帖子</div>
       <div class="feed-scroll">
@@ -44,7 +42,6 @@ const newsPosts = computed(() => store.socialNews)
       </div>
     </div>
 
-    <!-- 新闻动态 -->
     <div class="feed-col">
       <div class="feed-header">新闻动态</div>
       <div class="feed-scroll">

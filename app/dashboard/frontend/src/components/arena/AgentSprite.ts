@@ -48,16 +48,13 @@ export class AgentSprite extends Container {
 
     const tomColor = TOM_COLORS[visual.tomLevel] ?? 0x7f8fa6
 
-    // Outer glow (visible during thinking or hover)
     this.outerGlow = new Graphics()
     this.addChild(this.outerGlow)
 
-    // Main ring
     this.ring = new Graphics()
     this.drawRing(tomColor, 1.0)
     this.addChild(this.ring)
 
-    // Emoji face
     const emojiStyle = new TextStyle({
       fontSize: 18,
       align: 'center',
@@ -67,7 +64,6 @@ export class AgentSprite extends Container {
     this.emojiText.position.set(0, -1)
     this.addChild(this.emojiText)
 
-    // ID label below
     const idStyle = new TextStyle({
       fontSize: 8,
       fontWeight: 'bold',
@@ -80,7 +76,6 @@ export class AgentSprite extends Container {
     this.idLabel.position.set(0, AVATAR_RADIUS + 3)
     this.addChild(this.idLabel)
 
-    // Floating action label (BUY/SELL popup)
     const actionStyle = new TextStyle({
       fontSize: 10,
       fontWeight: 'bold',
@@ -94,7 +89,6 @@ export class AgentSprite extends Container {
     this.actionLabel.alpha = 0
     this.addChild(this.actionLabel)
 
-    // Hover events
     this.on('pointerenter', () => { this._hovered = true })
     this.on('pointerleave', () => { this._hovered = false })
   }
@@ -121,11 +115,9 @@ export class AgentSprite extends Container {
     const tomColor = TOM_COLORS[visual.tomLevel] ?? 0x7f8fa6
     const glowColor = TOM_GLOW_COLORS[visual.tomLevel] ?? 0x7f8fa6
 
-    // Update emoji
     this.emojiText.text = EMOTION_MAP[visual.emotion] ?? '😐'
     this.idLabel.style.fill = tomColor
 
-    // Thinking pulse animation
     if (visual.phase === 'thinking') {
       this.pulsePhase += 0.06
       const pulse = 0.5 + Math.sin(this.pulsePhase) * 0.5
@@ -142,7 +134,6 @@ export class AgentSprite extends Container {
       this.scale.set(this._hovered ? 1.08 : 1.0)
     }
 
-    // Action label fade animation (frame-based instead of RAF)
     if (this.actionFadeAlpha > 0) {
       this.actionFadeAlpha -= 0.015
       this.actionFadeY -= 0.3

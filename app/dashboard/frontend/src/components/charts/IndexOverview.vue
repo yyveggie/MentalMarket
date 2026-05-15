@@ -211,7 +211,6 @@ function computeMincerZarnowitz(realVar: number[], simVar: number[]): {
   const ic11 = cov00 / covDet
   const waldChi2 = c0 * (ic00 * c0 + ic01 * c1) + c1 * (ic10 * c0 + ic11 * c1)
 
-  // For chi-square with 2 dof, survival function is exp(-x/2).
   const pValue = waldChi2 >= 0 ? Math.exp(-0.5 * waldChi2) : null
   return { alpha, beta, r2, waldChi2, pValue, n }
 }
@@ -234,7 +233,6 @@ function resolveDisplayDate(rawDate: string): string | null {
   if (day !== null) {
     const calDate = calendarDateByDay(day)
     if (calDate) return calDate
-    // 无真实日历时用交易日序号
     return `Day ${day}`
   }
   return rawDate || null
@@ -270,7 +268,6 @@ function paintClosedBands(
   const step = iW / Math.max(1, pointCount - 1)
   const layer = g.append('g').attr('class', 'closed-bands')
   for (const seg of segments) {
-    // 休市带按“交易日区间”左对齐：day i 覆盖 [i-1, i] 区间，避免视觉上晚半天到一天。
     const x0 = seg.start <= 0 ? 0 : Math.max(0, x(seg.start - 1))
     const x1 = seg.end === pointCount - 1
       ? iW
@@ -342,8 +339,6 @@ const indexData = computed(() => {
     const maxSimDay = sortedSimEntries.length > 0 ? sortedSimEntries[sortedSimEntries.length - 1][0] : 0
     let lastOpenSimForDisplay: number | null = null
 
-    // 有真实曲线日历时：按日历迭代，同时构建真实+模拟 sparkline
-    // 无真实曲线日历时：仅用模拟数据构建 sparkline（sim-only 模式）
     const hasRealCalendar = allRealRows.length > 0
 
     if (hasRealCalendar) {
@@ -357,7 +352,6 @@ const indexData = computed(() => {
         simSparklineFullRaw.push(row.day <= maxSimDay ? simCarryForDisplay : null)
       }
     } else {
-      // sim-only 模式：直接用模拟数据序列
       for (const [day, close] of sortedSimEntries) {
         simSparklineFullRaw.push(close)
         simSparklineRaw.push(day <= currentDay ? close : null)
@@ -401,7 +395,6 @@ const indexData = computed(() => {
     const realReturns: number[] = []
     const simReturns: number[] = []
 
-    // 前瞻1日口径：用上一日模拟变化方向预测当日真实变化方向。
     for (let i = 2; i < aligned.length; i++) {
       const [dayPrev2, , simPrev2] = aligned[i - 2]
       const [dayPrev1, realPrev, simPrev1] = aligned[i - 1]
@@ -414,13 +407,11 @@ const indexData = computed(() => {
       const realDir = sign(realDelta)
       const simPredDir = sign(simPredDelta)
 
-      // 双零表示双方都无方向信息，不计入样本。
       if (realDir === 0 && simPredDir === 0) continue
       if (realDir === simPredDir) predictionForward1MatchCount += 1
       predictionForward1SampleCount += 1
     }
 
-    // 同日口径与拟合指标：用同一日的真实/模拟变化比较方向与形态。
     for (let i = 1; i < aligned.length; i++) {
       const [dayPrev, realPrev, simPrev] = aligned[i - 1]
       const [dayCur, realCur, simCur] = aligned[i]
@@ -464,7 +455,6 @@ const indexData = computed(() => {
     const price = (simValid.length ? simValid[simValid.length - 1] : null) ?? lastSimRow?.close ?? lastReal?.close ?? 0
     const pctChg = lastSimRow?.pct_chg ?? 0
     const totalVol = simRows.reduce((s, r) => s + (r.volume ?? 0), 0)
-    // 日期：有日历用真实日期，否则用交易日序号
     const firstDate = allRealRows.length > 0
       ? allRealRows[0].date
       : (sortedSimEntries.length > 0 ? `Day ${sortedSimEntries[0][0]}` : null)
@@ -495,7 +485,6 @@ const indexData = computed(() => {
       predictionSameDaySampleCount,
       predictionForward1AccuracyPct,
       predictionForward1SampleCount,
-      // 兼容旧字段：默认使用前瞻1日口径。
       predictionAccuracyPct: predictionForward1AccuracyPct,
       predictionSampleCount: predictionForward1SampleCount,
       volatilityFitPct,
@@ -639,7 +628,6 @@ function renderCenterChart() {
         .defined((d) => d !== null && Number.isFinite(d))
         .x((_, i) => x(i))
         .y((d) => y(d as number))
-        // 模拟线使用线性连接，避免闭市平线被平滑曲线打断。
         .curve(d3.curveLinear)
 
     g.append('path')
@@ -731,7 +719,6 @@ function renderCenterChart() {
   if (viewPrices.length < 2) return
 
   if (hasRealBroad) {
-    // 双线模式：归一化真实+模拟大盘
     const viewDayTags = dayTags.slice(startIdx, endIdx + 1)
     const simBase = firstNonNull(viewPrices)
     const normSim = normalizeSeries(viewPrices.map(v => v as number | null), simBase)
@@ -758,7 +745,6 @@ function renderCenterChart() {
     g.append('path').datum(normReal).attr('fill', 'none').attr('stroke', '#64748b').attr('stroke-width', 2).attr('d', lineReal)
     g.append('path').datum(normSim).attr('fill', 'none').attr('stroke', '#ef5350').attr('stroke-width', 2.4).attr('d', lineSim)
   } else {
-    // 单线模式（无真实曲线）
     const x = d3.scaleLinear().domain([0, viewPrices.length - 1]).range([0, iW])
     const ext = d3.extent(viewPrices) as [number, number]
     const pad = (ext[1] - ext[0]) * 0.1 || 1
@@ -849,7 +835,6 @@ watch(currentTradingDay, () => {
   <div class="idx-overview card">
     <div class="panel-head">
       <div class="card-title">{{ centerTitle }}</div>
-      <!-- 全局拟合指标 -->
       <div class="global-fit-pills" v-if="store.metrics">
         <span v-if="store.metrics.prediction_accuracy_same_day_pct != null || store.metrics.prediction_accuracy_pct != null" class="fit-pill">
           🎯 同日 <b>{{ fmt(store.metrics.prediction_accuracy_same_day_pct ?? store.metrics.prediction_accuracy_pct, 1) }}%</b>

@@ -26,7 +26,6 @@ const DEFAULT_TRADING_DAY_SECONDS = 3600
 const displayContent = computed(() => {
   const text = String(props.post.content ?? '')
   if (!isNews.value) return text
-  // 新闻模式下将短横线列表转为更紧凑的圆点列表，并压缩多余空行。
   return text
     .replace(/^\s*-\s+/gm, '• ')
     .replace(/\n{3,}/g, '\n\n')
