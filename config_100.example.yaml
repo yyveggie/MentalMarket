@@ -1,0 +1,300 @@
+
+# ╔══════════════════════════════════════════════════════════════╗
+# ║         MentalMarket 快速测试配置（100 Agent）                 ║
+# ║   基于 config.yaml 调整，补偿流动性下降并保持市场动态合理性    ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+# ================================================================
+#  1. 仿真核心参数
+#     控制仿真全局行为：Agent数量、价格起点、时间跨度、批次调度、撮合引擎、延迟模型及ToM阶数分布。
+# ================================================================
+simulation:
+  n_agents: 100                # 参与仿真的 Agent 总数（不含做市商）
+  initial_price: 100.0         # 标的资产初始价格（做市商播种订单簿的基准价）
+  random_seed: 42              # 全局随机种子，确保实验可复现
+
+  # --- 时间与批次 ---
+  max_sim_time: 360000         # 仿真最大模拟时间（秒）；360000s = 100个交易日（每天3600s）
+  snapshot_interval: 3600      # 每隔多少秒生成一次日终快照（1个交易日 = 3600s）
+  batch_size: 50               # 每批并发调用 LLM 的 Agent 数量上限
+  batch_timeout: 180           # 单批 LLM 推理的超时时间（秒），超时则强制跳过未返回的 Agent
+  event_window: 600.0          # 事件窗口（秒）：Agent 仅感知当前时刻前后该窗口内的事件
+
+  # --- 订单簿与撮合 ---
+  fee_rate: 0.0002             # 每笔成交的手续费率（双边收取：买卖各扣 成交额 × fee_rate）
+  l2_depth: 5                  # L2 行情簿展示深度（买/卖各 N 档），注入 Agent 提示词
+  l2_history_max: 5000         # L2 行情历史最大缓存条数
+  price_history_maxlen: 20000  # 成交价格历史最大缓存条数（用于技术指标计算）
+
+  # --- 安全与阈值 ---
+  max_consecutive_failures: 5        # Agent 连续 LLM 调用失败 N 次后临时跳过该 Agent
+  market_maker_cash_multiplier: 10   # 做市商初始资金 = 所有 Agent 平均资金 × 此倍数
+  market_trend_threshold: 0.001      # 市场趋势判定阈值：收益率绝对值 > 此值视为上涨/下跌，否则震荡
+  price_discovery_min_trades: 10     # 做市商结束流动性播种所需的最少成交笔数
+
+  # --- 延迟模型（所有 ToM 共享同一均匀随机分布，单位：秒）---
+  # 每阶段延迟在 [min, max] 区间内独立均匀采样，与 ToM 阶数无关；
+  # 保留 delay_model_by_tom 的条目结构仅为与引擎接口兼容，三个键取值完全相同。
+  # perception: 感知市场信息延迟 | decision: 做出决策延迟
+  # submit: 提交订单延迟       | report: 生成社交帖子延迟
+  delay_model_by_tom:
+    0:
+      perception: {min: 0.15, max: 0.6}
+      decision:   {min: 0.1, max: 0.5}
+      submit:     {min: 0.05, max: 0.3}
+      report:     {min: 0.1, max: 0.5}
+    1:
+      perception: {min: 0.15, max: 0.6}
+      decision:   {min: 0.1, max: 0.5}
+      submit:     {min: 0.05, max: 0.3}
+      report:     {min: 0.1, max: 0.5}
+    2:
+      perception: {min: 0.15, max: 0.6}
+      decision:   {min: 0.1, max: 0.5}
+      submit:     {min: 0.05, max: 0.3}
+      report:     {min: 0.1, max: 0.5}
+
+  # --- ToM 阶数初始分布 ---
+  # 控制各 ToM 阶数 Agent 的占比，总和应为 1.0
+  tom_distribution:
+    0: 0.33                    # ToM-0 占比
+    1: 0.33                    # ToM-1 占比
+    2: 0.33                    # ToM-2 占比
+
+# ================================================================
+#  2. Agent 参数
+#     控制 Agent 的初始资金/持仓分布、交易频率、可用工具集合、技术分析指标参数。
+# ================================================================
+agent:
+  # --- 初始资金分布 ---
+  cash_mode: power_law         # 资金分配模式：power_law（幂律分布）| equal（均等分配）
+  cash_min: 100000             # 幂律分布最小资金
+  cash_max: 1000000            # 幂律分布最大资金
+  cash_alpha: 1.16             # 幂律分布指数 α（值越小尾部越厚，财富越不均等）
+  cash_by_tom:                 # 按 ToM 层级分别设置资金分布参数
+    0: {min: 100000, max: 1000000, alpha: 1.16}   # ToM-0 资金范围及幂律指数
+    1: {min: 100000, max: 1000000, alpha: 1.16}   # ToM-1 资金范围及幂律指数
+    2: {min: 100000, max: 1000000, alpha: 1.16}   # ToM-2 资金范围及幂律指数
+  cash_equal_amount: 500000    # cash_mode=equal 时每个 Agent 的初始资金
+
+  # --- 初始持仓 ---
+  stock_ratio_min: 0.3         # 初始持仓价值占总资产（现金+股票）的最小比例
+  stock_ratio_max: 0.7         # 初始持仓价值占总资产的最大比例
+  index_holding_file: data/agents_initial_holdings_100.json   # 预生成的 100 Agent 初始持仓文件
+  index_holding_prob_file: data/index_holding_prob.json       # 各指数被持有的概率分布文件
+  index_holding_max: 4         # 单个 Agent 最多持有的指数数量
+  index_holding_min: 1         # 单个 Agent 最少持有的指数数量
+  min_holders_per_index: 15    # 每只指数至少有 N 个 Agent 持有（保证最低流动性）
+
+  # --- 交易频率（泊松到达间隔，秒）---
+  # Agent 的交易到达过程服从泊松分布，lambda 为平均到达间隔（秒）。
+  # lambda 越小 → 交易越频繁。提高频率以补偿 Agent 数量减少 10 倍。
+  arrival_lambda:
+    0: 1200                    # ToM-0 平均每 1200s 交易一次（≈3次/天）
+    1: 1200                    # ToM-1 平均每 1200s 交易一次
+    2: 1200                    # ToM-2 平均每 1200s 交易一次
+
+  # --- 工具与推理 ---
+  tool_loop_max_steps: 2       # Agent 在单次决策中最多调用 N 次工具（超过后强制输出最终决策）
+  reasoning_maxlen: 500        # Agent 内部推理文本截断长度（字符），注入日志但不影响决策
+  tool_allowlist_by_tom:       # 按 ToM 层级配置可用工具白名单
+  # 所有工具：set_trade_plan, social_action, cancel_orders, set_deception_plan
+    0: [cancel_orders, social_action]      # ToM-0：撤单 + 社交 + 下单（无欺骗）
+    1: [cancel_orders, social_action]      # ToM-1：同上
+    2: [cancel_orders, social_action]      # ToM-2：同上（可加 set_deception_plan 开启欺骗）
+
+  # --- 技术分析参数 ---
+  # 注入 Agent 提示词的技术指标计算参数
+  technical_analysis:
+    trade_lookback: 100        # 计算技术指标时回溯的成交记录条数；↓ 从 200（交易量小）
+    sma_short_period: 5        # 短期简单移动平均线周期（5个成交价）
+    sma_long_period: 20        # 长期简单移动平均线周期（20个成交价）
+    rsi_period: 14             # RSI（相对强弱指数）计算周期
+    rsi_overbought: 70         # RSI 超买阈值（RSI > 70 提示超买）
+    rsi_oversold: 30           # RSI 超卖阈值（RSI < 30 提示超卖）
+    momentum_period: 10        # 动量指标计算周期（当前价 vs N期前价格）
+
+# ================================================================
+#  3. 多指数行情
+#     配置真实股票行情数据源，提供 Agent 决策所需的外部市场参考。
+#     每只指数有独立的价格曲线，Agent 可同时持有多只指数。
+# ================================================================
+market_indices:
+  enabled: true                # 是否启用多指数行情（false 则为单标的模式）
+  profile_csv: data/stock_profile.csv   # 指数/股票基本信息文件（名称、代码等）
+  quotes_csv: data/stock_data.csv       # 指数/股票历史行情文件（日期、开高低收等）
+  recent_days: 60              # 从 CSV 行情数据中加载 start_date 之前最近 N 个交易日的报价（Agent 可查看的历史行情深度，非仿真天数）
+  start_date: "2023-06-15"    # 行情数据截止日期：加载此日期之前的 recent_days 个交易日报价
+  baseline_flat_days: 0        # 仿真开头 N 天使用平坦价格（用于消除初始冲击），0 表示不启用
+  quotes_maxlen: 2000          # 行情历史缓存最大条数（用于技术指标计算和提示词展示）
+
+# ================================================================
+#  4. 订单簿参数
+#     控制连续双向拍卖（CDA）撮合引擎的订单簿行为：做市商播种、价格限制、订单生命周期等。
+# ================================================================
+orderbook:
+  seed_levels: 15              # 做市商初始播种的价格档位数（买/卖各 N 档）
+  seed_spread_pct: 0.002       # 相邻播种档位之间的价差比例（0.2%）
+  seed_max_qty: 100            # 每个播种档位的最大挂单数量
+  seed_min_qty: 20             # 每个播种档位的最小挂单数量
+  seed_qty_decay: 3            # 播种数量随远离中间价的衰减速率（指数衰减因子）
+  seed_absorption_pct: 0.25    # 做市商流动性被吃掉超过该比例后触发补充播种（25%）
+  max_trade_log: 50000         # 成交记录最大保存条数
+  tick_size: 0.01              # 最小价格变动单位（0.01元）
+  lot_size: 1                  # 最小交易数量单位（1股）
+  price_limit_pct: 0.10        # 涨跌停限制（±10%），超过该幅度的订单被拒绝
+  order_ttl: 7200              # 限价订单生存时间（秒），超时自动撤销；7200s = 2个交易日
+  buy_depth_cap: 1.0           # 买单深度上限系数（防止 Agent 过度挂单占用资金）
+
+# ================================================================
+#  5. 社交网络
+#     控制社交信息板、社交图谱（关注/KOL）、帖子排序算法、互动影响力增量及声誉追踪系统。
+# ================================================================
+social:
+  # --- 帖子展示 ---
+  perception_hot_k: 2          # 注入 Agent 提示词的全局热帖数量
+  perception_latest_k: 3       # 注入 Agent 提示词的最新帖子数量
+  max_posts: 1000              # 社交信息板最大帖子容量（deque，超出淘汰最旧）
+  candidate_pool_min: 10       # 热帖排序候选池最小大小
+  recency_half_life: 3600.0    # 帖子时效分的半衰期（秒）；3600s = 1个交易日
+  post_content_maxlen: 300     # 帖子内容最大字符数（超出截断）
+  retweet_preview_len: 100     # 转发帖中原帖内容预览长度（字符）
+  # --- 社交图谱 ---
+  graph_enabled: true          # 是否启用有向关注网络（false 则无关注/KOL机制）
+  # KOL 身份由声誉双阈值动态判定（滞后）：
+  #   非 KOL 的声誉 ≥ kol_reputation_threshold → 升为 KOL；
+  #   已是 KOL 的声誉 < kol_reputation_loss_threshold → 失去 KOL 身份。
+  kol_reputation_threshold: 5.0        # KOL 晋级阈值
+  kol_reputation_loss_threshold: 3.0   # KOL 掉落阈值（与晋级阈值之间形成滞后带）
+  follow_random_min: 3         # 初始化时每个 Agent 随机关注的最少人数
+  follow_random_max: 5         # 初始化时每个 Agent 随机关注的最多人数
+  # --- 帖子排序权重 ---
+  # Score = engagement·engagement_coeff + recency·recency_coeff + log1p(Rep)·reputation_coeff + social_bonus
+  scoring:
+    retweet_weight: 2          # 转发在互动分中的权重（1次转发 = 2次点赞）
+    engagement_coeff: 2.0      # 互动分（赞-踩+转发×权重）的总系数
+    recency_coeff: 5.0         # 时效分（指数衰减）的总系数
+    reputation_coeff: 2.0      # 作用于 log1p(声誉) 项的排序系数
+    social_bonus: 3.0          # 关注者帖子在个性化排序中的额外加分
+  # --- 声誉系统（多因子累积，下界 0，无上界）---
+  reputation_enabled: true             # 是否启用声誉追踪（false 则声誉固定为初始值）
+  reputation_eval_delay: 3600          # 预测评估延迟（秒）：记录预测后经过 N 秒才评估准确性
+  reputation_window: 10                # 事后分析用的预测历史窗口
+  reputation_initial: 1.0              # 所有 agent 起始声誉
+  reputation_neutral_threshold: 0.2    # 中性情绪阈值：|sentiment| < 此值的决策不记录为预测
+  reputation_min_window: 3             # 事后分析用的最小有效样本数
+  reputation_max_pending: 50000        # 待评估预测队列最大长度（防止内存溢出）
+  # 多因子权重（每次触发的声誉增量，score 下界为 0）：
+  reputation_correct_weight: 0.3       # 预测正确 +0.3
+  reputation_wrong_weight: 0.3         # 预测错误 -0.3
+  reputation_like_weight: 0.05         # 被点赞 +0.05
+  reputation_dislike_weight: 0.05      # 被点踩 -0.05
+  reputation_retweet_weight: 0.1       # 被转发 +0.1
+  reputation_decay_rate: 0.97          # 每交易日末 score ← score × 0.97
+
+# ================================================================
+#  6. 动态演化
+#     控制 Agent ToM 阶数的动态升级机制：表现差的低阶 Agent 在多轮亏损后自动升级心智层级，模拟学习与适应。
+# ================================================================
+evolution:
+  enabled: false               # 是否启用 ToM 动态升级（当前实验关闭）
+  interval: 36000              # 演化评估间隔（秒）；36000s = 每10个交易日评估一次
+  win_rate_threshold: -0.05    # 收益率阈值：收益率 < 此值的 Agent 被视为"表现差"
+  consecutive_rounds: 2        # 连续 N 轮表现差则触发升级
+  max_upgrade_per_round: 10    # 单轮最多升级的 Agent 数量
+  max_tom_level: 2             # ToM 升级上限（最高升至 ToM-2）
+
+# ================================================================
+#  7. 新闻事件
+#     控制新闻注入的方式和频率。两种模式：
+#     - 默认模式：从大池随机采样新闻，不与真实日历对齐
+#     - 实验模式：按真实日期逐日注入新闻，用于价格拟合实验
+# ================================================================
+news_events_config:
+  enabled: true                # 是否启用新闻事件注入
+  news_day_offset_pct: 0.25   # 每日新闻注入时刻占交易日的位置（0.25 = 交易日25%处，即早盘）
+  # --- 默认模式（experimental_daily_title_mode=false 时生效）---
+  news_file: data/news.json    # 新闻池文件（5190条，无日期，随机采样）
+  news_per_day: 5              # 默认模式下每日注入的新闻条数
+  coverage_cycle: 3            # 新闻覆盖周期（每 N 天轮换一批新闻主题）
+  # --- 实验模式（experimental_daily_title_mode=true 时生效）---
+  experimental_daily_title_mode: false       # 是否启用实验模式（按真实日历注入新闻）
+  experimental_news_file: data/news2.json   # 实验模式新闻文件（694条，含真实日期字段）
+  reopen_include_closed_days: true          # 是否在仿真中包含休市日（true=包含，用于与真实曲线对齐）
+  monday_include_weekend: true              # 周一是否同时注入周末的新闻（true=注入）
+
+# ================================================================
+#  8. 提示词参数
+#     控制注入 Agent 系统提示词中的社交帖子数量上限。
+# ================================================================
+prompt:
+  social_max_posts: 5          # Agent 提示词中社交帖子总数上限（热帖+最新+个性化增量）
+
+# ================================================================
+#  9. 推理存储
+#     控制仿真运行数据的持久化：日志缓冲、检查点保存策略、
+#     数据裁剪限制。所有运行数据存储在 runs/{timestamp}/ 目录。
+# ================================================================
+storage:
+  base_dir: runs               # 运行输出根目录（每次运行在此目录下创建带时间戳的子目录）
+  buffer_size: 100             # 日志写入磁盘的缓冲区大小（每 N 条 flush 一次）
+  store_prompt: false          # 是否保存完整的 LLM 提示词到日志（true 会显著增加磁盘占用）
+  checkpoint_interval: 3600    # 检查点保存间隔（秒）；3600s = 每个交易日保存一次
+  checkpoint_l2_keep: 200      # 检查点中保留的 L2 行情快照条数
+  checkpoint_price_keep: 5000  # 检查点中保留的价格历史条数
+  checkpoint_snapshot_keep: 20 # 检查点中保留的日终快照数量
+  checkpoint_trade_log_limit: 2000  # 检查点中保留的成交记录条数
+
+# ================================================================
+#  10. 实时看板
+#     WebSocket 实时推送看板，浏览器端展示价格走势、情绪分布、社交图谱、L2 盘口等仿真实况。
+# ================================================================
+dashboard:
+  enabled: true                # 是否启用实时看板服务
+  host: 0.0.0.0                # 看板 WebSocket 监听地址（0.0.0.0 = 所有网卡）
+  port: 8765                   # 看板 WebSocket 监听端口
+  l2_depth: 10                 # 看板展示的 L2 盘口深度（买/卖各 N 档）
+  l2_quote_orders: 0           # 盘口中做市商报价订单数量（0 = 不单独展示）
+  trading_day_seconds: 3600    # 看板中一个交易日的时长（用于时间轴计算）
+  max_recent_events: 200       # 看板事件流最大缓存条数（展示最近 N 条事件）
+  # --- 图表参数 ---
+  price_trend_maxlen: 600      # 价格走势图最大数据点数
+  sentiment_trend_maxlen: 600  # 情绪走势图最大数据点数
+  deviation_trend_maxlen: 600  # 偏差走势图最大数据点数
+  sentiment_window: 500        # 情绪移动平均窗口大小
+  social_graph_top_n: 100      # 社交图谱可视化展示的 Top-N Agent 节点数
+  # --- 真实曲线对比（仅 experimental_daily_title_mode=true 时有效）---
+  real_index_curves_file: data/index_volatility_curves.json   # 真实指数波动率曲线文件
+  real_calendar_news_file: data/news2.json                    # 真实日历新闻文件（看板对照展示）
+  real_curve_include_closed_days: true   # 看板真实曲线是否包含休市日
+  # --- WebSocket ---
+  ws_push_interval: 1.0        # WebSocket 推送间隔（秒）
+  ws_event_queue_size: 2000    # WebSocket 事件队列大小（溢出时丢弃旧事件）
+  ws_heartbeat: 20.0           # WebSocket 心跳间隔（秒），防止连接超时断开
+
+# ================================================================
+#  11. API 配置
+#     LLM 推理服务的全局参数和多提供商配置。
+#     支持多个提供商轮询/负载均衡，实现高吞吐推理。
+# ================================================================
+api:
+  inference:
+    temperature: 0.7           # LLM 采样温度（0=确定性，1=高随机性）
+    max_tokens: 1024           # LLM 单次生成最大 token 数
+    print_full_prompt: false   # 调试：是否打印完整提示词到终端
+    debug_print: false         # 调试：是否打印 LLM 返回的原始响应
+    colorized_print: false     # 调试：终端输出是否启用彩色高亮
+
+  providers:                   # LLM 提供商列表（按名称区分，可配置多个实现负载分散）
+    - name: provider_1          # 提供商标识名
+      base_url: "<your-openai-compatible-api-base-url>"
+      api_key: $MENTALMARKET_PROVIDER_1_API_KEY
+      model: "<your-model-name>"
+      max_concurrency: 20      # 最大并发请求数
+      timeout: 60              # 单次请求超时（秒）
+      extra_body: {}           # 传递给 API 的额外请求体参数
+
+  routing:
+    0: [provider_1]
+    1: [provider_1]
+    2: [provider_1]
