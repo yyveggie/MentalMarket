@@ -1,5 +1,6 @@
 # Run logs/results
 runs/
+output/
 
 # Evaluation outputs (plots, caches, analysis scripts — not shipped with repo)
 evaluation/
@@ -29,3 +30,8 @@ node_modules/
 eva.txt
 
 .run.md
+data/agents_initial_holdings_100.json
+data/agents_initial_holdings.json
+data/all_entity_mapping.json
+data/index_volatility_curves.json
+data/mongodb_quotes_export.csv
