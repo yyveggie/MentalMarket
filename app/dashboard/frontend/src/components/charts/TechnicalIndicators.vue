@@ -22,10 +22,17 @@ const rows = computed(() => {
     }))
 })
 
+// RSI 属于信号而非价格变动：超买/超卖统一用琥珀色并加文字标签，不占用涨跌色
 function rsiClass(rsi: number | null): string {
   if (rsi == null) return ''
-  if (rsi > 70) return 'color-down'
-  if (rsi < 30) return 'color-up'
+  if (rsi > 70 || rsi < 30) return 'signal'
+  return ''
+}
+
+function rsiLabel(rsi: number | null): string {
+  if (rsi == null) return ''
+  if (rsi > 70) return '超买'
+  if (rsi < 30) return '超卖'
   return ''
 }
 
@@ -46,13 +53,13 @@ function momClass(mom: number | null): string {
           <tr>
             <th>代码</th>
             <th>最新价</th>
-            <th>SMA5</th>
-            <th>SMA20</th>
-            <th>EMA5</th>
-            <th>EMA20</th>
-            <th>RSI14</th>
-            <th>MOM10</th>
-            <th>VOL</th>
+            <th title="5 日简单移动平均">SMA5</th>
+            <th title="20 日简单移动平均">SMA20</th>
+            <th title="5 日指数移动平均">EMA5</th>
+            <th title="20 日指数移动平均">EMA20</th>
+            <th title="14 期相对强弱指标，>70 超买，<30 超卖">RSI14</th>
+            <th title="10 期动量 = 现价 − 10 期前价格">MOM10</th>
+            <th title="收益率标准差（非年化）">波动率</th>
           </tr>
         </thead>
         <tbody>
@@ -63,9 +70,9 @@ function momClass(mom: number | null): string {
             <td>{{ fmt(r.sma20) }}</td>
             <td>{{ fmt(r.ema5) }}</td>
             <td>{{ fmt(r.ema20) }}</td>
-            <td :class="rsiClass(r.rsi14)">{{ fmt(r.rsi14, 1) }}</td>
-            <td :class="momClass(r.momentum10)">{{ fmt(r.momentum10) }}</td>
-            <td>{{ fmt(r.volatility) }}</td>
+            <td :class="rsiClass(r.rsi14)">{{ fmt(r.rsi14, 1) }}<small v-if="rsiLabel(r.rsi14)" class="rsi-tag">{{ rsiLabel(r.rsi14) }}</small></td>
+            <td :class="momClass(r.momentum10)">{{ fmt(r.momentum10, 3) }}</td>
+            <td>{{ r.volatility != null ? (r.volatility * 100).toFixed(3) + '%' : '-' }}</td>
           </tr>
           <tr v-if="rows.length === 0">
             <td colspan="9"></td>
@@ -84,7 +91,7 @@ function momClass(mom: number | null): string {
 .ind-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--font-mono);
 }
 
@@ -103,10 +110,9 @@ function momClass(mom: number | null): string {
 
 .ind-table th {
   background: var(--surface-1);
-  color: var(--accent);
+  color: var(--text-muted);
   font-weight: 600;
-  font-size: 10px;
-  text-transform: uppercase;
+  font-size: 11px;
   letter-spacing: 0.3px;
   position: sticky;
   top: 0;
@@ -124,5 +130,19 @@ function momClass(mom: number | null): string {
 .sym-cell {
   font-weight: 600;
   color: var(--heading);
+}
+
+.signal {
+  color: #d98c00;
+  font-weight: 600;
+}
+
+.rsi-tag {
+  margin-left: 4px;
+  font-size: 9px;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: rgba(245, 166, 35, 0.15);
+  color: #d98c00;
 }
 </style>

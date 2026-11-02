@@ -38,11 +38,17 @@ try:
 
     def _fast_json_dumps(obj: dict) -> str:
         return _orjson.dumps(obj, option=_orjson.OPT_NON_STR_KEYS).decode()
+
+    def _fast_json_loads(text: str):
+        return _orjson.loads(text)
 except ImportError:
     import json as _json_fallback
 
     def _fast_json_dumps(obj: dict) -> str:
         return _json_fallback.dumps(obj, ensure_ascii=False)
+
+    def _fast_json_loads(text: str):
+        return _json_fallback.loads(text)
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +84,8 @@ class DataLogger:
         if name not in self._files:
             path = self.run_dir / f"{name}.jsonl"
             self._files[name] = open(path, "a", encoding="utf-8", buffering=65536)
-            self._buffers[name] = []
+            # 重开文件句柄（flush 失败重试）时必须保留既有缓冲区，否则待重试的记录会变成孤儿而丢失
+            self._buffers.setdefault(name, [])
         return self._files[name]
 
     def _append(self, name: str, record: dict):
@@ -139,6 +146,62 @@ class DataLogger:
                 if fc >= 10:
                     logger.critical("DISK I/O FAILURE on %s: %d consecutive flush failures — data at risk! Check disk space.", name, fc)
                     buf.clear()
+
+    def truncate_after_sim_time(
+        self,
+        sim_time: float,
+        skip: tuple[str, ...] = ("agents_init", "agents_final"),
+    ) -> dict[str, int]:
+        """续跑前调用：删除各 JSONL 中 sim_time 晚于 checkpoint 时刻的记录。
+
+        崩溃前已落盘但未进入 checkpoint 的记录会在续跑后被重新生成（decision_id 也从
+        checkpoint 计数继续），不删除就会出现重复行和重复编号。
+        """
+        import os
+
+        self.flush_all()
+        for fh in self._files.values():
+            try:
+                fh.close()
+            except Exception:
+                pass
+        self._files.clear()
+
+        cutoff = float(sim_time) + 1e-6
+        removed: dict[str, int] = {}
+        for path in sorted(self.run_dir.glob("*.jsonl")):
+            name = path.stem
+            if name in skip:
+                continue
+            tmp_path = path.with_name(path.name + ".tmp")
+            dropped = 0
+            with open(path, "r", encoding="utf-8") as src, open(tmp_path, "w", encoding="utf-8") as dst:
+                for line in src:
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    try:
+                        record = _fast_json_loads(stripped)
+                    except Exception:
+                        dst.write(stripped + "\n")
+                        continue
+                    st = record.get("sim_time") if isinstance(record, dict) else None
+                    if st is not None:
+                        try:
+                            if float(st) > cutoff:
+                                dropped += 1
+                                continue
+                        except (TypeError, ValueError):
+                            pass
+                    dst.write(stripped + "\n")
+            if dropped > 0:
+                os.replace(tmp_path, path)
+                removed[name] = dropped
+            else:
+                os.remove(tmp_path)
+        if removed:
+            logger.info("Resume: dropped post-checkpoint records (sim_time > %.3f): %s", float(sim_time), removed)
+        return removed
 
     # ========== 公共 API ==========
 
@@ -280,7 +343,18 @@ class DataLogger:
         self._append("agents_final", record)
 
     def log_agents_final_batch(self, agents: dict, last_price: float | dict[str, float]):
-        """批量记录所有 Agent 的最终状态（排除虚拟做市商 agent_id=0）"""
+        """批量记录所有 Agent 的最终状态（排除虚拟做市商 agent_id=0）。
+        文件只保留最新一份：续跑再次退出时覆盖而不是追加。"""
+        self._flush("agents_final")
+        old_fh = self._files.pop("agents_final", None)
+        if old_fh is not None:
+            try:
+                old_fh.close()
+            except Exception:
+                pass
+        self._buffers["agents_final"] = []
+        with open(self.run_dir / "agents_final.jsonl", "w", encoding="utf-8"):
+            pass
         if isinstance(last_price, dict):
             price_map = last_price
         else:
@@ -307,9 +381,14 @@ class DataLogger:
         self._flush("agents_final")
 
     def flush_all(self):
-        """将所有缓冲区强制写入磁盘"""
+        """将所有缓冲区强制写入磁盘（包括已写入文件对象但仍留在其 64KB 缓冲里的数据）"""
         for name in list(self._buffers.keys()):
             self._flush(name, force_sync=True)
+        for fh in self._files.values():
+            try:
+                fh.flush()
+            except Exception as e:
+                logger.debug("flush_all: file flush failed: %s", e)
 
     def close(self):
         """关闭所有文件句柄"""

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import * as d3 from 'd3'
 import { useMarketStore } from '@/stores/marketStore'
+import { useRafRender } from '@/composables/useRafRender'
 import { useTooltip } from '@/composables/useTooltip'
 
 const store = useMarketStore()
@@ -74,17 +75,17 @@ function render() {
 
   g.append('g').attr('transform', `translate(0,${ih})`)
     .call(d3.axisBottom(x).ticks(Math.min(data.length, 6)).tickFormat(d => `D${d}`))
-    .call(g => g.selectAll('text').attr('fill', '#787b86').style('font-size', '8px'))
-    .call(g => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call(g => g.selectAll('text').style('fill', 'var(--chart-text)').style('font-size', '10px'))
+    .call(g => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
 
   g.append('g')
     .call(d3.axisLeft(y).ticks(4).tickFormat(d => `${d}%`))
-    .call(g => g.selectAll('text').attr('fill', '#787b86').style('font-size', '8px'))
-    .call(g => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call(g => g.selectAll('text').style('fill', 'var(--chart-text)').style('font-size', '10px'))
+    .call(g => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
 
   g.selectAll('.grid-line').data(y.ticks(4)).join('line')
     .attr('x1', 0).attr('x2', iw).attr('y1', d => y(d)).attr('y2', d => y(d))
-    .attr('stroke', '#e0e3eb').attr('stroke-dasharray', '2,3')
+    .style('stroke', 'var(--chart-grid)').attr('stroke-dasharray', '2,3')
 
   for (const tom of toms) {
     const key = `tom${tom}` as 'tom0' | 'tom1' | 'tom2'
@@ -92,21 +93,22 @@ function render() {
     g.append('path').datum(data).attr('fill', 'none').attr('stroke', TOM_COLORS[tom]).attr('stroke-width', 1.5).attr('d', line)
     const last = data[data.length - 1]
     g.append('text').attr('x', iw + 3).attr('y', y(last[key][BIAS_KEY]))
-      .attr('fill', TOM_COLORS[tom]).attr('font-size', '8px').attr('font-family', 'monospace').attr('dominant-baseline', 'middle')
+      .attr('fill', TOM_COLORS[tom]).attr('font-size', '10px').attr('font-family', 'monospace').attr('dominant-baseline', 'middle')
       .text(TOM_LABELS[tom])
   }
 }
 
+const scheduleRender = useRafRender(render, { el: () => svgRef.value })
 let resizeObs: ResizeObserver | null = null
-onMounted(() => { render(); if (svgRef.value) { resizeObs = new ResizeObserver(() => render()); resizeObs.observe(svgRef.value) } })
+onMounted(() => { render(); if (svgRef.value) { resizeObs = new ResizeObserver(() => scheduleRender()); resizeObs.observe(svgRef.value) } })
 onUnmounted(() => resizeObs?.disconnect())
-watch(() => store.biasTrends, render, { deep: true })
+watch(() => store.biasTrends, scheduleRender)
 </script>
 
 <template>
   <div class="card">
     <div class="card-title">处置效应
-      <span class="info-btn" @mouseenter="showTip('disp')" @mouseleave="hideTip">❕</span>
+      <span class="info-btn" @mouseenter="showTip('disp')" @mouseleave="hideTip">i</span>
       <div v-if="activeTooltip === 'disp'" class="custom-tooltip">卖出盈利仓位的同时仍持有亏损仓位的占比，反映"卖赢不卖亏"的心理偏差</div>
       <span v-if="latestValues" class="latest-val">
         <span v-for="tom in activeToms" :key="tom" :style="{ color: TOM_COLORS[tom] }">{{ latestValues[tom] }}%</span>

@@ -41,7 +41,7 @@ const gainHoldPct = computed(() => gainTotal.value > 0 ? (currentCounters.value.
 <template>
   <div class="card">
     <div class="card-title">损失厌恶分析
-      <span class="info-btn" @mouseenter="showTip('la')" @mouseleave="hideTip">❕</span>
+      <span class="info-btn" @mouseenter="showTip('la')" @mouseleave="hideTip">i</span>
       <div v-if="activeTooltip === 'la'" class="custom-tooltip">{{ tip }}</div>
     </div>
     <div class="tom-tabs">

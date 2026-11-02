@@ -1,13 +1,17 @@
-# Run logs/results
 runs/
 output/
 
-# Evaluation outputs (plots, caches, analysis scripts — not shipped with repo)
+# Local metric/evaluation scripts and their generated outputs
 evaluation/
 scripts/
+results_from_logs/
 
 # Papers
-论文，不必看/
+paper/
+
+# Realtime mode and configs
+realtime/
+config_realtime*.yaml
 
 # Python
 __pycache__/
@@ -37,9 +41,12 @@ prompts/
 tools/
 config.yaml
 config_100.yaml
-config_realtime.yaml
 data/agents_initial_holdings_100.json
 data/agents_initial_holdings.json
 data/all_entity_mapping.json
 data/index_volatility_curves.json
 data/mongodb_quotes_export.csv
+
+# 录制的演示视频（本地产物）
+data/videos/
+data/replay/

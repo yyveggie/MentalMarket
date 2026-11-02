@@ -22,7 +22,7 @@ const corrPct = computed(() =>
 <template>
   <div class="card">
     <div class="card-title">泡沫检测
-      <span class="info-btn" @mouseenter="showTip('bb')" @mouseleave="hideTip">❕</span>
+      <span class="info-btn" @mouseenter="showTip('bb')" @mouseleave="hideTip">i</span>
       <div v-if="activeTooltip === 'bb'" class="custom-tooltip">基于信心与价格偏离度的相关性检测自我实现预言式泡沫，相关系数越高泡沫信号越强</div>
     </div>
     <div class="metric-center">

@@ -2,6 +2,8 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as d3 from 'd3'
 import { useMarketStore } from '@/stores/marketStore'
+import { describeSimClock } from '@/utils/simTime'
+import { useRafRender } from '@/composables/useRafRender'
 
 const store = useMarketStore()
 const svgRef = ref<SVGSVGElement>()
@@ -31,16 +33,16 @@ function render() {
   const ySent = d3.scaleLinear().domain([-1, 1]).range([innerH, 0])
 
   g.append('g').attr('transform', `translate(0,${innerH})`)
-    .call(d3.axisBottom(x).ticks(6).tickFormat((d) => `${d}s`))
-    .call((g) => g.selectAll('text').attr('fill', '#787b86').style('font-size', '9px'))
-    .call((g) => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call(d3.axisBottom(x).ticks(6).tickFormat((d) => describeSimClock(Number(d), store.tradingDaySeconds)))
+    .call((g) => g.selectAll('text').style('fill', 'var(--chart-text)').style('font-size', '10px'))
+    .call((g) => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
 
   g.append('g').call(d3.axisLeft(ySent).ticks(5))
-    .call((g) => g.selectAll('text').attr('fill', COLOR_SENT).style('font-size', '9px'))
-    .call((g) => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call((g) => g.selectAll('text').attr('fill', COLOR_SENT).style('font-size', '10px'))
+    .call((g) => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
 
   g.append('line').attr('x1', 0).attr('x2', innerW).attr('y1', ySent(0)).attr('y2', ySent(0))
-    .attr('stroke', '#e0e3eb').attr('stroke-dasharray', '3,3')
+    .style('stroke', 'var(--chart-grid)').attr('stroke-dasharray', '3,3')
 
   if (sentData.length > 1) {
     const sentArea = d3.area<{ t: number; s: number }>().x((d) => x(d.t)).y0(ySent(0)).y1((d) => ySent(d.s)).curve(d3.curveMonotoneX)
@@ -60,20 +62,21 @@ function render() {
   const parts: string[] = []
   if (latestSent !== null) parts.push(`情绪 ${latestSent.toFixed(3)}`)
   if (latestConf !== null) parts.push(`信心 ${latestConf.toFixed(3)}`)
-  if (parts.length) val.append('text').attr('fill', '#787b86').attr('font-size', '9px').attr('font-family', 'monospace').text(parts.join(' | '))
+  if (parts.length) val.append('text').style('fill', 'var(--chart-text)').attr('font-size', '10px').attr('font-family', 'monospace').text(parts.join(' | '))
 
   const legend = g.append('g').attr('transform', `translate(${innerW - 130}, -4)`)
   ;[{ label: '情绪指数', color: COLOR_SENT, dash: '' }, { label: '信心指数', color: COLOR_CONF, dash: '6,3' }].forEach((item, i) => {
     const gi = legend.append('g').attr('transform', `translate(${i * 70}, 0)`)
     gi.append('line').attr('x1', 0).attr('x2', 12).attr('y1', 0).attr('y2', 0).attr('stroke', item.color).attr('stroke-width', 1.5).attr('stroke-dasharray', item.dash)
-    gi.append('text').attr('x', 15).attr('y', 3).attr('fill', item.color).attr('font-size', '8px').attr('font-family', 'monospace').text(item.label)
+    gi.append('text').attr('x', 15).attr('y', 3).attr('fill', item.color).attr('font-size', '10px').attr('font-family', 'monospace').text(item.label)
   })
 }
 
+const scheduleRender = useRafRender(render, { el: () => svgRef.value })
 let resizeObs: ResizeObserver | null = null
-onMounted(() => { render(); if (svgRef.value) { resizeObs = new ResizeObserver(() => render()); resizeObs.observe(svgRef.value) } })
+onMounted(() => { render(); if (svgRef.value) { resizeObs = new ResizeObserver(() => scheduleRender()); resizeObs.observe(svgRef.value) } })
 onUnmounted(() => resizeObs?.disconnect())
-watch([() => store.sentimentTrend, () => store.confidenceTrend], render, { deep: true })
+watch([() => store.sentimentTrend, () => store.confidenceTrend], scheduleRender)
 </script>
 
 <template>

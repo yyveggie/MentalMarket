@@ -9,16 +9,16 @@ const props = defineProps<{
 
 function actionIcon(action: string): string {
   const a = (action ?? 'hold').toLowerCase()
-  if (a === 'buy') return '🟢'
-  if (a === 'sell') return '🔴'
-  return '⚪'
+  if (a === 'buy') return '买'
+  if (a === 'sell') return '卖'
+  return '持'
 }
 
 function toolIcon(name: string): string {
-  if (name.includes('trade') || name.includes('plan')) return '📋'
-  if (name.includes('social')) return '📱'
-  if (name.includes('deception')) return '🎭'
-  return '🔧'
+  if (name.includes('trade') || name.includes('plan')) return '计划'
+  if (name.includes('social')) return '社交'
+  if (name.includes('deception')) return '欺骗'
+  return '工具'
 }
 </script>
 
@@ -58,7 +58,7 @@ function toolIcon(name: string): string {
         </div>
 
         <div v-if="d.reasoning" class="node-block belief">
-          <span class="block-label">💭 推理</span>
+          <span class="block-label">推理</span>
           <p>{{ d.reasoning }}</p>
         </div>
 
@@ -181,11 +181,11 @@ function toolIcon(name: string): string {
 }
 
 .node-block.belief {
-  border-left: 2px solid var(--accent-2);
+  background: var(--surface-1);
 }
 
 .node-block.intention {
-  border-left: 2px solid var(--accent-3);
+  background: var(--surface-1);
 }
 
 .node-tools {
@@ -198,7 +198,6 @@ function toolIcon(name: string): string {
 .tool-detail {
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-left: 2px solid var(--accent-1);
   border-radius: var(--radius);
   padding: 6px 8px;
   font-size: 10px;

@@ -55,7 +55,7 @@ const tradingDayDisplay = computed(() => {
   >
     <div class="post-header">
       <span class="post-author" :class="isSystem ? 'system' : ''">
-        {{ isSystem ? '📢 系统' : `A${post.agent_id}` }}
+        {{ isSystem ? '系统' : `A${post.agent_id}` }}
       </span>
       <span v-if="sourceBadge" class="badge" :class="sourceBadge.class">
         {{ sourceBadge.label }}
@@ -67,10 +67,10 @@ const tradingDayDisplay = computed(() => {
     <div class="post-content" :class="{ 'post-content-news': isNews }">{{ displayContent }}</div>
 
     <div class="post-footer">
-      <span v-if="showEngagement" class="stat">❤️ {{ post.likes }}</span>
-      <span v-if="showEngagement" class="stat">👎 {{ post.dislikes || 0 }}</span>
-      <span v-if="showEngagement" class="stat">🔁 {{ post.retweet_count }}</span>
-      <span v-if="post.original_post_id" class="stat">📎 #{{ post.original_post_id }}</span>
+      <span v-if="showEngagement" class="stat">赞 {{ post.likes }}</span>
+      <span v-if="showEngagement" class="stat">踩 {{ post.dislikes || 0 }}</span>
+      <span v-if="showEngagement" class="stat">转 {{ post.retweet_count }}</span>
+      <span v-if="post.original_post_id" class="stat">引 #{{ post.original_post_id }}</span>
     </div>
   </div>
 </template>
@@ -87,7 +87,7 @@ const tradingDayDisplay = computed(() => {
 }
 
 .post-bubble.hot-glow {
-  border-left: 2px solid var(--accent-3);
+  background: rgba(255, 152, 0, 0.05);
 }
 
 .post-bubble.highlight {

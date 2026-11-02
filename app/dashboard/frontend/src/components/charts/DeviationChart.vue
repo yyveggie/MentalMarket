@@ -2,6 +2,8 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as d3 from 'd3'
 import { useMarketStore } from '@/stores/marketStore'
+import { describeSimClock } from '@/utils/simTime'
+import { useRafRender } from '@/composables/useRafRender'
 
 const store = useMarketStore()
 const svgRef = ref<SVGSVGElement>()
@@ -32,16 +34,16 @@ function render() {
   const yDev = d3.scaleLinear().domain([devExtent[0] - devPad, devExtent[1] + devPad]).range([innerH, 0])
 
   g.append('g').attr('transform', `translate(0,${innerH})`)
-    .call(d3.axisBottom(x).ticks(6).tickFormat((d) => `${d}s`))
-    .call((g) => g.selectAll('text').attr('fill', '#787b86').style('font-size', '9px'))
-    .call((g) => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call(d3.axisBottom(x).ticks(6).tickFormat((d) => describeSimClock(Number(d), store.tradingDaySeconds)))
+    .call((g) => g.selectAll('text').style('fill', 'var(--chart-text)').style('font-size', '10px'))
+    .call((g) => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
 
   g.append('g').call(d3.axisLeft(yDev).ticks(5).tickFormat((d) => `${(d as number).toFixed(1)}%`))
-    .call((g) => g.selectAll('text').attr('fill', '#787b86').style('font-size', '9px'))
-    .call((g) => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call((g) => g.selectAll('text').style('fill', 'var(--chart-text)').style('font-size', '10px'))
+    .call((g) => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
 
   g.append('line').attr('x1', 0).attr('x2', innerW).attr('y1', yDev(0)).attr('y2', yDev(0))
-    .attr('stroke', '#e0e3eb').attr('stroke-dasharray', '3,3')
+    .style('stroke', 'var(--chart-grid)').attr('stroke-dasharray', '3,3')
 
   if (devData.length > 1) {
     const devArea = d3.area<{ t: number; d: number }>().x((d) => x(d.t)).y0(yDev(0)).y1((d) => yDev(d.d)).curve(d3.curveMonotoneX)
@@ -53,15 +55,16 @@ function render() {
   const last = devData[devData.length - 1]
   if (last) {
     g.append('text').attr('x', 6).attr('y', -2)
-      .attr('fill', '#787b86').attr('font-size', '9px').attr('font-family', 'monospace')
+      .style('fill', 'var(--chart-text)').attr('font-size', '10px').attr('font-family', 'monospace')
       .text(`当前偏离 ${last.d > 0 ? '+' : ''}${last.d.toFixed(2)}%`)
   }
 }
 
+const scheduleRender = useRafRender(render, { el: () => svgRef.value })
 let resizeObs: ResizeObserver | null = null
-onMounted(() => { render(); if (svgRef.value) { resizeObs = new ResizeObserver(() => render()); resizeObs.observe(svgRef.value) } })
+onMounted(() => { render(); if (svgRef.value) { resizeObs = new ResizeObserver(() => scheduleRender()); resizeObs.observe(svgRef.value) } })
 onUnmounted(() => resizeObs?.disconnect())
-watch(() => store.deviationTrend, render, { deep: true })
+watch(() => store.deviationTrend, scheduleRender)
 </script>
 
 <template>

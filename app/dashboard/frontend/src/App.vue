@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useMarketStore } from '@/stores/marketStore'
 import { useWebSocket } from '@/composables/useWebSocket'
+import { replay, replayAvailable } from '@/composables/useReplay'
+import ReplayBar from '@/components/layout/ReplayBar.vue'
 import HeaderBar from '@/components/layout/HeaderBar.vue'
 import SidePanel from '@/components/layout/SidePanel.vue'
 import TradingArena from '@/components/arena/TradingArena.vue'
@@ -18,12 +20,13 @@ import SocialNetwork from '@/components/social/SocialNetwork.vue'
 import KolPanel from '@/components/social/KolPanel.vue'
 import CollapseTransition from '@/components/layout/CollapseTransition.vue'
 import AgentCard from '@/components/agent/AgentCard.vue'
+import VirtualGrid from '@/components/ui/VirtualGrid.vue'
 import DecisionFlow from '@/components/agent/DecisionFlow.vue'
 import AgentLeaderboard from '@/components/charts/AgentLeaderboard.vue'
 import AnalyticsPanel from '@/components/charts/AnalyticsPanel.vue'
 
 const store = useMarketStore()
-const { connect, disconnect } = useWebSocket()
+const { connect, disconnect, subscribe } = useWebSocket()
 
 const sidePanelOpen = ref(false)
 const selectedAgentId = ref<number | null>(null)
@@ -43,7 +46,80 @@ function saveCollapsed(s: Set<SectionKey>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([...s]))
 }
 
+const SECTION_DEFS: Array<{ key: SectionKey; label: string }> = [
+  { key: 'index' as SectionKey, label: '市场概览' },
+  { key: 'holdings' as SectionKey, label: '持仓总览' },
+  { key: 'decisions' as SectionKey, label: '决策流' },
+  { key: 'broad' as SectionKey, label: '指数成交量 / 排行榜' },
+  { key: 'sentiment' as SectionKey, label: '情绪 / 偏离度' },
+  { key: 'social' as SectionKey, label: '社交信息流' },
+  { key: 'social-graph' as SectionKey, label: '社交网络 / KOL' },
+  { key: 'tom' as SectionKey, label: 'ToM 分析' },
+  { key: 'orderbook' as SectionKey, label: '订单簿' },
+  { key: 'micro' as SectionKey, label: '微观结构 / 技术指标' },
+  { key: 'bias' as SectionKey, label: '行为偏差分析' },
+]
+
 const collapsedSections = ref<Set<SectionKey>>(loadCollapsed())
+
+// ── 工作区 Tab：把 11 个区块分成几组，避免单页 1 万多像素的长滚动 ──
+type Workspace = 'all' | 'market' | 'trading' | 'agents' | 'social' | 'research'
+const WORKSPACES: Array<{ key: Workspace; label: string; sections: SectionKey[] }> = [
+  { key: 'market', label: '行情', sections: ['index', 'broad'] },
+  { key: 'trading', label: '交易', sections: ['orderbook', 'micro'] },
+  { key: 'agents', label: 'Agent', sections: ['holdings', 'decisions'] },
+  { key: 'social', label: '社交', sections: ['social', 'social-graph'] },
+  { key: 'research', label: '研究', sections: ['tom', 'sentiment', 'bias'] },
+  { key: 'all', label: '全部', sections: [] },
+]
+const WS_KEY = 'mm-workspace'
+// ?present=1：演示/录屏模式，隐藏导航条与区块开关，只保留顶栏和内容（配合 ?ws= 与 &only=index 使用）
+const presentMode = new URLSearchParams(location.search).get('present') === '1'
+const onlySections = (new URLSearchParams(location.search).get('only') ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+const workspace = ref<Workspace>(((): Workspace => {
+  try {
+    // 支持 ?ws=agents 这样的链接直达某个工作区
+    const fromUrl = new URLSearchParams(location.search).get('ws') as Workspace | null
+    if (fromUrl && WORKSPACES.some((w) => w.key === fromUrl)) return fromUrl
+    if (replayAvailable()) return 'all' // 回放页面默认展示全部区块
+    const raw = localStorage.getItem(WS_KEY) as Workspace | null
+    if (raw && WORKSPACES.some((w) => w.key === raw)) return raw
+  } catch {}
+  return 'market'
+})())
+const WORKSPACE_TOPICS: Record<Workspace, string[]> = {
+  market: ['market'],
+  trading: ['market'],
+  agents: ['agents'],
+  social: ['social'],
+  research: ['research', 'agents'],
+  all: ['market', 'agents', 'social', 'research'],
+}
+// 只向服务端订阅当前工作区需要的主题，减少每秒推送的数据量
+watch(workspace, (w) => subscribe(WORKSPACE_TOPICS[w] ?? WORKSPACE_TOPICS.all), { immediate: true })
+
+function setWorkspace(key: Workspace) {
+  workspace.value = key
+  try { localStorage.setItem(WS_KEY, key) } catch {}
+  document.querySelector('.main')?.scrollTo({ top: 0 })
+}
+// 顶栏区块开关：只列出当前工作区包含的区块
+const visibleSectionDefs = computed(() => SECTION_DEFS.filter((d) => showSection(d.key)))
+
+function showSection(key: SectionKey): boolean {
+  if (onlySections.length) return onlySections.includes(key)
+  if (workspace.value === 'all') return true
+  const ws = WORKSPACES.find((w) => w.key === workspace.value)
+  return ws ? ws.sections.includes(key) : true
+}
+
+// ── 交易大厅（像素小人）默认关闭，作为演示模式开关 ──
+const ARENA_KEY = 'mm-demo-arena'
+const arenaEnabled = ref<boolean>((() => { try { return localStorage.getItem(ARENA_KEY) === '1' } catch { return false } })())
+function toggleArena() {
+  arenaEnabled.value = !arenaEnabled.value
+  try { localStorage.setItem(ARENA_KEY, arenaEnabled.value ? '1' : '0') } catch {}
+}
 function toggleSection(key: SectionKey) {
   if (collapsedSections.value.has(key)) {
     collapsedSections.value.delete(key)
@@ -121,25 +197,31 @@ onUnmounted(() => disconnect())
 <template>
   <div class="shell">
     <HeaderBar />
+    <ReplayBar v-if="replay.active" />
 
-    <nav class="section-nav">
-      <a class="nav-pill" href="#sec-index" @click.prevent="scrollTo('sec-index')">指数</a>
-      <a class="nav-pill" href="#sec-holdings" @click.prevent="scrollTo('sec-holdings')">持仓</a>
-      <a class="nav-pill" href="#sec-sentiment" @click.prevent="scrollTo('sec-sentiment')">情绪</a>
-      <a class="nav-pill" href="#sec-social" @click.prevent="scrollTo('sec-social')">社交</a>
-      <a class="nav-pill" href="#sec-tom" @click.prevent="scrollTo('sec-tom')">ToM</a>
-      <a class="nav-pill" href="#sec-orderbook" @click.prevent="scrollTo('sec-orderbook')">订单簿</a>
-      <a class="nav-pill" href="#sec-micro" @click.prevent="scrollTo('sec-micro')">微观</a>
-      <a class="nav-pill" href="#sec-bias" @click.prevent="scrollTo('sec-bias')">偏差</a>
+    <nav v-if="!presentMode" class="section-nav">
+      <button
+        v-for="w in WORKSPACES"
+        :key="w.key"
+        class="nav-pill"
+        :class="{ active: workspace === w.key }"
+        @click="setWorkspace(w.key)"
+      >{{ w.label }}</button>
+      <div class="section-chips">
+        <button
+          v-for="d in visibleSectionDefs"
+          :key="d.key"
+          class="chip-btn"
+          :class="{ off: !isSectionOpen(d.key) }"
+          :title="isSectionOpen(d.key) ? '点击隐藏该区块' : '点击显示该区块'"
+          @click="toggleSection(d.key)"
+        >{{ d.label }}</button>
+      </div>
     </nav>
 
-    <main class="main">
+    <main class="main" :class="{ present: presentMode, replay: replay.active }">
       <!-- 0. 市场概览：大盘 + 指数 -->
-      <section id="sec-index">
-        <div class="section-header" @click="toggleSection('index')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('index') }">▾</span>
-          <span class="section-title">市场概览</span>
-        </div>
+      <section id="sec-index" v-show="showSection('index')">
         <CollapseTransition :show="isSectionOpen('index')">
           <div class="section-body">
             <IndexOverview />
@@ -148,12 +230,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 1. 持仓总览 -->
-      <section id="sec-holdings">
-        <div class="section-header" @click="toggleSection('holdings')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('holdings') }">▾</span>
-          <span class="section-title">持仓总览</span>
-          <span class="holdings-count">{{ filteredHoldings.length }}/{{ store.holdings.length }}</span>
-        </div>
+      <section id="sec-holdings" v-show="showSection('holdings')">
         <CollapseTransition :show="isSectionOpen('holdings')">
           <div class="section-body">
           <div class="card pulse-holdings">
@@ -170,6 +247,10 @@ onUnmounted(() => disconnect())
                 <button class="toolbar-btn" :class="{ active: holdingTomFilter === null }" @click="holdingTomFilter = null">全部</button>
                 <button v-for="t in [0, 1, 2]" :key="t" class="toolbar-btn" :class="{ active: holdingTomFilter === t, [`tom${t}-btn`]: true }" @click="holdingTomFilter = holdingTomFilter === t ? null : t">T{{ t }}</button>
               </div>
+              <div class="toolbar-group">
+                <button class="toolbar-btn" :class="{ active: arenaEnabled }" :title="'显示/隐藏像素化交易大厅（演示用）'" @click="toggleArena">演示模式</button>
+                <span class="holdings-count">{{ filteredHoldings.length }}/{{ store.holdings.length }}</span>
+              </div>
               <div class="toolbar-group metric-help-group">
                 <span v-for="item in holdingMetricHints" :key="item.key" class="toolbar-help-item">
                   <span class="toolbar-help-label">{{ item.label }}</span>
@@ -179,16 +260,20 @@ onUnmounted(() => disconnect())
                 </span>
               </div>
             </div>
-            <TradingArena @agent-click="onAgentClick" />
+            <TradingArena v-if="arenaEnabled" @agent-click="onAgentClick" />
             <div v-if="filteredHoldings.length > 0" class="holdings-section">
-              <div class="holdings-grid-compact">
-                <AgentCard
-                  v-for="agent in filteredHoldings"
-                  :key="agent.agent_id"
-                  :agent="agent"
-                  @click="onAgentClick(agent.agent_id)"
-                />
-              </div>
+              <VirtualGrid
+                :items="filteredHoldings"
+                :item-height="88"
+                :min-col-width="260"
+                :gap="4"
+                :height="300"
+                key-field="agent_id"
+              >
+                <template #item="{ item }">
+                  <AgentCard :agent="item" @click="onAgentClick(item.agent_id)" />
+                </template>
+              </VirtualGrid>
             </div>
             </div>
           </div>
@@ -196,11 +281,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 1.5 决策流 -->
-      <section id="sec-decisions">
-        <div class="section-header" @click="toggleSection('decisions')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('decisions') }">▾</span>
-          <span class="section-title">决策流</span>
-        </div>
+      <section id="sec-decisions" v-show="showSection('decisions')">
         <CollapseTransition :show="isSectionOpen('decisions')">
           <div class="section-body">
             <DecisionFlow />
@@ -209,13 +290,9 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 2. 大盘走势 + 指数成交量 | 排行榜 -->
-      <section>
-        <div class="section-header" @click="toggleSection('broad')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('broad') }">▾</span>
-          <span class="section-title">大盘走势 / 排行榜</span>
-        </div>
+      <section v-show="showSection('broad')">
         <CollapseTransition :show="isSectionOpen('broad')">
-          <div class="section-body grid-3-1">
+          <div class="section-body grid-volume-board">
             <BroadVolumeCharts />
             <AgentLeaderboard />
           </div>
@@ -223,11 +300,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 3. 情绪/信心 + 偏离度/大盘 -->
-      <section id="sec-sentiment">
-        <div class="section-header" @click="toggleSection('sentiment')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('sentiment') }">▾</span>
-          <span class="section-title">情绪 / 偏离度</span>
-        </div>
+      <section id="sec-sentiment" v-show="showSection('sentiment')">
         <CollapseTransition :show="isSectionOpen('sentiment')">
           <div class="section-body grid-2">
             <SentimentChart />
@@ -237,11 +310,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 3. 社交信息流 -->
-      <section id="sec-social">
-        <div class="section-header" @click="toggleSection('social')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('social') }">▾</span>
-          <span class="section-title">社交信息流</span>
-        </div>
+      <section id="sec-social" v-show="showSection('social')">
         <CollapseTransition :show="isSectionOpen('social')">
           <div class="section-body social-section">
             <SocialFeed />
@@ -250,11 +319,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 3.5 社交网络图谱 + KOL 列表 -->
-      <section>
-        <div class="section-header" @click="toggleSection('social-graph')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('social-graph') }">▾</span>
-          <span class="section-title">社交网络 / KOL</span>
-        </div>
+      <section v-show="showSection('social-graph')">
         <CollapseTransition :show="isSectionOpen('social-graph')">
           <div class="section-body grid-3-1">
             <SocialNetwork />
@@ -264,11 +329,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 4. ToM 分析 -->
-      <section id="sec-tom">
-        <div class="section-header" @click="toggleSection('tom')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('tom') }">▾</span>
-          <span class="section-title">ToM 分析</span>
-        </div>
+      <section id="sec-tom" v-show="showSection('tom')">
         <CollapseTransition :show="isSectionOpen('tom')">
           <div class="section-body">
             <TomAnalytics />
@@ -277,11 +338,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 4. 订单簿（含价格走势） -->
-      <section id="sec-orderbook">
-        <div class="section-header" @click="toggleSection('orderbook')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('orderbook') }">▾</span>
-          <span class="section-title">订单簿</span>
-        </div>
+      <section id="sec-orderbook" v-show="showSection('orderbook')">
         <CollapseTransition :show="isSectionOpen('orderbook')">
           <div class="section-body">
             <OrderBook />
@@ -290,11 +347,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 5. 微观结构 + 技术指标 -->
-      <section id="sec-micro">
-        <div class="section-header" @click="toggleSection('micro')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('micro') }">▾</span>
-          <span class="section-title">微观结构 / 技术指标</span>
-        </div>
+      <section id="sec-micro" v-show="showSection('micro')">
         <CollapseTransition :show="isSectionOpen('micro')">
           <div class="section-body grid-2">
             <MarketMicro />
@@ -304,11 +357,7 @@ onUnmounted(() => disconnect())
       </section>
 
       <!-- 6. 深度分析面板 -->
-      <section id="sec-bias">
-        <div class="section-header" @click="toggleSection('bias')">
-          <span class="section-chevron" :class="{ collapsed: !isSectionOpen('bias') }">▾</span>
-          <span class="section-title">行为偏差分析</span>
-        </div>
+      <section id="sec-bias" v-show="showSection('bias')">
         <CollapseTransition :show="isSectionOpen('bias')">
           <div class="section-body">
             <AnalyticsPanel />
@@ -339,10 +388,61 @@ onUnmounted(() => disconnect())
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px;
+  /* 页面内各区块高度已固定，关闭滚动锚定，避免内部列表更新时视口被浏览器"纠正" */
+  overflow-anchor: none;
 }
 
 .main > section {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+}
+
+.main.present {
+  padding: 10px 16px;
+  overflow: hidden;
+}
+
+.main.replay {
+  padding-bottom: 72px; /* 给底部回放控制条留位置 */
+}
+
+.section-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  padding-left: 12px;
+  border-left: 1px solid var(--border-light);
+}
+
+.chip-btn {
+  border: 1px solid transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+
+.chip-btn.off {
+  background: transparent;
+  color: var(--text-dim);
+  border-color: var(--border-light);
+  text-decoration: line-through;
+}
+
+.chip-btn:hover {
+  border-color: var(--accent);
+}
+
+.section-nav .nav-pill.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
 }
 
 /* ── 可折叠 Section ── */
@@ -387,7 +487,7 @@ onUnmounted(() => disconnect())
 }
 
 .section-body {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .pulse-holdings {
@@ -581,10 +681,37 @@ onUnmounted(() => disconnect())
   display: grid;
   grid-template-columns: 3fr 1fr;
   gap: 16px;
+  align-items: start;
+}
+
+/* 成交量图 + 排行榜：排行榜两列各 10 行，至少 460px 才不截断 */
+.grid-volume-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(460px, 34%);
+  gap: 16px;
+  align-items: start;
+}
+
+.grid-volume-board > * {
+  min-width: 0;
+}
+
+.grid-volume-board > :last-child {
+  max-height: 560px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* 右侧列表类卡片（排行榜 / KOL）限高滚动，条目数变化不撑高整行 */
+.grid-3-1 > :last-child {
+  max-height: 560px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .section-nav {
   display: flex;
+  align-items: center;
   gap: 2px;
   padding: 4px 20px;
   background: var(--surface-0);
@@ -597,7 +724,9 @@ onUnmounted(() => disconnect())
 .section-nav::-webkit-scrollbar { display: none; }
 
 .nav-pill {
-  padding: 4px 12px;
+  border: none;
+  background: none;
+  padding: 5px 14px;
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;

@@ -1,0 +1,1950 @@
+{
+ "method": "weighted_index_close_from_constituents",
+ "volatility_definition": "(close_t-close_t-1)/close_t-1",
+ "source": {
+  "script": "scripts/fetch_real_data.py",
+  "sim_start": "2026-08-01"
+ },
+ "indices": {
+  "TLEI": [
+   {
+    "date": "2026-08-03",
+    "close": 10.0902,
+    "volatility": 0.002125,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 9.8829,
+    "volatility": -0.020545,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 9.9904,
+    "volatility": 0.010877,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 9.9409,
+    "volatility": -0.004955,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 9.9556,
+    "volatility": 0.001479,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 10.027,
+    "volatility": 0.007172,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 9.859,
+    "volatility": -0.016755,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 9.8275,
+    "volatility": -0.003195,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 9.7534,
+    "volatility": -0.00754,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 9.756,
+    "volatility": 0.000267,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 9.9901,
+    "volatility": 0.023995,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 10.0891,
+    "volatility": 0.00991,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 10.1283,
+    "volatility": 0.003885,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 10.1405,
+    "volatility": 0.001205,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 10.3603,
+    "volatility": 0.021675,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 10.5203,
+    "volatility": 0.015444,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 10.4022,
+    "volatility": -0.011226,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 10.4091,
+    "volatility": 0.000663,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 10.5045,
+    "volatility": 0.009165,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 10.4572,
+    "volatility": -0.004503,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 10.4087,
+    "volatility": -0.004638,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 10.447,
+    "volatility": 0.00368,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 10.1955,
+    "volatility": -0.024074,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 10.2884,
+    "volatility": 0.009112,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "MEI": [
+   {
+    "date": "2026-08-03",
+    "close": 9.8378,
+    "volatility": 0.012494,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 9.673,
+    "volatility": -0.016752,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 9.624,
+    "volatility": -0.005066,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 9.5007,
+    "volatility": -0.012812,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 9.5195,
+    "volatility": 0.001979,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 9.543,
+    "volatility": 0.002469,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 9.4241,
+    "volatility": -0.012459,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 9.4994,
+    "volatility": 0.00799,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 9.3276,
+    "volatility": -0.018085,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 9.2737,
+    "volatility": -0.005779,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 9.306,
+    "volatility": 0.003483,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 9.3083,
+    "volatility": 0.000247,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 9.2216,
+    "volatility": -0.009314,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 9.2057,
+    "volatility": -0.001724,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 9.1182,
+    "volatility": -0.009505,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 9.0227,
+    "volatility": -0.010474,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 9.0776,
+    "volatility": 0.006085,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 9.1112,
+    "volatility": 0.003701,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 9.0665,
+    "volatility": -0.004906,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 9.1137,
+    "volatility": 0.005206,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 9.1171,
+    "volatility": 0.000373,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 9.1727,
+    "volatility": 0.006098,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 8.995,
+    "volatility": -0.019373,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 9.0441,
+    "volatility": 0.005459,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "CPEI": [
+   {
+    "date": "2026-08-03",
+    "close": 11.0694,
+    "volatility": -0.006239,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 11.3765,
+    "volatility": 0.027743,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 11.576,
+    "volatility": 0.017536,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 11.3386,
+    "volatility": -0.020508,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 11.9124,
+    "volatility": 0.050606,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 12.1245,
+    "volatility": 0.017805,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 12.0809,
+    "volatility": -0.003596,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 11.9718,
+    "volatility": -0.009031,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 11.9273,
+    "volatility": -0.003717,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 11.7388,
+    "volatility": -0.015804,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 11.962,
+    "volatility": 0.019014,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 11.928,
+    "volatility": -0.002842,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 11.8966,
+    "volatility": -0.002632,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 11.7491,
+    "volatility": -0.012399,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 11.4111,
+    "volatility": -0.028768,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 11.1097,
+    "volatility": -0.026413,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 11.205,
+    "volatility": 0.008578,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 11.2441,
+    "volatility": 0.00349,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 11.3966,
+    "volatility": 0.013563,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 11.3836,
+    "volatility": -0.001141,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 11.1352,
+    "volatility": -0.021821,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 11.1666,
+    "volatility": 0.00282,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 11.0769,
+    "volatility": -0.008033,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 11.2121,
+    "volatility": 0.012206,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "IEEI": [
+   {
+    "date": "2026-08-03",
+    "close": 9.6262,
+    "volatility": 0.009946,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 9.4152,
+    "volatility": -0.021919,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 9.3184,
+    "volatility": -0.010281,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 9.2927,
+    "volatility": -0.002758,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 9.2331,
+    "volatility": -0.006414,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 9.2813,
+    "volatility": 0.00522,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 9.2125,
+    "volatility": -0.007413,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 9.172,
+    "volatility": -0.004396,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 9.0505,
+    "volatility": -0.013247,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 8.994,
+    "volatility": -0.006243,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 8.9529,
+    "volatility": -0.00457,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 8.932,
+    "volatility": -0.002334,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 8.9462,
+    "volatility": 0.00159,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 9.0002,
+    "volatility": 0.006036,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 8.9152,
+    "volatility": -0.009444,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 8.9857,
+    "volatility": 0.007908,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 9.0622,
+    "volatility": 0.008514,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 9.1301,
+    "volatility": 0.007493,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 9.0326,
+    "volatility": -0.010679,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 9.0916,
+    "volatility": 0.006532,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 8.8965,
+    "volatility": -0.021459,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 8.9629,
+    "volatility": 0.007464,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 8.8685,
+    "volatility": -0.010532,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 8.9281,
+    "volatility": 0.00672,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "REEI": [
+   {
+    "date": "2026-08-03",
+    "close": 9.1463,
+    "volatility": -0.005686,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 8.9024,
+    "volatility": -0.026667,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 8.9721,
+    "volatility": 0.007829,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 9.1812,
+    "volatility": 0.023306,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 9.2334,
+    "volatility": 0.005686,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 9.338,
+    "volatility": 0.011328,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 9.2509,
+    "volatility": -0.009327,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 9.4948,
+    "volatility": 0.026365,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 9.2857,
+    "volatility": -0.022023,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 9.1812,
+    "volatility": -0.011254,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 9.0941,
+    "volatility": -0.009487,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 9.1289,
+    "volatility": 0.003827,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 9.1115,
+    "volatility": -0.001906,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 9.1463,
+    "volatility": 0.003819,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 9.0418,
+    "volatility": -0.011425,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 8.8153,
+    "volatility": -0.02505,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 8.9024,
+    "volatility": 0.009881,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 9.1638,
+    "volatility": 0.029363,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 9.0244,
+    "volatility": -0.015212,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 9.0418,
+    "volatility": 0.001928,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 8.6585,
+    "volatility": -0.042392,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 8.5366,
+    "volatility": -0.014079,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 8.4843,
+    "volatility": -0.006127,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 8.8676,
+    "volatility": 0.045178,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "TSEI": [
+   {
+    "date": "2026-08-03",
+    "close": 9.879,
+    "volatility": -0.000688,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 9.683,
+    "volatility": -0.01984,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 9.6097,
+    "volatility": -0.00757,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 9.4683,
+    "volatility": -0.014714,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 9.5126,
+    "volatility": 0.004679,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 9.5842,
+    "volatility": 0.007527,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 9.4496,
+    "volatility": -0.014044,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 9.4734,
+    "volatility": 0.002519,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 9.3678,
+    "volatility": -0.011147,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 9.2127,
+    "volatility": -0.016557,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 9.2076,
+    "volatility": -0.000554,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 9.182,
+    "volatility": -0.00278,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 9.0116,
+    "volatility": -0.018558,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 9.0491,
+    "volatility": 0.004161,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 8.911,
+    "volatility": -0.015261,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 8.8718,
+    "volatility": -0.004399,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 8.9656,
+    "volatility": 0.010573,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 9.0457,
+    "volatility": 0.008934,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 9.0576,
+    "volatility": 0.001316,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 9.0917,
+    "volatility": 0.003765,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 8.9434,
+    "volatility": -0.016312,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 9.119,
+    "volatility": 0.019635,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 8.9775,
+    "volatility": -0.015517,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 9.1547,
+    "volatility": 0.019738,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "CGEI": [
+   {
+    "date": "2026-08-03",
+    "close": 10.3136,
+    "volatility": 0.001359,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 10.0919,
+    "volatility": -0.021496,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 9.9633,
+    "volatility": -0.012743,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 9.9536,
+    "volatility": -0.000974,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 9.958,
+    "volatility": 0.000442,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 10.2024,
+    "volatility": 0.024543,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 10.1557,
+    "volatility": -0.004577,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 10.1233,
+    "volatility": -0.00319,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 10.2047,
+    "volatility": 0.008041,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 10.089,
+    "volatility": -0.011338,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 9.7759,
+    "volatility": -0.031034,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 9.8031,
+    "volatility": 0.002782,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 9.8431,
+    "volatility": 0.00408,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 9.7821,
+    "volatility": -0.006197,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 9.6341,
+    "volatility": -0.01513,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 9.8349,
+    "volatility": 0.020843,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 9.8456,
+    "volatility": 0.001088,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 9.8559,
+    "volatility": 0.001046,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 9.7816,
+    "volatility": -0.007539,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 9.8473,
+    "volatility": 0.006717,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 9.8004,
+    "volatility": -0.004763,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 9.832,
+    "volatility": 0.003224,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 9.8083,
+    "volatility": -0.00241,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 9.8098,
+    "volatility": 0.000153,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "TTEI": [
+   {
+    "date": "2026-08-03",
+    "close": 9.7877,
+    "volatility": -0.027889,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 9.8839,
+    "volatility": 0.009829,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 10.1784,
+    "volatility": 0.029796,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 10.1541,
+    "volatility": -0.002387,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 10.2416,
+    "volatility": 0.008617,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 10.2755,
+    "volatility": 0.00331,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 10.1931,
+    "volatility": -0.008019,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 10.2729,
+    "volatility": 0.007829,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 10.2292,
+    "volatility": -0.004254,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 10.3459,
+    "volatility": 0.011409,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 10.5038,
+    "volatility": 0.015262,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 10.4552,
+    "volatility": -0.004627,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 10.0644,
+    "volatility": -0.037379,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 9.9208,
+    "volatility": -0.014268,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 9.8671,
+    "volatility": -0.005413,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 9.6735,
+    "volatility": -0.019621,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 9.7421,
+    "volatility": 0.007092,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 9.8158,
+    "volatility": 0.007565,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 9.9588,
+    "volatility": 0.014568,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 9.8747,
+    "volatility": -0.008445,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 10.0024,
+    "volatility": 0.012932,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 9.9105,
+    "volatility": -0.009188,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 9.7911,
+    "volatility": -0.012048,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 9.7676,
+    "volatility": -0.0024,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "EREI": [
+   {
+    "date": "2026-08-03",
+    "close": 10.2245,
+    "volatility": -0.010797,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 10.0225,
+    "volatility": -0.019756,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 10.0799,
+    "volatility": 0.005727,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 10.1959,
+    "volatility": 0.011508,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 10.2676,
+    "volatility": 0.007032,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 10.3938,
+    "volatility": 0.012291,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 10.2432,
+    "volatility": -0.014489,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 10.1557,
+    "volatility": -0.008542,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 10.0481,
+    "volatility": -0.010595,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 10.089,
+    "volatility": 0.00407,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 10.1432,
+    "volatility": 0.005372,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 10.2439,
+    "volatility": 0.009928,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 10.2801,
+    "volatility": 0.003534,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 10.3536,
+    "volatility": 0.00715,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 10.3839,
+    "volatility": 0.002927,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 10.47,
+    "volatility": 0.008292,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 10.4191,
+    "volatility": -0.004862,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 10.4662,
+    "volatility": 0.004521,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 10.4927,
+    "volatility": 0.002532,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 10.5364,
+    "volatility": 0.004165,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 10.5229,
+    "volatility": -0.001281,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 10.5342,
+    "volatility": 0.001074,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 10.4467,
+    "volatility": -0.008306,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 10.4409,
+    "volatility": -0.000555,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ],
+  "FSEI": [
+   {
+    "date": "2026-08-03",
+    "close": 10.57,
+    "volatility": 0.006341,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-04",
+    "close": 10.2757,
+    "volatility": -0.027843,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-05",
+    "close": 10.2163,
+    "volatility": -0.005781,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-06",
+    "close": 10.1998,
+    "volatility": -0.001615,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-07",
+    "close": 10.1678,
+    "volatility": -0.003137,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-10",
+    "close": 10.1569,
+    "volatility": -0.001072,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-11",
+    "close": 10.1156,
+    "volatility": -0.004066,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-12",
+    "close": 10.0789,
+    "volatility": -0.003628,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-13",
+    "close": 10.1341,
+    "volatility": 0.005477,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-14",
+    "close": 10.0042,
+    "volatility": -0.012818,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-17",
+    "close": 10.0056,
+    "volatility": 0.00014,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-18",
+    "close": 10.025,
+    "volatility": 0.001939,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-19",
+    "close": 10.1647,
+    "volatility": 0.013935,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-20",
+    "close": 10.1386,
+    "volatility": -0.002568,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-21",
+    "close": 10.194,
+    "volatility": 0.005464,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-24",
+    "close": 10.3634,
+    "volatility": 0.016618,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-25",
+    "close": 10.3455,
+    "volatility": -0.001727,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-26",
+    "close": 10.4729,
+    "volatility": 0.012315,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-27",
+    "close": 10.4099,
+    "volatility": -0.006016,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-28",
+    "close": 10.3705,
+    "volatility": -0.003785,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-08-31",
+    "close": 10.4998,
+    "volatility": 0.012468,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-01",
+    "close": 10.7057,
+    "volatility": 0.01961,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-02",
+    "close": 10.663,
+    "volatility": -0.003989,
+    "up_down": 0,
+    "market_status": "开市",
+    "is_closed": false
+   },
+   {
+    "date": "2026-09-03",
+    "close": 10.719,
+    "volatility": 0.005252,
+    "up_down": 1,
+    "market_status": "开市",
+    "is_closed": false
+   }
+  ]
+ }
+}

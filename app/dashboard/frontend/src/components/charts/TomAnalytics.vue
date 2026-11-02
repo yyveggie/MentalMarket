@@ -2,7 +2,8 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import * as d3 from 'd3'
 import { useMarketStore } from '@/stores/marketStore'
-import { fmt, fmtPct } from '@/utils/formatters'
+import { useRafRender } from '@/composables/useRafRender'
+import { fmt, fmtPct, fmtCn } from '@/utils/formatters'
 
 const store = useMarketStore()
 const wealthSvg = ref<SVGSVGElement>()
@@ -59,7 +60,7 @@ const tomData = computed(() => {
 function renderBar(
   svgEl: SVGSVGElement | undefined,
   values: number[],
-  formatFn: (v: number) => string = (v) => v.toFixed(0),
+  formatFn: (v: number) => string = (v) => fmtCn(v, 1),
   colorFn?: (v: number, i: number) => string,
 ) {
   if (!svgEl) return
@@ -75,13 +76,13 @@ function renderBar(
   const y = d3.scaleLinear().domain([-yMax * 0.05, yMax * 1.15]).range([iH, 0])
 
   g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x))
-    .call((g) => g.selectAll('text').attr('fill', '#787b86').style('font-size', '8px'))
-    .call((g) => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call((g) => g.selectAll('text').style('fill', 'var(--chart-text)').style('font-size', '10px'))
+    .call((g) => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
   g.append('g').call(d3.axisLeft(y).ticks(4).tickFormat((d) => formatFn(d as number)))
-    .call((g) => g.selectAll('text').attr('fill', '#787b86').style('font-size', '8px'))
-    .call((g) => g.selectAll('line,path').attr('stroke', '#e0e3eb'))
+    .call((g) => g.selectAll('text').style('fill', 'var(--chart-text)').style('font-size', '10px'))
+    .call((g) => g.selectAll('line,path').style('stroke', 'var(--chart-grid)'))
 
-  g.append('line').attr('x1', 0).attr('x2', iW).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', '#2a2f38')
+  g.append('line').attr('x1', 0).attr('x2', iW).attr('y1', y(0)).attr('y2', y(0)).style('stroke', 'var(--chart-grid)')
 
   g.selectAll('.bar').data(values).join('rect')
     .attr('x', (_, i) => x(TOM_LABELS[i])!)
@@ -95,7 +96,7 @@ function renderBar(
   g.selectAll('.lbl').data(values).join('text')
     .attr('x', (_, i) => x(TOM_LABELS[i])! + x.bandwidth() / 2)
     .attr('y', (d) => y(Math.max(0, d)) - 3)
-    .attr('text-anchor', 'middle').attr('fill', '#ccc9c1').attr('font-size', '9px').attr('font-family', 'monospace')
+    .attr('text-anchor', 'middle').style('fill', 'var(--chart-text)').attr('font-size', '10px').attr('font-family', 'monospace')
     .text((d) => formatFn(d))
 }
 
@@ -120,15 +121,15 @@ function renderDist(svgEl: SVGSVGElement | undefined) {
     .attr('d', arc as any)
     .attr('fill', (_, i) => TOM_COLORS[i])
     .attr('opacity', 0.7)
-    .attr('stroke', '#e0e3eb')
+    .style('stroke', 'var(--chart-grid)')
     .attr('stroke-width', 1)
 
   g.selectAll('.label').data(pie).join('text')
     .attr('transform', (d) => `translate(${(arc as any).centroid(d)})`)
-    .attr('text-anchor', 'middle').attr('fill', '#ccc9c1').attr('font-size', '9px').attr('font-family', 'monospace')
+    .attr('text-anchor', 'middle').style('fill', 'var(--chart-text)').attr('font-size', '10px').attr('font-family', 'monospace')
     .text((d) => d.data > 0 ? String(d.data) : '')
 
-  g.append('text').attr('text-anchor', 'middle').attr('fill', '#8a877e').attr('font-size', '10px').attr('font-family', 'monospace')
+  g.append('text').attr('text-anchor', 'middle').style('fill', 'var(--text-dim)').attr('font-size', '10px').attr('font-family', 'monospace')
     .attr('dy', '0.35em').text(`${total}`)
 }
 
@@ -141,18 +142,19 @@ function renderAll() {
   renderDist(distSvg.value)
 }
 
+const scheduleRender = useRafRender(renderAll, { el: () => wealthSvg.value })
 let resizeObs: ResizeObserver | null = null
 
 onMounted(() => {
   renderAll()
   const targets = [wealthSvg, returnSvg, quantileSvg, distSvg].map((r) => r.value).filter(Boolean) as SVGSVGElement[]
   if (targets.length) {
-    resizeObs = new ResizeObserver(() => renderAll())
+    resizeObs = new ResizeObserver(() => scheduleRender())
     targets.forEach((t) => resizeObs!.observe(t))
   }
 })
 onUnmounted(() => resizeObs?.disconnect())
-watch(() => store.tomSummary, renderAll, { deep: true })
+watch(() => store.tomSummary, scheduleRender)
 </script>
 
 <template>
@@ -278,7 +280,7 @@ watch(() => store.tomSummary, renderAll, { deep: true })
 .perf-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--font-mono);
 }
 
@@ -299,7 +301,7 @@ watch(() => store.tomSummary, renderAll, { deep: true })
   background: var(--surface-1);
   color: var(--accent);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }

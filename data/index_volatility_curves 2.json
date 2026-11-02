@@ -1,0 +1,5230 @@
+{
+  "method": "weighted_index_close_from_constituents",
+  "volatility_definition": "(close_t-close_t-1)/close_t-1",
+  "source": {
+    "profile_csv": "data/stock_profile.csv",
+    "quotes_dir": "data/mongodb_quotes_by_stock"
+  },
+  "indices": {
+    "TLEI": [
+      {
+        "date": "2025-12-15",
+        "close": 72.921734,
+        "volatility": null,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 71.236146,
+        "volatility": -0.02311503,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 71.700912,
+        "volatility": 0.0065243,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 71.481246,
+        "volatility": -0.00306364,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-19",
+        "close": 72.258744,
+        "volatility": 0.01087695,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-22",
+        "close": 72.273892,
+        "volatility": 0.00020964,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-23",
+        "close": 72.52351,
+        "volatility": 0.00345378,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-24",
+        "close": 72.59798,
+        "volatility": 0.00102684,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-25",
+        "close": 73.131648,
+        "volatility": 0.007351,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-26",
+        "close": 72.968028,
+        "volatility": -0.00223734,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-29",
+        "close": 72.707388,
+        "volatility": -0.00357198,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 72.33266,
+        "volatility": -0.00515392,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 72.222746,
+        "volatility": -0.00151956,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-05",
+        "close": 73.821362,
+        "volatility": 0.02213452,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 74.915498,
+        "volatility": 0.0148214,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 73.791362,
+        "volatility": -0.01500539,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-08",
+        "close": 75.982872,
+        "volatility": 0.02969873,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-09",
+        "close": 75.88504,
+        "volatility": -0.00128755,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-12",
+        "close": 76.387046,
+        "volatility": 0.00661535,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-13",
+        "close": 75.950914,
+        "volatility": -0.0057095,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-14",
+        "close": 75.535212,
+        "volatility": -0.0054733,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 75.901344,
+        "volatility": 0.00484717,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-16",
+        "close": 74.598698,
+        "volatility": -0.01716236,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 75.296874,
+        "volatility": 0.00935909,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-20",
+        "close": 75.199338,
+        "volatility": -0.00129535,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-21",
+        "close": 74.566186,
+        "volatility": -0.00841965,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 75.907686,
+        "volatility": 0.01799073,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-23",
+        "close": 74.90185,
+        "volatility": -0.01325078,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 74.659634,
+        "volatility": -0.00323378,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-27",
+        "close": 73.82865,
+        "volatility": -0.0111303,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-28",
+        "close": 73.49503,
+        "volatility": -0.00451884,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-29",
+        "close": 73.435708,
+        "volatility": -0.00080716,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-30",
+        "close": 71.681524,
+        "volatility": -0.02388734,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 70.672584,
+        "volatility": -0.01407531,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 73.192222,
+        "volatility": 0.03565227,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 74.418268,
+        "volatility": 0.01675104,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 73.719538,
+        "volatility": -0.00938923,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-06",
+        "close": 72.39289,
+        "volatility": -0.01799588,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 72.70502,
+        "volatility": 0.00431161,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 73.781286,
+        "volatility": 0.01480319,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-11",
+        "close": 74.20716,
+        "volatility": 0.00577211,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-12",
+        "close": 75.881516,
+        "volatility": 0.02256327,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-13",
+        "close": 76.071182,
+        "volatility": 0.0024995,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-24",
+        "close": 78.274382,
+        "volatility": 0.02896235,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-25",
+        "close": 79.486436,
+        "volatility": 0.01548468,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-26",
+        "close": 79.840476,
+        "volatility": 0.00445409,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-27",
+        "close": 79.190514,
+        "volatility": -0.00814076,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-02",
+        "close": 80.334898,
+        "volatility": 0.01445102,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-03",
+        "close": 81.354534,
+        "volatility": 0.01269232,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-04",
+        "close": 81.5389,
+        "volatility": 0.0022662,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-05",
+        "close": 81.769244,
+        "volatility": 0.00282496,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-06",
+        "close": 82.056608,
+        "volatility": 0.00351433,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 79.137992,
+        "volatility": -0.03556832,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 78.476244,
+        "volatility": -0.00836195,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-11",
+        "close": 78.210532,
+        "volatility": -0.00338589,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-12",
+        "close": 77.550054,
+        "volatility": -0.00844487,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 76.040512,
+        "volatility": -0.01946539,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-16",
+        "close": 75.983654,
+        "volatility": -0.00074773,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-17",
+        "close": 75.241944,
+        "volatility": -0.00976144,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-18",
+        "close": 75.61118,
+        "volatility": 0.00490732,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-19",
+        "close": 74.661772,
+        "volatility": -0.01255645,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 72.857674,
+        "volatility": -0.02416361,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 69.061054,
+        "volatility": -0.05211009,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 69.932506,
+        "volatility": 0.01261857,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 69.94796,
+        "volatility": 0.00022098,
+        "component_count_used": 2,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "MEI": [
+      {
+        "date": "2025-12-15",
+        "close": 807.259982,
+        "volatility": null,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 791.519104,
+        "volatility": -0.01949914,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 801.00841,
+        "volatility": 0.01198873,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 793.657516,
+        "volatility": -0.00917705,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-19",
+        "close": 799.089772,
+        "volatility": 0.00684458,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-22",
+        "close": 799.190743,
+        "volatility": 0.00012636,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-23",
+        "close": 799.538709,
+        "volatility": 0.0004354,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-24",
+        "close": 799.377476,
+        "volatility": -0.00020166,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-25",
+        "close": 798.869123,
+        "volatility": -0.00063594,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-26",
+        "close": 805.686798,
+        "volatility": 0.00853416,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-29",
+        "close": 794.498354,
+        "volatility": -0.01388684,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 793.364379,
+        "volatility": -0.00142728,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 786.069099,
+        "volatility": -0.00919537,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-05",
+        "close": 799.619984,
+        "volatility": 0.0172388,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 813.686489,
+        "volatility": 0.01759149,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 814.86913,
+        "volatility": 0.00145344,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-08",
+        "close": 811.662334,
+        "volatility": -0.00393535,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-09",
+        "close": 821.530897,
+        "volatility": 0.01215846,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-12",
+        "close": 828.528429,
+        "volatility": 0.00851767,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-13",
+        "close": 842.875244,
+        "volatility": 0.01731602,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-14",
+        "close": 831.51991,
+        "volatility": -0.01347214,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 839.802941,
+        "volatility": 0.00996131,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-16",
+        "close": 838.749361,
+        "volatility": -0.00125456,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 868.50998,
+        "volatility": 0.03548214,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-20",
+        "close": 873.57907,
+        "volatility": 0.00583654,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-21",
+        "close": 857.596519,
+        "volatility": -0.01829548,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 852.566684,
+        "volatility": -0.00586504,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 860.438522,
+        "volatility": 0.00923311,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-26",
+        "close": 864.458586,
+        "volatility": 0.00467211,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-27",
+        "close": 853.815193,
+        "volatility": -0.01231221,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-28",
+        "close": 843.630385,
+        "volatility": -0.01192859,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-29",
+        "close": 840.153193,
+        "volatility": -0.0041217,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-30",
+        "close": 829.034306,
+        "volatility": -0.01323436,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 831.224391,
+        "volatility": 0.00264173,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-03",
+        "close": 860.241359,
+        "volatility": 0.03490871,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 870.346094,
+        "volatility": 0.0117464,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 854.155087,
+        "volatility": -0.01860295,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-06",
+        "close": 849.712845,
+        "volatility": -0.00520074,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 863.05304,
+        "volatility": 0.01569965,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 864.589676,
+        "volatility": 0.00178047,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-11",
+        "close": 863.608321,
+        "volatility": -0.00113505,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-12",
+        "close": 874.375697,
+        "volatility": 0.01246789,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-13",
+        "close": 860.359212,
+        "volatility": -0.01603028,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-24",
+        "close": 882.709652,
+        "volatility": 0.02597803,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-25",
+        "close": 968.021944,
+        "volatility": 0.09664819,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-26",
+        "close": 965.947558,
+        "volatility": -0.00214291,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 959.263511,
+        "volatility": -0.00691968,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-02",
+        "close": 969.929909,
+        "volatility": 0.01111936,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-03",
+        "close": 942.526024,
+        "volatility": -0.02825347,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-04",
+        "close": 950.016362,
+        "volatility": 0.00794709,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-05",
+        "close": 972.728298,
+        "volatility": 0.02390689,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-06",
+        "close": 975.90818,
+        "volatility": 0.00326903,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 982.450054,
+        "volatility": 0.00670337,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-10",
+        "close": 982.427954,
+        "volatility": -2.25e-05,
+        "component_count_used": 7,
+        "component_weight_sum_used": 89.08,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-11",
+        "close": 900.505014,
+        "volatility": -0.08338824,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-12",
+        "close": 891.930447,
+        "volatility": -0.00952195,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 878.009696,
+        "volatility": -0.01560744,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-16",
+        "close": 862.048894,
+        "volatility": -0.01817839,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-17",
+        "close": 853.415374,
+        "volatility": -0.01001512,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-18",
+        "close": 854.800348,
+        "volatility": 0.00162286,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-19",
+        "close": 834.619149,
+        "volatility": -0.02360925,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 829.819782,
+        "volatility": -0.00575037,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 811.882205,
+        "volatility": -0.02161623,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 816.623572,
+        "volatility": 0.00583997,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 830.97907,
+        "volatility": 0.01757909,
+        "component_count_used": 8,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "CPEI": [
+      {
+        "date": "2025-12-15",
+        "close": 2730.693533,
+        "volatility": null,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 2667.045115,
+        "volatility": -0.02330852,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 2751.999944,
+        "volatility": 0.03185354,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 2758.767893,
+        "volatility": 0.00245928,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-19",
+        "close": 2786.06234,
+        "volatility": 0.00989371,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-22",
+        "close": 2790.023157,
+        "volatility": 0.00142165,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-23",
+        "close": 2803.891907,
+        "volatility": 0.00497084,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-24",
+        "close": 2814.036924,
+        "volatility": 0.00361819,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-25",
+        "close": 2815.567034,
+        "volatility": 0.00054374,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-26",
+        "close": 2809.097649,
+        "volatility": -0.00229772,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-29",
+        "close": 2782.578887,
+        "volatility": -0.00944031,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 2782.446408,
+        "volatility": -4.761e-05,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 2759.528078,
+        "volatility": -0.00823676,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-05",
+        "close": 2875.025579,
+        "volatility": 0.04185408,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 2942.613163,
+        "volatility": 0.02350852,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 2955.277454,
+        "volatility": 0.00430376,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-08",
+        "close": 2921.135881,
+        "volatility": -0.01155275,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-09",
+        "close": 2923.061501,
+        "volatility": 0.0006592,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-12",
+        "close": 2910.453734,
+        "volatility": -0.00431321,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-13",
+        "close": 2941.800986,
+        "volatility": 0.01077057,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-14",
+        "close": 2902.290901,
+        "volatility": -0.01343058,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 2909.020499,
+        "volatility": 0.00231872,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-16",
+        "close": 2863.81949,
+        "volatility": -0.01553822,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 2881.931332,
+        "volatility": 0.00632437,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-20",
+        "close": 2904.649338,
+        "volatility": 0.00788291,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-21",
+        "close": 2868.908109,
+        "volatility": -0.01230483,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 2863.077858,
+        "volatility": -0.00203222,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 2837.058625,
+        "volatility": -0.00908785,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 2820.208519,
+        "volatility": -0.00593929,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-27",
+        "close": 2787.611679,
+        "volatility": -0.01155831,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-28",
+        "close": 2799.233481,
+        "volatility": 0.00416909,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-29",
+        "close": 2850.952303,
+        "volatility": 0.01847607,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-30",
+        "close": 2855.025849,
+        "volatility": 0.00142884,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-02",
+        "close": 2712.477966,
+        "volatility": -0.04992875,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 2778.6902,
+        "volatility": 0.02441024,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 2800.673661,
+        "volatility": 0.00791145,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 2804.229349,
+        "volatility": 0.00126958,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-06",
+        "close": 2816.115396,
+        "volatility": 0.00423861,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-09",
+        "close": 2824.694788,
+        "volatility": 0.00304653,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 2842.72197,
+        "volatility": 0.00638199,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-11",
+        "close": 2892.240241,
+        "volatility": 0.01741932,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-12",
+        "close": 2879.101299,
+        "volatility": -0.00454283,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-13",
+        "close": 2825.578042,
+        "volatility": -0.01859027,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-24",
+        "close": 2845.184169,
+        "volatility": 0.0069388,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-25",
+        "close": 2869.845416,
+        "volatility": 0.00866772,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-26",
+        "close": 2838.184668,
+        "volatility": -0.01103221,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 2868.962246,
+        "volatility": 0.01084411,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-02",
+        "close": 2822.903006,
+        "volatility": -0.01605432,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-03",
+        "close": 2754.981647,
+        "volatility": -0.02406082,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-04",
+        "close": 2703.578267,
+        "volatility": -0.01865834,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-05",
+        "close": 2734.870719,
+        "volatility": 0.01157446,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-06",
+        "close": 2835.918482,
+        "volatility": 0.03694791,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 2779.613619,
+        "volatility": -0.01985419,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 2808.961897,
+        "volatility": 0.0105584,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-11",
+        "close": 2801.364769,
+        "volatility": -0.0027046,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-12",
+        "close": 2750.825031,
+        "volatility": -0.01804111,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 2719.383389,
+        "volatility": -0.0114299,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-16",
+        "close": 2673.395807,
+        "volatility": -0.01691103,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-17",
+        "close": 2704.155603,
+        "volatility": 0.01150589,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-18",
+        "close": 2728.290554,
+        "volatility": 0.00892513,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-19",
+        "close": 2674.657312,
+        "volatility": -0.01965819,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 2630.773728,
+        "volatility": -0.01640718,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 2534.274699,
+        "volatility": -0.03668085,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 2565.321717,
+        "volatility": 0.01225085,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 2618.958598,
+        "volatility": 0.02090844,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "IEEI": [
+      {
+        "date": "2025-12-15",
+        "close": 9.982923,
+        "volatility": null,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 9.915935,
+        "volatility": -0.00671026,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 9.985935,
+        "volatility": 0.00705934,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 10.000352,
+        "volatility": 0.00144373,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-19",
+        "close": 10.040857,
+        "volatility": 0.00405036,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-22",
+        "close": 9.993832,
+        "volatility": -0.00468337,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-23",
+        "close": 10.036688,
+        "volatility": 0.00428824,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-24",
+        "close": 10.057046,
+        "volatility": 0.00202836,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-25",
+        "close": 10.059957,
+        "volatility": 0.00028945,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-26",
+        "close": 10.045338,
+        "volatility": -0.00145319,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-29",
+        "close": 10.095228,
+        "volatility": 0.00496648,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-30",
+        "close": 9.976394,
+        "volatility": -0.0117713,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 9.938561,
+        "volatility": -0.00379225,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-05",
+        "close": 9.976752,
+        "volatility": 0.00384271,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 10.086302,
+        "volatility": 0.01098053,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 10.10992,
+        "volatility": 0.00234159,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-08",
+        "close": 10.132289,
+        "volatility": 0.00221258,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-09",
+        "close": 10.120636,
+        "volatility": -0.00115009,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-12",
+        "close": 10.144355,
+        "volatility": 0.00234363,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-13",
+        "close": 10.170498,
+        "volatility": 0.0025771,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-14",
+        "close": 10.044217,
+        "volatility": -0.0124164,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 9.973262,
+        "volatility": -0.00706426,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-16",
+        "close": 10.047182,
+        "volatility": 0.00741182,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-19",
+        "close": 10.006704,
+        "volatility": -0.00402879,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-20",
+        "close": 10.290303,
+        "volatility": 0.0283409,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-21",
+        "close": 10.130744,
+        "volatility": -0.01550576,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 10.070928,
+        "volatility": -0.0059044,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 10.020184,
+        "volatility": -0.00503866,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 10.257475,
+        "volatility": 0.0236813,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-27",
+        "close": 10.012085,
+        "volatility": -0.02392304,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-28",
+        "close": 10.025115,
+        "volatility": 0.00130143,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-29",
+        "close": 10.150267,
+        "volatility": 0.01248385,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-30",
+        "close": 10.069606,
+        "volatility": -0.00794669,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 9.788155,
+        "volatility": -0.02795055,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 9.898504,
+        "volatility": 0.01127373,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 10.201039,
+        "volatility": 0.03056371,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 10.122775,
+        "volatility": -0.00767216,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-06",
+        "close": 9.993344,
+        "volatility": -0.01278612,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 10.049166,
+        "volatility": 0.00558592,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 9.980424,
+        "volatility": -0.00684057,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-11",
+        "close": 9.987458,
+        "volatility": 0.00070478,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-12",
+        "close": 10.007779,
+        "volatility": 0.00203465,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-13",
+        "close": 9.878881,
+        "volatility": -0.01287978,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-24",
+        "close": 10.212223,
+        "volatility": 0.03374289,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-25",
+        "close": 10.237356,
+        "volatility": 0.00246107,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-26",
+        "close": 10.23686,
+        "volatility": -4.845e-05,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 10.322645,
+        "volatility": 0.00838001,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-02",
+        "close": 10.292994,
+        "volatility": -0.00287242,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-03",
+        "close": 10.173123,
+        "volatility": -0.01164588,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-04",
+        "close": 10.047613,
+        "volatility": -0.01233741,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-05",
+        "close": 10.1327,
+        "volatility": 0.00846838,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-06",
+        "close": 10.251708,
+        "volatility": 0.01174494,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 10.122764,
+        "volatility": -0.01257781,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 10.201469,
+        "volatility": 0.00777505,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-11",
+        "close": 10.46561,
+        "volatility": 0.02589245,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-12",
+        "close": 10.515224,
+        "volatility": 0.00474067,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-13",
+        "close": 10.711687,
+        "volatility": 0.01868367,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-16",
+        "close": 10.373617,
+        "volatility": -0.03156085,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-17",
+        "close": 10.28618,
+        "volatility": -0.00842879,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-18",
+        "close": 10.219963,
+        "volatility": -0.00643747,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-19",
+        "close": 10.104224,
+        "volatility": -0.0113248,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 9.982709,
+        "volatility": -0.01202616,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 9.715298,
+        "volatility": -0.02678742,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 9.841992,
+        "volatility": 0.01304067,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 10.024554,
+        "volatility": 0.01854929,
+        "component_count_used": 3,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "REEI": [
+      {
+        "date": "2025-12-15",
+        "close": 165.82,
+        "volatility": null,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 166.09,
+        "volatility": 0.00162827,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-17",
+        "close": 166.09,
+        "volatility": 0.0,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-18",
+        "close": 165.29,
+        "volatility": -0.00481667,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-19",
+        "close": 167.41,
+        "volatility": 0.01282594,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-22",
+        "close": 167.67,
+        "volatility": 0.00155307,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-23",
+        "close": 165.82,
+        "volatility": -0.01103358,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-24",
+        "close": 165.56,
+        "volatility": -0.00156797,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-25",
+        "close": 166.09,
+        "volatility": 0.00320126,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-26",
+        "close": 165.56,
+        "volatility": -0.00319104,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-29",
+        "close": 163.71,
+        "volatility": -0.0111742,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 161.06,
+        "volatility": -0.01618716,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 161.33,
+        "volatility": 0.00167639,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-05",
+        "close": 167.14,
+        "volatility": 0.03601314,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 171.38,
+        "volatility": 0.02536796,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 169.0,
+        "volatility": -0.01388727,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-08",
+        "close": 174.29,
+        "volatility": 0.03130178,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-09",
+        "close": 173.76,
+        "volatility": -0.00304091,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-12",
+        "close": 172.17,
+        "volatility": -0.00915055,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-13",
+        "close": 171.11,
+        "volatility": -0.00615671,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-14",
+        "close": 166.35,
+        "volatility": -0.02781836,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 169.0,
+        "volatility": 0.01593027,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-16",
+        "close": 164.76,
+        "volatility": -0.02508876,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 165.56,
+        "volatility": 0.00485555,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-20",
+        "close": 172.7,
+        "volatility": 0.04312636,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-21",
+        "close": 171.91,
+        "volatility": -0.00457441,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 174.02,
+        "volatility": 0.01227386,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-23",
+        "close": 177.46,
+        "volatility": 0.01976784,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-26",
+        "close": 175.87,
+        "volatility": -0.00895977,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-27",
+        "close": 174.55,
+        "volatility": -0.00750554,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-28",
+        "close": 179.84,
+        "volatility": 0.0303065,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-29",
+        "close": 188.04,
+        "volatility": 0.04559609,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-30",
+        "close": 180.1,
+        "volatility": -0.04222506,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 175.34,
+        "volatility": -0.02642976,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 179.84,
+        "volatility": 0.02566442,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 190.15,
+        "volatility": 0.05732874,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 189.62,
+        "volatility": -0.00278727,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-06",
+        "close": 184.6,
+        "volatility": -0.026474,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 187.24,
+        "volatility": 0.01430119,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 182.22,
+        "volatility": -0.02681051,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-11",
+        "close": 181.96,
+        "volatility": -0.00142685,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-12",
+        "close": 180.1,
+        "volatility": -0.01022203,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-13",
+        "close": 178.25,
+        "volatility": -0.01027207,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-24",
+        "close": 179.57,
+        "volatility": 0.00740533,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-25",
+        "close": 184.07,
+        "volatility": 0.02505987,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-26",
+        "close": 179.05,
+        "volatility": -0.02727223,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 179.84,
+        "volatility": 0.00441218,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-02",
+        "close": 179.57,
+        "volatility": -0.00150133,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-03",
+        "close": 176.67,
+        "volatility": -0.01614969,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-04",
+        "close": 174.29,
+        "volatility": -0.01347144,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-05",
+        "close": 173.76,
+        "volatility": -0.00304091,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-06",
+        "close": 172.7,
+        "volatility": -0.00610037,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-09",
+        "close": 167.94,
+        "volatility": -0.02756225,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 167.94,
+        "volatility": 0.0,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-11",
+        "close": 169.0,
+        "volatility": 0.00631178,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-12",
+        "close": 169.0,
+        "volatility": 0.0,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 170.85,
+        "volatility": 0.01094675,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-16",
+        "close": 170.85,
+        "volatility": 0.0,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-17",
+        "close": 171.91,
+        "volatility": 0.00620427,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-18",
+        "close": 168.2,
+        "volatility": -0.02158106,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-19",
+        "close": 165.03,
+        "volatility": -0.01884661,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 162.91,
+        "volatility": -0.01284615,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 156.57,
+        "volatility": -0.03891719,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 157.89,
+        "volatility": 0.00843073,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 158.95,
+        "volatility": 0.00671353,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "TSEI": [
+      {
+        "date": "2025-12-15",
+        "close": 183.53,
+        "volatility": null,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 185.68,
+        "volatility": 0.01171471,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-17",
+        "close": 184.8,
+        "volatility": -0.00473934,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-18",
+        "close": 177.34,
+        "volatility": -0.04036797,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-19",
+        "close": 191.96,
+        "volatility": 0.08244051,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-22",
+        "close": 211.16,
+        "volatility": 0.10002084,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-23",
+        "close": 206.1,
+        "volatility": -0.02396287,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-24",
+        "close": 203.67,
+        "volatility": -0.01179039,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-25",
+        "close": 197.53,
+        "volatility": -0.03014681,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-26",
+        "close": 213.96,
+        "volatility": 0.08317724,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-29",
+        "close": 212.06,
+        "volatility": -0.00888016,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 209.12,
+        "volatility": -0.013864,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 219.2,
+        "volatility": 0.04820199,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-05",
+        "close": 209.3,
+        "volatility": -0.04516423,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-06",
+        "close": 210.0,
+        "volatility": 0.00334448,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 216.54,
+        "volatility": 0.03114286,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-08",
+        "close": 215.47,
+        "volatility": -0.00494135,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-09",
+        "close": 222.03,
+        "volatility": 0.03044507,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-12",
+        "close": 221.15,
+        "volatility": -0.00396343,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-13",
+        "close": 213.06,
+        "volatility": -0.03658151,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-14",
+        "close": 208.75,
+        "volatility": -0.02022904,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 207.73,
+        "volatility": -0.00488623,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-16",
+        "close": 204.99,
+        "volatility": -0.0131902,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 216.51,
+        "volatility": 0.05619786,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-20",
+        "close": 222.75,
+        "volatility": 0.02882084,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-21",
+        "close": 220.43,
+        "volatility": -0.01041526,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 217.0,
+        "volatility": -0.0155605,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 216.33,
+        "volatility": -0.00308756,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 214.8,
+        "volatility": -0.00707253,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-27",
+        "close": 210.48,
+        "volatility": -0.02011173,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-28",
+        "close": 208.26,
+        "volatility": -0.01054732,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-29",
+        "close": 213.96,
+        "volatility": 0.02736963,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-30",
+        "close": 207.17,
+        "volatility": -0.0317349,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 206.2,
+        "volatility": -0.00468215,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 212.34,
+        "volatility": 0.02977692,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 212.08,
+        "volatility": -0.00122445,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-05",
+        "close": 214.36,
+        "volatility": 0.01075066,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-06",
+        "close": 214.08,
+        "volatility": -0.00130621,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 225.09,
+        "volatility": 0.05142937,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 220.45,
+        "volatility": -0.02061398,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-11",
+        "close": 224.86,
+        "volatility": 0.02000454,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-12",
+        "close": 218.3,
+        "volatility": -0.02917371,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-13",
+        "close": 219.39,
+        "volatility": 0.00499313,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-24",
+        "close": 197.46,
+        "volatility": -0.09995898,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-25",
+        "close": 190.32,
+        "volatility": -0.03615922,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-26",
+        "close": 185.68,
+        "volatility": -0.02437999,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 186.79,
+        "volatility": 0.00597803,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-02",
+        "close": 181.04,
+        "volatility": -0.03078323,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-03",
+        "close": 175.55,
+        "volatility": -0.03032479,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-04",
+        "close": 177.94,
+        "volatility": 0.01361435,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-05",
+        "close": 177.22,
+        "volatility": -0.00404631,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-06",
+        "close": 177.61,
+        "volatility": 0.00220065,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 174.09,
+        "volatility": -0.0198187,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 174.79,
+        "volatility": 0.00402091,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-11",
+        "close": 172.31,
+        "volatility": -0.01418845,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-12",
+        "close": 170.94,
+        "volatility": -0.00795079,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 169.89,
+        "volatility": -0.00614251,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-16",
+        "close": 174.25,
+        "volatility": 0.02566366,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-17",
+        "close": 174.67,
+        "volatility": 0.00241033,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-18",
+        "close": 173.77,
+        "volatility": -0.00515257,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-19",
+        "close": 168.2,
+        "volatility": -0.03205386,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 167.37,
+        "volatility": -0.0049346,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 164.05,
+        "volatility": -0.01983629,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 164.17,
+        "volatility": 0.00073148,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 166.49,
+        "volatility": 0.01413169,
+        "component_count_used": 1,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "CGEI": [
+      {
+        "date": "2025-12-15",
+        "close": 8983.732361,
+        "volatility": null,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 8960.427251,
+        "volatility": -0.00259415,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 9031.433673,
+        "volatility": 0.00792445,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 9020.867009,
+        "volatility": -0.00116999,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-19",
+        "close": 9043.011975,
+        "volatility": 0.00245486,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-22",
+        "close": 9030.703467,
+        "volatility": -0.00136111,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-23",
+        "close": 9024.768609,
+        "volatility": -0.00065719,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-24",
+        "close": 8981.100553,
+        "volatility": -0.00483869,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-25",
+        "close": 9067.030231,
+        "volatility": 0.00956783,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-26",
+        "close": 9064.872857,
+        "volatility": -0.00023794,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-29",
+        "close": 8987.35502,
+        "volatility": -0.00855145,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 8909.696472,
+        "volatility": -0.00864087,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 8832.208075,
+        "volatility": -0.00869709,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-05",
+        "close": 9129.228767,
+        "volatility": 0.03362927,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 9143.219159,
+        "volatility": 0.00153248,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 9111.103478,
+        "volatility": -0.00351251,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-08",
+        "close": 9028.559002,
+        "volatility": -0.00905977,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-09",
+        "close": 9075.265664,
+        "volatility": 0.00517321,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-12",
+        "close": 9103.304306,
+        "volatility": 0.00308957,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-13",
+        "close": 9024.826536,
+        "volatility": -0.0086208,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-14",
+        "close": 8943.281106,
+        "volatility": -0.00903568,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 8885.29674,
+        "volatility": -0.00648357,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-16",
+        "close": 8838.888351,
+        "volatility": -0.00522305,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 8802.531136,
+        "volatility": -0.00411332,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-20",
+        "close": 8789.755638,
+        "volatility": -0.00145134,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-21",
+        "close": 8647.297553,
+        "volatility": -0.01620729,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 8579.917409,
+        "volatility": -0.00779205,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 8559.774085,
+        "volatility": -0.00234773,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 8586.895459,
+        "volatility": 0.00316847,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-27",
+        "close": 8585.873992,
+        "volatility": -0.00011896,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-28",
+        "close": 8466.036779,
+        "volatility": -0.01395749,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-29",
+        "close": 9173.226028,
+        "volatility": 0.0835325,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-30",
+        "close": 8939.799388,
+        "volatility": -0.02544652,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 9098.878013,
+        "volatility": 0.01779443,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-03",
+        "close": 9389.318467,
+        "volatility": 0.03192047,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 9700.295483,
+        "volatility": 0.0331203,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 9886.011739,
+        "volatility": 0.01914542,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-06",
+        "close": 9640.962422,
+        "volatility": -0.02478748,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 9700.193407,
+        "volatility": 0.00614368,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 9570.783212,
+        "volatility": -0.01334099,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-11",
+        "close": 9569.842374,
+        "volatility": -9.83e-05,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-12",
+        "close": 9457.196198,
+        "volatility": -0.01177095,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-13",
+        "close": 9447.742554,
+        "volatility": -0.00099962,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-24",
+        "close": 9333.782731,
+        "volatility": -0.01206212,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-25",
+        "close": 9481.926639,
+        "volatility": 0.0158718,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-26",
+        "close": 9324.27373,
+        "volatility": -0.01662667,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 9256.561747,
+        "volatility": -0.0072619,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-02",
+        "close": 9163.080235,
+        "volatility": -0.01009895,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-03",
+        "close": 9080.220044,
+        "volatility": -0.00904283,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-04",
+        "close": 8921.630222,
+        "volatility": -0.01746542,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-05",
+        "close": 8909.86107,
+        "volatility": -0.00131917,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-06",
+        "close": 8938.660297,
+        "volatility": 0.00323229,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 8908.493415,
+        "volatility": -0.00337488,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 8939.020116,
+        "volatility": 0.0034267,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-11",
+        "close": 8927.714653,
+        "volatility": -0.00126473,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-12",
+        "close": 8883.28825,
+        "volatility": -0.00497623,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 9014.386261,
+        "volatility": 0.01475782,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-16",
+        "close": 9298.339779,
+        "volatility": 0.03150004,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-17",
+        "close": 9447.529726,
+        "volatility": 0.01604479,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-18",
+        "close": 9345.520202,
+        "volatility": -0.01079748,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-19",
+        "close": 9244.840443,
+        "volatility": -0.01077305,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 9195.255121,
+        "volatility": -0.00536357,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 8956.216714,
+        "volatility": -0.02599584,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 8954.820267,
+        "volatility": -0.00015592,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-25",
+        "close": 8976.01861,
+        "volatility": 0.00236725,
+        "component_count_used": 5,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "TTEI": [
+      {
+        "date": "2025-12-15",
+        "close": 189.86088,
+        "volatility": null,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 186.465948,
+        "volatility": -0.01788115,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 190.520937,
+        "volatility": 0.02174654,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 192.540904,
+        "volatility": 0.01060234,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-19",
+        "close": 182.474983,
+        "volatility": -0.05227939,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-22",
+        "close": 187.593423,
+        "volatility": 0.02805009,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-23",
+        "close": 188.233762,
+        "volatility": 0.00341344,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-24",
+        "close": 191.6,
+        "volatility": 0.01788329,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-25",
+        "close": 190.835031,
+        "volatility": -0.00399253,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-26",
+        "close": 192.265846,
+        "volatility": 0.00749765,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-29",
+        "close": 192.462441,
+        "volatility": 0.00102252,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-30",
+        "close": 191.298573,
+        "volatility": -0.00604724,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 188.706269,
+        "volatility": -0.01355109,
+        "component_count_used": 9,
+        "component_weight_sum_used": 90.22,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-05",
+        "close": 211.078167,
+        "volatility": 0.11855408,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 218.588422,
+        "volatility": 0.03558044,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 223.359757,
+        "volatility": 0.02182794,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-08",
+        "close": 224.214377,
+        "volatility": 0.0038262,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-09",
+        "close": 221.919567,
+        "volatility": -0.01023489,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-12",
+        "close": 230.094641,
+        "volatility": 0.036838,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-13",
+        "close": 226.748454,
+        "volatility": -0.01454265,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-14",
+        "close": 225.490032,
+        "volatility": -0.00554986,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 227.047183,
+        "volatility": 0.00690563,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-16",
+        "close": 235.461647,
+        "volatility": 0.03706042,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-19",
+        "close": 238.574802,
+        "volatility": 0.01322149,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-20",
+        "close": 236.926879,
+        "volatility": -0.00690736,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-21",
+        "close": 246.949655,
+        "volatility": 0.04230324,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-22",
+        "close": 244.27911,
+        "volatility": -0.01081413,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 243.138347,
+        "volatility": -0.00466992,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 238.302137,
+        "volatility": -0.01989078,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-27",
+        "close": 243.87906,
+        "volatility": 0.02340274,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-28",
+        "close": 251.020118,
+        "volatility": 0.02928114,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-29",
+        "close": 241.354602,
+        "volatility": -0.03850495,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-30",
+        "close": 243.25698,
+        "volatility": 0.00788209,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-02",
+        "close": 226.997462,
+        "volatility": -0.06684091,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 231.320644,
+        "volatility": 0.01904507,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 226.498353,
+        "volatility": -0.02084678,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-05",
+        "close": 224.272558,
+        "volatility": -0.00982698,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-06",
+        "close": 223.047789,
+        "volatility": -0.00546107,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 230.404753,
+        "volatility": 0.0329838,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 231.070697,
+        "volatility": 0.00289032,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-11",
+        "close": 228.003442,
+        "volatility": -0.0132741,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-12",
+        "close": 235.121897,
+        "volatility": 0.03122082,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-13",
+        "close": 235.89629,
+        "volatility": 0.00329358,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-24",
+        "close": 239.329145,
+        "volatility": 0.01455239,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-25",
+        "close": 237.15894,
+        "volatility": -0.00906787,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-26",
+        "close": 238.093237,
+        "volatility": 0.00393954,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-27",
+        "close": 234.389959,
+        "volatility": -0.0155539,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-02",
+        "close": 230.232133,
+        "volatility": -0.01773893,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-03",
+        "close": 218.507139,
+        "volatility": -0.05092683,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-04",
+        "close": 218.585289,
+        "volatility": 0.00035766,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-05",
+        "close": 221.570532,
+        "volatility": 0.01365711,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-06",
+        "close": 222.246086,
+        "volatility": 0.00304894,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 216.717363,
+        "volatility": -0.02487658,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 222.116091,
+        "volatility": 0.02491138,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-11",
+        "close": 219.782181,
+        "volatility": -0.01050762,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-12",
+        "close": 216.231095,
+        "volatility": -0.0161573,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 216.592686,
+        "volatility": 0.00167224,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-16",
+        "close": 225.589799,
+        "volatility": 0.04153932,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-17",
+        "close": 220.019193,
+        "volatility": -0.02469352,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-18",
+        "close": 226.35536,
+        "volatility": 0.02879825,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-19",
+        "close": 221.309183,
+        "volatility": -0.02229316,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 213.817876,
+        "volatility": -0.03384996,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 203.363587,
+        "volatility": -0.04889343,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 205.171389,
+        "volatility": 0.00888951,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 208.8061,
+        "volatility": 0.01771549,
+        "component_count_used": 10,
+        "component_weight_sum_used": 100.01,
+        "up_down": 1
+      }
+    ],
+    "EREI": [
+      {
+        "date": "2025-12-15",
+        "close": 74.77596,
+        "volatility": null,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 74.195427,
+        "volatility": -0.00776363,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 74.340734,
+        "volatility": 0.00195844,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 75.089089,
+        "volatility": 0.01006655,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-19",
+        "close": 74.713353,
+        "volatility": -0.00500387,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-22",
+        "close": 75.250224,
+        "volatility": 0.00718574,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-23",
+        "close": 75.344659,
+        "volatility": 0.00125495,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-24",
+        "close": 75.02967,
+        "volatility": -0.00418064,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-25",
+        "close": 74.785444,
+        "volatility": -0.00325506,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-26",
+        "close": 75.576182,
+        "volatility": 0.01057342,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-29",
+        "close": 75.113428,
+        "volatility": -0.00612301,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 75.460462,
+        "volatility": 0.00462013,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-31",
+        "close": 75.90439,
+        "volatility": 0.00588292,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-05",
+        "close": 76.407692,
+        "volatility": 0.00663074,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 78.190414,
+        "volatility": 0.02333171,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 77.545947,
+        "volatility": -0.00824228,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-08",
+        "close": 77.397518,
+        "volatility": -0.00191408,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-09",
+        "close": 78.372583,
+        "volatility": 0.01259814,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-12",
+        "close": 78.245316,
+        "volatility": -0.00162387,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-13",
+        "close": 78.78195,
+        "volatility": 0.00685835,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-14",
+        "close": 78.117205,
+        "volatility": -0.00843778,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 77.912147,
+        "volatility": -0.002625,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-16",
+        "close": 76.776925,
+        "volatility": -0.01457054,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 76.942315,
+        "volatility": 0.00215416,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-20",
+        "close": 77.219727,
+        "volatility": 0.00360545,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-21",
+        "close": 76.907704,
+        "volatility": -0.00404072,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 76.698343,
+        "volatility": -0.00272224,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 75.863024,
+        "volatility": -0.01089097,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 77.786442,
+        "volatility": 0.02535383,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-27",
+        "close": 77.906328,
+        "volatility": 0.00154122,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-28",
+        "close": 78.843512,
+        "volatility": 0.01202963,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-29",
+        "close": 80.130996,
+        "volatility": 0.01632961,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-30",
+        "close": 78.944375,
+        "volatility": -0.01480851,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 75.740257,
+        "volatility": -0.04058703,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 76.504581,
+        "volatility": 0.01009138,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 78.570825,
+        "volatility": 0.02700811,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 77.540527,
+        "volatility": -0.01311298,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-06",
+        "close": 77.314748,
+        "volatility": -0.00291175,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 78.331328,
+        "volatility": 0.01314859,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 78.712443,
+        "volatility": 0.00486542,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-11",
+        "close": 79.193628,
+        "volatility": 0.0061132,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-12",
+        "close": 79.123047,
+        "volatility": -0.00089125,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-13",
+        "close": 77.189189,
+        "volatility": -0.02444115,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-24",
+        "close": 78.790217,
+        "volatility": 0.02074161,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-25",
+        "close": 78.670764,
+        "volatility": -0.00151609,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-26",
+        "close": 78.449554,
+        "volatility": -0.00281185,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 78.758974,
+        "volatility": 0.00394419,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-02",
+        "close": 81.631927,
+        "volatility": 0.03647779,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-03",
+        "close": 82.019538,
+        "volatility": 0.00474828,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-04",
+        "close": 81.603369,
+        "volatility": -0.00507402,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-05",
+        "close": 81.087923,
+        "volatility": -0.00631648,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-06",
+        "close": 80.661693,
+        "volatility": -0.00525639,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-09",
+        "close": 81.321535,
+        "volatility": 0.00818036,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-10",
+        "close": 80.65133,
+        "volatility": -0.00824142,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-11",
+        "close": 81.54337,
+        "volatility": 0.01106045,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-12",
+        "close": 82.227825,
+        "volatility": 0.00839375,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-13",
+        "close": 81.296302,
+        "volatility": -0.01132856,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-16",
+        "close": 80.428282,
+        "volatility": -0.01067724,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-17",
+        "close": 80.328116,
+        "volatility": -0.00124541,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-18",
+        "close": 79.925016,
+        "volatility": -0.00501817,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-19",
+        "close": 79.451281,
+        "volatility": -0.00592724,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 78.963604,
+        "volatility": -0.00613806,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 77.792071,
+        "volatility": -0.01483637,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 78.598021,
+        "volatility": 0.01036031,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 78.701302,
+        "volatility": 0.00131404,
+        "component_count_used": 6,
+        "component_weight_sum_used": 100.0,
+        "up_down": 1
+      }
+    ],
+    "FSEI": [
+      {
+        "date": "2025-12-15",
+        "close": 140.49337,
+        "volatility": null,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-16",
+        "close": 140.005638,
+        "volatility": -0.00347157,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-17",
+        "close": 141.185192,
+        "volatility": 0.00842505,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-18",
+        "close": 142.535428,
+        "volatility": 0.00956358,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-19",
+        "close": 142.428447,
+        "volatility": -0.00075056,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-22",
+        "close": 141.964841,
+        "volatility": -0.00325501,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-23",
+        "close": 142.895852,
+        "volatility": 0.00655803,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-24",
+        "close": 142.484178,
+        "volatility": -0.00288093,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-25",
+        "close": 143.961988,
+        "volatility": 0.01037175,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-26",
+        "close": 144.244721,
+        "volatility": 0.00196394,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2025-12-29",
+        "close": 143.612527,
+        "volatility": -0.00438279,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-30",
+        "close": 142.938939,
+        "volatility": -0.00469032,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2025-12-31",
+        "close": 142.36761,
+        "volatility": -0.00399702,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-05",
+        "close": 146.263226,
+        "volatility": 0.02736308,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-06",
+        "close": 149.222514,
+        "volatility": 0.02023262,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-07",
+        "close": 147.282554,
+        "volatility": -0.01300045,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-08",
+        "close": 143.336874,
+        "volatility": -0.02678987,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-09",
+        "close": 141.954885,
+        "volatility": -0.00964154,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-12",
+        "close": 140.897343,
+        "volatility": -0.00744985,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-13",
+        "close": 141.374284,
+        "volatility": 0.00338503,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-14",
+        "close": 138.583522,
+        "volatility": -0.01974024,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-15",
+        "close": 138.739022,
+        "volatility": 0.00112206,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-16",
+        "close": 137.069091,
+        "volatility": -0.01203649,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-19",
+        "close": 136.65789,
+        "volatility": -0.00299996,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-20",
+        "close": 137.273513,
+        "volatility": 0.00450485,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-21",
+        "close": 135.630855,
+        "volatility": -0.01196632,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-22",
+        "close": 134.10918,
+        "volatility": -0.01121924,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-23",
+        "close": 132.630832,
+        "volatility": -0.01102346,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-26",
+        "close": 133.677842,
+        "volatility": 0.00789417,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-27",
+        "close": 134.53322,
+        "volatility": 0.00639881,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-28",
+        "close": 133.641315,
+        "volatility": -0.00662963,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-01-29",
+        "close": 137.743703,
+        "volatility": 0.03069701,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-01-30",
+        "close": 136.471469,
+        "volatility": -0.00923624,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-02",
+        "close": 135.513227,
+        "volatility": -0.00702155,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-03",
+        "close": 135.729286,
+        "volatility": 0.00159437,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-04",
+        "close": 137.761185,
+        "volatility": 0.01497023,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-05",
+        "close": 138.608995,
+        "volatility": 0.0061542,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-06",
+        "close": 138.03855,
+        "volatility": -0.0041155,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-09",
+        "close": 139.464037,
+        "volatility": 0.01032674,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-10",
+        "close": 138.936169,
+        "volatility": -0.00378498,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-11",
+        "close": 138.440296,
+        "volatility": -0.00356907,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-12",
+        "close": 136.814492,
+        "volatility": -0.01174372,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-13",
+        "close": 135.196245,
+        "volatility": -0.01182804,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-24",
+        "close": 134.745783,
+        "volatility": -0.00333191,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-25",
+        "close": 134.948869,
+        "volatility": 0.00150718,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-02-26",
+        "close": 133.256816,
+        "volatility": -0.01253848,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-02-27",
+        "close": 133.00934,
+        "volatility": -0.00185713,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-02",
+        "close": 132.080168,
+        "volatility": -0.00698576,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-03",
+        "close": 132.839678,
+        "volatility": 0.00575037,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-04",
+        "close": 130.707279,
+        "volatility": -0.01605243,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-05",
+        "close": 131.890914,
+        "volatility": 0.00905562,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-06",
+        "close": 132.579505,
+        "volatility": 0.00522091,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-09",
+        "close": 130.505751,
+        "volatility": -0.01564159,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-10",
+        "close": 131.864475,
+        "volatility": 0.01041123,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-11",
+        "close": 132.709499,
+        "volatility": 0.00640827,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-12",
+        "close": 131.951859,
+        "volatility": -0.00570901,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-13",
+        "close": 131.829026,
+        "volatility": -0.00093089,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-16",
+        "close": 131.352414,
+        "volatility": -0.00361538,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-17",
+        "close": 133.173442,
+        "volatility": 0.01386368,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-18",
+        "close": 133.003207,
+        "volatility": -0.0012783,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-19",
+        "close": 131.499277,
+        "volatility": -0.01130747,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-20",
+        "close": 130.489796,
+        "volatility": -0.0076767,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-23",
+        "close": 126.076598,
+        "volatility": -0.03382026,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 0
+      },
+      {
+        "date": "2026-03-24",
+        "close": 127.642875,
+        "volatility": 0.01242322,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      },
+      {
+        "date": "2026-03-25",
+        "close": 128.486136,
+        "volatility": 0.0066064,
+        "component_count_used": 11,
+        "component_weight_sum_used": 99.99,
+        "up_down": 1
+      }
+    ]
+  }
+}

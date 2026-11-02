@@ -28,7 +28,7 @@ const planAdherence = computed(() => {
 <template>
   <div class="card">
     <div class="card-title">计划执行追踪
-      <span class="info-btn" @mouseenter="showTip('pe')" @mouseleave="hideTip">❕</span>
+      <span class="info-btn" @mouseenter="showTip('pe')" @mouseleave="hideTip">i</span>
       <div v-if="activeTooltip === 'pe'" class="custom-tooltip">{{ tip }}</div>
     </div>
     <div class="tom-tabs">

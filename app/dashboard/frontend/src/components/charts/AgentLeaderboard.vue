@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useMarketStore } from '@/stores/marketStore'
-import { fmtCompact, fmtPct } from '@/utils/formatters'
+import { fmtCn, fmtPct } from '@/utils/formatters'
 
 const store = useMarketStore()
 
@@ -15,29 +15,34 @@ const TABS: { key: SortKey; label: string }[] = [
   { key: 'trade_count', label: '交易次数' },
 ]
 
-const ranked = computed(() => {
-  const agents = [...store.holdings].filter((a) => a.agent_id > 0)
+interface Row {
+  agent_id: number
+  tom_level: number
+  value: number
+}
+
+// 优先用服务端算好的排行榜（行情工作区不必拉取全部持仓）；没有时从本地持仓计算
+const board = computed<{ total: number; top: Row[]; bottom: Row[] }>(() => {
   const key = activeTab.value
-  agents.sort((a, b) => (b[key] ?? 0) - (a[key] ?? 0))
-  return agents
+  const lb = store.leaderboard?.by_key?.[key]
+  if (lb) return { total: store.leaderboard?.total ?? 0, top: lb.top, bottom: lb.bottom }
+  const agents = store.holdings.filter((a) => a.agent_id > 0)
+  const rows: Row[] = agents.map((a) => ({ agent_id: a.agent_id, tom_level: a.tom_level, value: Number(a[key] ?? 0) }))
+  rows.sort((a, b) => b.value - a.value)
+  return {
+    total: rows.length,
+    top: rows.slice(0, 10),
+    bottom: rows.length > 10 ? rows.slice(-10).reverse() : [],
+  }
 })
 
-const topN = computed(() => ranked.value.slice(0, 10))
-const bottomN = computed(() => {
-  const r = ranked.value
-  if (r.length <= 10) return []
-  return r.slice(-10).reverse()
-})
-
-function displayVal(agent: any, key: SortKey): string {
-  const v = agent[key] ?? 0
+function displayVal(v: number, key: SortKey): string {
   if (key === 'return_pct') return fmtPct(v)
-  if (key === 'wealth' || key === 'total_pnl') return fmtCompact(v)
+  if (key === 'wealth' || key === 'total_pnl') return fmtCn(v, 2)
   return String(v)
 }
 
-function valClass(agent: any, key: SortKey): string {
-  const v = agent[key] ?? 0
+function valClass(v: number, key: SortKey): string {
   if (key === 'trade_count') return ''
   if (v > 0) return 'color-up'
   if (v < 0) return 'color-down'
@@ -64,25 +69,25 @@ function valClass(agent: any, key: SortKey): string {
     <div class="board-split">
       <div class="board-col">
         <div class="col-header">
-          <span class="arrow arrow-up">▲</span> Top 10
+          <span class="arrow arrow-up">▲</span> 前 10
         </div>
-        <div v-for="(a, i) in topN" :key="a.agent_id" class="rank-row">
+        <div v-for="(a, i) in board.top" :key="a.agent_id" class="rank-row">
           <span class="rank-num">{{ i + 1 }}</span>
           <span class="agent-id">A{{ a.agent_id }}</span>
           <span class="badge" :class="`badge-tom${a.tom_level}`">T{{ a.tom_level }}</span>
-          <span class="rank-val" :class="valClass(a, activeTab)">{{ displayVal(a, activeTab) }}</span>
+          <span class="rank-val" :class="valClass(a.value, activeTab)">{{ displayVal(a.value, activeTab) }}</span>
         </div>
       </div>
 
-      <div v-if="bottomN.length" class="board-col">
+      <div v-if="board.bottom.length" class="board-col">
         <div class="col-header">
-          <span class="arrow arrow-down">▼</span> Bottom 10
+          <span class="arrow arrow-down">▼</span> 后 10
         </div>
-        <div v-for="(a, i) in bottomN" :key="a.agent_id" class="rank-row bottom-row">
-          <span class="rank-num">{{ ranked.length - 9 + i }}</span>
+        <div v-for="(a, i) in board.bottom" :key="a.agent_id" class="rank-row bottom-row">
+          <span class="rank-num">{{ board.total - 9 + i }}</span>
           <span class="agent-id">A{{ a.agent_id }}</span>
           <span class="badge" :class="`badge-tom${a.tom_level}`">T{{ a.tom_level }}</span>
-          <span class="rank-val" :class="valClass(a, activeTab)">{{ displayVal(a, activeTab) }}</span>
+          <span class="rank-val" :class="valClass(a.value, activeTab)">{{ displayVal(a.value, activeTab) }}</span>
         </div>
       </div>
     </div>
@@ -129,8 +134,12 @@ function valClass(agent: any, key: SortKey): string {
 
 .board-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
+}
+
+.board-col {
+  min-width: 0;
 }
 
 .col-header {
@@ -152,7 +161,8 @@ function valClass(agent: any, key: SortKey): string {
   gap: 6px;
   padding: 3px 6px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
   transition: background 0.1s;
 }
 
@@ -181,7 +191,10 @@ function valClass(agent: any, key: SortKey): string {
   margin-left: auto;
   font-weight: 700;
   font-family: var(--font-mono);
-  font-size: 11px;
-  flex-shrink: 0;
+  font-size: 12px;
+  text-align: right;
+  min-width: 0;
+  flex-shrink: 1;
+  white-space: nowrap;
 }
 </style>

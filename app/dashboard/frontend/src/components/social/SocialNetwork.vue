@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import * as d3 from 'd3'
 import { useMarketStore } from '@/stores/marketStore'
+import { useRafRender } from '@/composables/useRafRender'
 
 const store = useMarketStore()
 const svgRef = ref<SVGSVGElement>()
@@ -53,8 +54,9 @@ function render() {
   const edges = graph.value.graph_edges || []
   const now = Date.now()
   const countsChanged = nodes.length !== lastNodeCount || edges.length !== lastEdgeCount
-  const firstRender = lastNodeCount === -1
-  if (!firstRender && (!countsChanged || now - lastRenderTime < MIN_RENDER_INTERVAL)) return
+  const firstRender = lastNodeCount <= 0
+  // 结构（节点/边数）变化立即重绘；结构不变时至多每 30 秒重排一次（声誉/粉丝数只影响大小）
+  if (!firstRender && !countsChanged && now - lastRenderTime < MIN_RENDER_INTERVAL) return
   lastNodeCount = nodes.length
   lastEdgeCount = edges.length
   lastRenderTime = now
@@ -137,7 +139,7 @@ function doRender() {
     .selectAll('line')
     .data(links)
     .join('line')
-    .attr('stroke', '#b2b5be')
+    .style('stroke', 'var(--chart-axis)')
     .attr('stroke-width', 1)
     .attr('stroke-opacity', 0.6)
     .attr('marker-end', 'url(#arrow)')
@@ -149,7 +151,7 @@ function doRender() {
     .attr('refX', 12).attr('refY', 0)
     .attr('markerWidth', 4).attr('markerHeight', 4)
     .attr('orient', 'auto')
-    .append('path').attr('d', 'M0,-3L6,0L0,3').attr('fill', '#b2b5be')
+    .append('path').attr('d', 'M0,-3L6,0L0,3').style('fill', 'var(--chart-axis)')
 
   const node = g.append('g')
     .selectAll('circle')
@@ -172,17 +174,24 @@ function doRender() {
     .style('pointer-events', 'none')
 
   labelGroup.append('text')
-    .attr('font-size', '9px')
+    .attr('font-size', '10px')
     .attr('font-weight', '600')
-    .attr('fill', '#131722')
+    .style('fill', 'var(--heading)')
     .attr('dy', (d) => -rScale(d.reputation) - 6)
     .text((d) => `A${d.id}`)
 
   labelGroup.append('text')
     .attr('font-size', '7px')
-    .attr('fill', '#787b86')
+    .style('fill', 'var(--chart-text)')
     .attr('dy', (d) => -rScale(d.reputation) + 2)
     .text((d) => `${d.followers}粉`)
+
+  // 先按初始/恢复的坐标画一帧，避免力导向 tick 到来前节点堆在原点
+  link
+    .attr('x1', (d: any) => d.source.x).attr('y1', (d: any) => d.source.y)
+    .attr('x2', (d: any) => d.target.x).attr('y2', (d: any) => d.target.y)
+  node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
+  labelGroup.attr('transform', (d: any) => `translate(${d.x},${d.y})`)
 
   sim.on('tick', () => {
     link
@@ -209,16 +218,26 @@ function doRender() {
   }, 5000)
 }
 
+const scheduleRender = useRafRender(render, {
+  el: () => svgRef.value,
+  // 每秒的全量推送里社交图通常没变化；只有节点/边/KOL/粉丝数或筛选变了才重启力导向模拟
+  signature: () => {
+    const g = graph.value || {}
+    const nodes: any[] = g.graph_nodes || []
+    const edges: any[] = g.graph_edges || []
+    return `${filterMode.value}|${edges.length}|${nodes.map((n) => `${n.id}:${n.tom}:${n.is_kol ? 1 : 0}:${n.followers}`).join(',')}`
+  },
+})
 let resizeObs: ResizeObserver | null = null
 onMounted(() => {
   render()
   if (svgRef.value) {
-    resizeObs = new ResizeObserver(() => render())
+    resizeObs = new ResizeObserver(() => scheduleRender())
     resizeObs.observe(svgRef.value)
   }
 })
 onUnmounted(() => resizeObs?.disconnect())
-watch(() => store.socialGraph, render, { deep: true })
+watch([() => store.socialGraph, filterMode], scheduleRender)
 </script>
 
 <template>

@@ -8,11 +8,21 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
-from aiohttp import web
+from aiohttp import WSMsgType, web
+
+from app.dashboard.ws_session import TOPICS as WS_TOPICS, WsSession, build_payload, holdings_fingerprints
 
 _logger = logging.getLogger(__name__)
 
 from app.utils.indicators import ema as _ema, momentum as _momentum, rsi as _rsi, sma as _sma, volatility as _volatility, round_or_none as _round_or_none, compute_trading_day as _compute_td
+
+
+def _safe_float(v: object) -> float | None:
+    try:
+        f = float(v)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    return f if f == f else None
 
 
 def _extract_reasoning(llm_out: dict, tom_level: int) -> str:
@@ -77,8 +87,16 @@ class RealtimeDashboard:
         self.thinking_agents: dict[int, dict] = {}
         self.scheduled_agents: dict[int, dict] = {}
         self._latest_sim_time: float = 0.0
+        # 最近一次集合竞价结果（按标的），由引擎在撮合后通过 on_call_auction 推送
+        self._last_auction: dict[str, dict] = {}
+        self._auction_history: deque[dict] = deque(maxlen=400)
         self._price_trend: dict[str, deque] = {}
         self._price_trend_maxlen = price_trend_maxlen
+        # 盘中 K 线：按固定仿真秒数分桶，由成交流聚合；默认一根 bar 对应展示时钟的一分钟（09:30→15:00 共 330 分钟）
+        bar_seconds_cfg = float(dcfg.get("intraday_bar_seconds", 0) or 0)
+        self._intraday_bar_seconds: float = bar_seconds_cfg if bar_seconds_cfg > 0 else max(0.5, self.trading_day_seconds / 330.0)
+        self._intraday_bars_maxlen: int = max(50, int(dcfg.get("intraday_bars_maxlen", 600)))
+        self._intraday_bars: dict[str, deque] = {}
         self._sentiment_trend: deque = deque(maxlen=sentiment_trend_maxlen)
         self._deviation_trend: deque = deque(maxlen=deviation_trend_maxlen)
         sentiment_window = int(dcfg.get("sentiment_window", 500))
@@ -112,6 +130,7 @@ class RealtimeDashboard:
         self._plan_by_tom: dict[int, dict[str, int]] = {t: _plan_tom_init() for t in (0, 1, 2)}
 
         self._ws_clients: set[web.WebSocketResponse] = set()
+        self._ws_sessions: dict[web.WebSocketResponse, WsSession] = {}
         self._push_task: asyncio.Task | None = None
         self._ws_push_interval: float = float(dcfg.get("ws_push_interval", 1.0))
         self._ws_heartbeat: float = float(dcfg.get("ws_heartbeat", 20.0))
@@ -225,6 +244,7 @@ class RealtimeDashboard:
 
         total += self._replay_sentiment_with_trends(run_dir)
         total += self._replay_market_snapshot_trends(run_dir)
+        total += self._replay_intraday_bars(run_dir)
 
         tail_replay = [
             ("trades", self.recent_trades.maxlen or 200),
@@ -290,6 +310,48 @@ class RealtimeDashboard:
 
         _logger.info("Dashboard replay: sentiment_series → %d records, trend points: sent=%d conf=%d",
                       count, len(self._sentiment_trend), len(self._confidence_trend))
+        return count
+
+    def _ingest_trade_bar(self, record: dict) -> None:
+        """把一笔成交并入对应标的的盘中 K 线（同一分桶内更新高低收和成交量，否则开新 bar）。"""
+        symbol = str(record.get("symbol", "") or "").upper()
+        try:
+            price = float(record.get("price", 0) or 0)
+            qty = int(record.get("quantity", 0) or 0)
+            sim_t = float(record.get("sim_time", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return
+        if not symbol or price <= 0 or qty <= 0:
+            return
+        bar_s = self._intraday_bar_seconds
+        bucket = round((sim_t // bar_s) * bar_s, 3)
+        series = self._intraday_bars.get(symbol)
+        if series is None:
+            series = deque(maxlen=self._intraday_bars_maxlen)
+            self._intraday_bars[symbol] = series
+        if series and series[-1]["t"] >= bucket:
+            bar = series[-1]
+            bar["high"] = max(bar["high"], price)
+            bar["low"] = min(bar["low"], price)
+            bar["close"] = price
+            bar["volume"] += qty
+            return
+        series.append({"t": bucket, "open": price, "high": price, "low": price, "close": price, "volume": qty})
+
+    def _replay_intraday_bars(self, run_dir: Path, tail_lines: int = 60000) -> int:
+        """续跑/重连时从 trades.jsonl 尾部重建盘中 K 线（只取尾部，避免全量扫描大文件）。"""
+        jsonl_path = run_dir / "trades.jsonl"
+        if not jsonl_path.exists():
+            return 0
+        count = 0
+        for line in self._read_tail_lines(jsonl_path, tail_lines):
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            self._ingest_trade_bar(record)
+            count += 1
+        _logger.info("Dashboard replay: intraday bars rebuilt from %d trades, symbols=%d", count, len(self._intraday_bars))
         return count
 
     def _replay_market_snapshot_trends(self, run_dir: Path) -> int:
@@ -1201,6 +1263,14 @@ class RealtimeDashboard:
             self._latest_sim_time = max(self._latest_sim_time, float(record.get("sim_time", 0.0) or 0.0))
             self.recent_trades.append(record)
 
+    def on_call_auction(self, symbol: str, payload: dict) -> None:
+        rec = dict(payload)
+        # 面板上保留最近一次“产生了成交价”的竞价（未交叉的收盘竞价不覆盖当日开盘价）
+        if rec.get("price") is not None:
+            self._last_auction[str(symbol).upper()] = rec
+        self._auction_history.append(rec)
+        self._latest_sim_time = max(self._latest_sim_time, float(rec.get("sim_time", 0.0) or 0.0))
+
     def on_agent_thinking_start(self, agent_id: int, payload: dict) -> None:
         self._latest_sim_time = max(self._latest_sim_time, float(payload.get("sim_time", 0.0)))
         self.thinking_agents[int(agent_id)] = {
@@ -1220,7 +1290,7 @@ class RealtimeDashboard:
             }
 
     def on_agent_order_scheduled(self, agent_id: int, payload: dict) -> None:
-        self._latest_sim_time = max(self._latest_sim_time, float(payload.get("execute_time", 0.0)))
+        # execute_time 是未来时刻，不能用它推进看板时钟（会让趋势图和交易日提前）
         aid = int(agent_id)
         self.scheduled_agents[aid] = {
             "agent_id": aid,
@@ -1245,6 +1315,8 @@ class RealtimeDashboard:
                     "tom_level": tom_level,
                     "reasoning": _extract_reasoning(llm_out, tom_level),
                     "action": str(llm_out.get("action", "hold")),
+                    "sentiment": _safe_float(llm_out.get("sentiment")),
+                    "confidence": _safe_float(llm_out.get("confidence")),
                     "tool_trace": (record.get("action_executed", {}) or {}).get("tool_trace", []),
                     "action_executed": record.get("action_executed", {}),
                 }
@@ -1286,6 +1358,8 @@ class RealtimeDashboard:
                             "quantity": int(action_exec.get("quantity", 0) or 0),
                             "tool_trace": compact_trace,
                             "reasoning": _extract_reasoning(llm_out, tom_level),
+                            "sentiment": _safe_float(llm_out.get("sentiment")),
+                            "confidence": _safe_float(llm_out.get("confidence")),
                         },
                     })
                 except asyncio.QueueFull:
@@ -1403,6 +1477,7 @@ class RealtimeDashboard:
         elif name == "trades":
             self._latest_sim_time = max(self._latest_sim_time, float(record.get("sim_time", 0.0) or 0.0))
             self.recent_trades.append(record)
+            self._ingest_trade_bar(record)
 
             if self._ws_clients:
                 try:
@@ -1424,23 +1499,37 @@ class RealtimeDashboard:
     async def _handle_ws(self, request: web.Request) -> web.WebSocketResponse:
         ws = web.WebSocketResponse(heartbeat=self._ws_heartbeat)
         await ws.prepare(request)
+        session = WsSession()
         self._ws_clients.add(ws)
+        self._ws_sessions[ws] = session
         _logger.info("WebSocket client connected (%d total)", len(self._ws_clients))
         try:
-            state = self._build_state()
-            await ws.send_json({"type": "full_state", "data": state})
+            state = self._build_state(session.topics)
+            await ws.send_json({"type": "state", "data": build_payload(session, state, self._heavy_cache_time, time.time())})
             async for msg in ws:
-                pass
+                if msg.type != WSMsgType.TEXT:
+                    continue
+                try:
+                    data = json.loads(msg.data)
+                except (TypeError, ValueError):
+                    continue
+                mtype = data.get("type") if isinstance(data, dict) else None
+                if mtype == "subscribe":
+                    session.set_topics(data.get("topics"), reset=bool(data.get("reset")))
+                elif mtype == "resync":
+                    session.reset()
         except Exception as ws_err:
             _logger.error("WebSocket handler error: %s: %s", type(ws_err).__name__, ws_err)
         finally:
             self._ws_clients.discard(ws)
+            self._ws_sessions.pop(ws, None)
             _logger.info("WebSocket client disconnected (%d remaining)", len(self._ws_clients))
         return ws
 
     async def _ws_broadcast_str(self, payload: str) -> None:
         dead: set[web.WebSocketResponse] = set()
-        for ws in self._ws_clients:
+        # send_str 可能挂起，期间连接的增删会改变集合；遍历快照避免 "Set changed size during iteration"
+        for ws in list(self._ws_clients):
             try:
                 await ws.send_str(payload)
             except Exception:
@@ -1465,8 +1554,22 @@ class RealtimeDashboard:
                 # 2) periodic full state push
                 now = _time.monotonic()
                 if now - last_full >= self._ws_push_interval and self._ws_clients:
-                    state = self._build_state()
-                    await self._ws_broadcast_str(json.dumps({"type": "full_state", "data": state}, ensure_ascii=False))
+                    union: set[str] = set()
+                    for sess in self._ws_sessions.values():
+                        union |= sess.topics
+                    state = self._build_state(union or set(WS_TOPICS))
+                    heavy_version = self._heavy_cache_time
+                    now_ts = time.time()
+                    for ws in list(self._ws_clients):
+                        sess = self._ws_sessions.get(ws)
+                        if sess is None:
+                            continue
+                        payload = build_payload(sess, state, heavy_version, now_ts)
+                        try:
+                            await ws.send_str(json.dumps({"type": "state", "data": payload}, ensure_ascii=False))
+                        except Exception:
+                            self._ws_clients.discard(ws)
+                            self._ws_sessions.pop(ws, None)
                     last_full = now
 
                 await asyncio.sleep(0.05)
@@ -1489,7 +1592,8 @@ class RealtimeDashboard:
         return web.Response(text=html, content_type="text/html")
 
     async def _handle_state(self, request: web.Request) -> web.Response:
-        payload = self._build_state()
+        payload = dict(self._build_state())
+        payload.pop("_holdings_fp", None)
         return web.json_response(payload)
 
     def _snapshot_bias_trend(self, trading_day: int) -> None:
@@ -1535,7 +1639,11 @@ class RealtimeDashboard:
 
         return stats
 
-    def _build_state(self) -> dict:
+    def _build_state(self, topics: set[str] | None = None) -> dict:
+        """构建看板状态。topics 为 None 时构建全部；否则跳过没有客户端订阅的重量级部分。"""
+        need = set(WS_TOPICS) if topics is None else set(topics)
+        need_market = "market" in need
+        need_social = "social" in need
         now_ts = time.time()
         sim_time = self._latest_sim_time
         trading_day = _compute_td(sim_time, self.trading_day_seconds)
@@ -1569,13 +1677,19 @@ class RealtimeDashboard:
 
         cda_by_symbol: dict[str, dict] = {}
         market_micro: dict[str, dict] = {}
-        for symbol, ob in self.orderbooks.items():
+        for symbol, ob in (self.orderbooks.items() if need_market else ()):
             l2 = ob.l2_data(depth=self.l2_depth)
             l2_attr = ob.l2_attribution(depth=self.l2_depth, per_level_orders=self.l2_quote_orders)
-            sym_trades = [t for t in list(self.recent_trades)[-120:] if str(t.get("symbol", "")).upper() == symbol][-80:]
+            sym_trades = [t for t in list(self.recent_trades)[-120:] if str(t.get("symbol", "")).upper() == symbol][-40:]
+            call_preview = ob.compute_call_price(ob.limit_reference_price) if ob.call_mode else None
             cda_by_symbol[symbol] = {
                 "last_price": ob.last_price,
                 "spread": l2.get("spread"),
+                "phase": ob.session_phase,
+                "call_auction": call_preview,
+                "last_auction": self._last_auction.get(symbol),
+                "limit_up": ob.limit_up_price if ob.price_limit_enabled else None,
+                "limit_down": ob.limit_down_price if ob.price_limit_enabled else None,
                 "bids": l2.get("bids", []),
                 "asks": l2.get("asks", []),
                 "bids_attribution": l2_attr.get("bids", []),
@@ -1633,6 +1747,8 @@ class RealtimeDashboard:
 
         index_snapshot = []
         index_series = {}
+        index_series_full: dict = {}
+        broad_index_series_full: list[dict] = []
         broad_market = {
             "name": "大盘(加权)",
             "value": None,
@@ -1649,8 +1765,11 @@ class RealtimeDashboard:
             index_snapshot = self.index_board.current_snapshot(float(sim_time), max_sim_time)
             # Frontend always consumes full available history and handles viewport locally
             # (drag-to-history / back-to-today), no lookback tuning required.
-            index_series = self.index_board.series_snapshot_all()
-            broad_index_series = self.index_board.broad_index_series_all()
+            # 指标/拟合度计算用全量序列；推送给看板的是按交易日压缩的序列（每天一行）
+            index_series_full = self.index_board.series_snapshot_all()
+            index_series = self.index_board.series_snapshot_daily()
+            broad_index_series_full = self.index_board.broad_index_series_all()
+            broad_index_series = self.index_board.broad_index_series_daily()
             broad_val = self.index_board.broad_index_value
             if index_snapshot:
                 pct_vals = [float(r.get("pct_chg", 0.0) or 0.0) for r in index_snapshot]
@@ -1659,8 +1778,8 @@ class RealtimeDashboard:
                 flat_count = len(pct_vals) - up_count - down_count
                 total_volume = sum(float(r.get("volume", 0.0) or 0.0) for r in index_snapshot)
                 broad_pct = None
-                if broad_index_series and len(broad_index_series) >= 2:
-                    broad_pct = broad_index_series[-1].get("pct_chg")
+                if broad_index_series_full and len(broad_index_series_full) >= 2:
+                    broad_pct = broad_index_series_full[-1].get("pct_chg")
                 elif broad_val is not None:
                     broad_pct = round(sum(pct_vals) / len(pct_vals), 4)
                 broad_market = {
@@ -1674,78 +1793,25 @@ class RealtimeDashboard:
                     "volume": round(total_volume, 2),
                 }
 
-        indicators = self._compute_indicators(index_series)
-        realtime_curve_metrics = self._compute_curve_realtime_metrics(index_series, trading_day)
+        indicators = self._compute_indicators(index_series_full) if need_market else {}
+        realtime_curve_metrics = self._compute_curve_realtime_metrics(index_series_full, trading_day)
 
-        social_graph_stats: dict = {}
-        graph = getattr(self.agent_manager.social_board, "social_graph", None)
-        if graph is not None:
-            profiles = list(graph._profiles.values())
-            total_follows = sum(p.following_count for p in profiles)
-            kol_list = sorted(
-                [p for p in profiles if p.is_kol],
-                key=lambda p: p.follower_count,
-                reverse=True,
-            )
-            graph_top_n = self._social_graph_top_n
-            rep_tracker = self.agent_manager.social_board.reputation_tracker
-            def _rep_of(aid: int) -> float:
-                return float(rep_tracker.get_reputation(aid)) if rep_tracker is not None else 0.0
-            top_by_followers = sorted(profiles, key=lambda p: p.follower_count, reverse=True)[:graph_top_n]
-            top_nodes = sorted(profiles, key=lambda p: _rep_of(p.agent_id), reverse=True)[:graph_top_n]
-            top_ids = {p.agent_id for p in top_nodes}
-            graph_edges: list[dict] = []
-            for p in top_nodes:
-                for target_id in p.following:
-                    if target_id in top_ids:
-                        graph_edges.append({"source": p.agent_id, "target": target_id})
-            graph_nodes = [
-                {
-                    "id": p.agent_id,
-                    "tom": getattr(self.agent_manager.agents.get(p.agent_id), "tom_level", 0),
-                    "followers": p.follower_count,
-                    "reputation": round(_rep_of(p.agent_id), 3),
-                    "is_kol": p.is_kol,
-                }
-                for p in top_nodes
-            ]
-            social_graph_stats = {
-                "total_agents": len(profiles),
-                "total_follows": total_follows,
-                "avg_following": round(total_follows / max(1, len(profiles)), 1),
-                "kol_count": len(kol_list),
-                "kol_reputation_threshold": graph._kol_reputation_threshold,
-                "kol_reputation_loss_threshold": graph._kol_reputation_loss_threshold,
-                # 兼容键：旧前端读取 kol_threshold，现统一指向声誉阈值
-                "kol_threshold": graph._kol_reputation_threshold,
-                "kol_agents": [
-                    {
-                        "agent_id": p.agent_id,
-                        "followers": p.follower_count,
-                        "following": p.following_count,
-                        "reputation": round(_rep_of(p.agent_id), 3),
-                    }
-                    for p in kol_list[:graph_top_n]
-                ],
-                "top_by_followers": [
-                    {
-                        "agent_id": p.agent_id,
-                        "followers": p.follower_count,
-                        "following": p.following_count,
-                        "reputation": round(_rep_of(p.agent_id), 3),
-                        "is_kol": p.is_kol,
-                    }
-                    for p in top_by_followers
-                ],
-                "graph_nodes": graph_nodes,
-                "graph_edges": graph_edges,
-            }
+        social_graph_stats: dict = heavy.get("social_graph") or {}
+
+        sim_cfg = getattr(self.agent_manager, "sim_config", {}) or {}
+        session = {
+            "phase": self.orderbook.session_phase,
+            "open_call_seconds": float(sim_cfg.get("call_auction_open_seconds", 0) or 0),
+            "close_call_seconds": float(sim_cfg.get("call_auction_close_seconds", 0) or 0),
+            "auctions": list(self._auction_history)[-40:] if need_market else [],
+        }
 
         return {
             "server_time": now_ts,
             "sim_time": sim_time,
             "trading_day": trading_day,
             "trading_day_seconds": self.trading_day_seconds,
+            "session": session,
             "metrics": {
                 "window_seconds": recent_window_seconds,
                 "total_agents": len(self.agent_manager.agents),
@@ -1753,12 +1819,17 @@ class RealtimeDashboard:
                 "unique_order_agents_10s": len(order_agent_ids_10s),
                 "completed_trade_agents": completed_trade_agents,
                 "completed_decision_agents": completed_decision_agents,
+                "thinking_count": len(self.thinking_agents),
                 "broad_market": broad_market,
                 **realtime_curve_metrics,
             },
             "index_snapshot": index_snapshot,
             "index_series": index_series,
             "broad_index_series": broad_index_series,
+            "daily_bars": self.index_board.daily_bars_all() if (self.index_board is not None and need_market) else {},
+            "intraday_bars": {k: list(v) for k, v in self._intraday_bars.items()} if need_market else {},
+            "intraday_bar_seconds": self._intraday_bar_seconds,
+            "sim_start_date": str(getattr(self.index_board, "_start_date", "") or "") if self.index_board is not None else "",
             "real_index_series": self._real_index_series,
             "real_curve_calendar": self._real_curve_calendar,
             "active": {
@@ -1774,6 +1845,8 @@ class RealtimeDashboard:
                 "recent_tools": list(self.recent_tools)[-120:],
             },
             "holdings": holdings,
+            "_holdings_fp": heavy.get("holdings_fp") or {},
+            "leaderboard": heavy.get("leaderboard") or {},
             "social_hot": social_hot,
             "social_latest": social_latest,
             "social_news": social_news,
@@ -1794,6 +1867,73 @@ class RealtimeDashboard:
             "social_graph": social_graph_stats,
             "mm_subsidy": dict(self.agent_manager.mm_subsidy),
         }
+
+    def _build_social_graph_stats(self) -> dict:
+        """社交网络统计与力导向图节点/边（随重量级缓存每 ~5 秒计算一次）。"""
+        graph = getattr(self.agent_manager.social_board, "social_graph", None)
+        if graph is None:
+            return {}
+        profiles = list(graph._profiles.values())
+        total_follows = sum(p.following_count for p in profiles)
+        kol_list = sorted(
+            [p for p in profiles if p.is_kol],
+            key=lambda p: p.follower_count,
+            reverse=True,
+        )
+        graph_top_n = self._social_graph_top_n
+        rep_tracker = self.agent_manager.social_board.reputation_tracker
+        def _rep_of(aid: int) -> float:
+            return float(rep_tracker.get_reputation(aid)) if rep_tracker is not None else 0.0
+        top_by_followers = sorted(profiles, key=lambda p: p.follower_count, reverse=True)[:graph_top_n]
+        top_nodes = sorted(profiles, key=lambda p: _rep_of(p.agent_id), reverse=True)[:graph_top_n]
+        top_ids = {p.agent_id for p in top_nodes}
+        graph_edges: list[dict] = []
+        for p in top_nodes:
+            for target_id in p.following:
+                if target_id in top_ids:
+                    graph_edges.append({"source": p.agent_id, "target": target_id})
+        graph_nodes = [
+            {
+                "id": p.agent_id,
+                "tom": getattr(self.agent_manager.agents.get(p.agent_id), "tom_level", 0),
+                "followers": p.follower_count,
+                "reputation": round(_rep_of(p.agent_id), 3),
+                "is_kol": p.is_kol,
+            }
+            for p in top_nodes
+        ]
+        social_graph_stats = {
+            "total_agents": len(profiles),
+            "total_follows": total_follows,
+            "avg_following": round(total_follows / max(1, len(profiles)), 1),
+            "kol_count": len(kol_list),
+            "kol_reputation_threshold": graph._kol_reputation_threshold,
+            "kol_reputation_loss_threshold": graph._kol_reputation_loss_threshold,
+            # 兼容键：旧前端读取 kol_threshold，现统一指向声誉阈值
+            "kol_threshold": graph._kol_reputation_threshold,
+            "kol_agents": [
+                {
+                    "agent_id": p.agent_id,
+                    "followers": p.follower_count,
+                    "following": p.following_count,
+                    "reputation": round(_rep_of(p.agent_id), 3),
+                }
+                for p in kol_list[:graph_top_n]
+            ],
+            "top_by_followers": [
+                {
+                    "agent_id": p.agent_id,
+                    "followers": p.follower_count,
+                    "following": p.following_count,
+                    "reputation": round(_rep_of(p.agent_id), 3),
+                    "is_kol": p.is_kol,
+                }
+                for p in top_by_followers
+            ],
+            "graph_nodes": graph_nodes,
+            "graph_edges": graph_edges,
+        }
+        return social_graph_stats
 
     def _get_heavy_state(self, now_ts: float) -> dict:
         """缓存重量级状态数据（holdings/tom_summary/social），按 _heavy_cache_interval 节流更新。"""
@@ -1852,7 +1992,8 @@ class RealtimeDashboard:
         social_news = []
         sb = getattr(self.agent_manager, "social_board", None)
         if sb is not None:
-            dual = sb.get_dual_perception(0, hot_k=20, latest_k=20)
+            # 看板展示全局热榜，而不是以做市商（agent 0）关注关系个性化排序的结果
+            dual = {"hot": sb.get_global_hot(top_k=20), "latest": sb.get_latest_feed(top_k=20)}
             for feed_name, feed_list, target in [("hot", dual.get("hot", []), social_hot), ("latest", dual.get("latest", []), social_latest)]:
                 for p in feed_list:
                     md = getattr(p, "metadata", {}) or {}
@@ -1940,14 +2081,27 @@ class RealtimeDashboard:
                 "top10_wealth_share": round(sum(wealths_sorted[-max(1, n // 10):]) / max(1, sum(wealths_sorted)), 4) if sum(wealths_sorted) > 0 else 0.0,
             }
 
+        # 排行榜由服务端计算，行情工作区不必为它拉取全部持仓
+        leaderboard: dict = {"total": len(holdings), "by_key": {}}
+        for key in ("return_pct", "wealth", "total_pnl", "trade_count"):
+            ranked = sorted(holdings, key=lambda h: float(h.get(key, 0) or 0), reverse=True)
+            slim = lambda h, k=key: {"agent_id": h["agent_id"], "tom_level": h["tom_level"], "value": h.get(k, 0)}
+            leaderboard["by_key"][key] = {
+                "top": [slim(h) for h in ranked[:10]],
+                "bottom": [slim(h) for h in ranked[-10:][::-1]] if len(ranked) > 10 else [],
+            }
+
         self._heavy_cache = {
             "holdings": holdings,
+            "holdings_fp": holdings_fingerprints(holdings),
+            "leaderboard": leaderboard,
             "completed_trade_agents": completed_trade_agents,
             "completed_decision_agents": completed_decision_agents,
             "tom_summary": tom_summary,
             "social_hot": social_hot,
             "social_latest": social_latest,
             "social_news": social_news,
+            "social_graph": self._build_social_graph_stats(),
         }
         self._heavy_cache_time = now_ts
         return self._heavy_cache

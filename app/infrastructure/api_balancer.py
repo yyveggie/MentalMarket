@@ -22,6 +22,8 @@ class ProviderConfig:
     model: str
     max_concurrency: int = 20
     timeout: float = 60.0
+    temperature: float | None = None
+    tool_choice: str | None = None
     extra_body: dict = field(default_factory=dict)
 
 
@@ -54,7 +56,19 @@ class APIBalancer:
         if isinstance(response_status, int):
             return response_status
         text = str(err)
-        m = re.search(r"\b([1-5]\d\d)\b", text)
+        # 只接受明确标注为状态码的三位数（"Error code: 429" / "status_code=500" / "HTTP 503" / "429 Too Many Requests"），
+        # 避免把端口号、计数等无关数字（如 host:443）误判成 4xx 而放弃重试
+        m = re.search(
+            r"(?:error[ _]code|status[ _]?code|status|http)\s*[:=]?\s*([1-5]\d\d)\b",
+            text, re.IGNORECASE,
+        )
+        if m is None:
+            m = re.search(
+                r"\b([1-5]\d\d)\s+(?:too many requests|internal server error|bad gateway|service unavailable|"
+                r"gateway time-?out|bad request|unauthorized|payment required|forbidden|not found|"
+                r"request timeout|unprocessable|overloaded)",
+                text, re.IGNORECASE,
+            )
         if m:
             try:
                 return int(m.group(1))
@@ -62,9 +76,17 @@ class APIBalancer:
                 return None
         return None
 
+    @staticmethod
+    def _is_tool_arguments_json_error(err: Exception) -> bool:
+        text = str(err).lower()
+        return "function.arguments" in text and "json format" in text
+
     def _is_retryable_error(self, err: Exception) -> bool:
+        """白名单制：只有明确的瞬时错误（429/5xx/超时/连接类）才重试，未知错误默认不重试。"""
         status = self._extract_status_code(err)
         name = type(err).__name__
+        if self._is_tool_arguments_json_error(err):
+            return True
         if status is not None:
             if status == 429 or 500 <= status < 600:
                 return True
@@ -74,12 +96,23 @@ class APIBalancer:
         lname = name.lower()
         if "badrequest" in lname or "invalidrequest" in lname:
             return False
-        retryable_keywords = ("connect", "timeout", "tempor", "rate", "unavailable")
-        if any(k in lname for k in retryable_keywords):
+        retryable_name_keywords = ("connect", "timeout", "tempor", "rate", "unavailable", "overload", "protocol")
+        if any(k in lname for k in retryable_name_keywords):
             return True
-        return True
+        # 部分 SDK 抛出泛型 Exception，仅消息中含瞬时错误特征（用长词避免误匹配，如 "rate" 会命中 "generate"）
+        msg = str(err).lower()
+        retryable_msg_keywords = (
+            "connection", "timed out", "timeout", "temporar",
+            "rate limit", "unavailable", "overloaded", "server error",
+        )
+        if any(k in msg for k in retryable_msg_keywords):
+            return True
+        logger.debug("Non-retryable by default: %s: %s", name, err)
+        return False
 
     def _should_dump_prompt(self, err: Exception) -> bool:
+        if self._is_tool_arguments_json_error(err):
+            return False
         status = self._extract_status_code(err)
         name = type(err).__name__
         if status is not None:
@@ -99,11 +132,12 @@ class APIBalancer:
                 chat_kwargs["extra_body"] = dict(cfg.extra_body)
             if self.max_tokens > 0:
                 chat_kwargs["max_tokens"] = self.max_tokens
+            temperature = cfg.temperature if cfg.temperature is not None else self.temperature
             self._models[name] = ChatOpenAI(
                 model=cfg.model,
                 api_key=cfg.api_key,  # type: ignore
                 base_url=cfg.base_url,
-                temperature=self.temperature,
+                temperature=temperature,
                 max_retries=1,
                 timeout=cfg.timeout,
                 **chat_kwargs,
@@ -158,17 +192,21 @@ class APIBalancer:
             sem = self._semaphores[provider.name]
             model = self._models[provider.name]
 
+            effective_tool_choice = tool_choice
+            if tool_choice == "required" and provider.tool_choice is not None:
+                effective_tool_choice = provider.tool_choice
             tool_ids = tuple(id(t) for t in tools) if tools else ()
-            cache_key = (provider_name, tool_ids, tool_choice)
-            for retry in range(self.max_retries_per_provider):
+            cache_key = (provider_name, tool_ids, effective_tool_choice)
+            max_provider_attempts = max(self.max_retries_per_provider, 8)
+            for retry in range(max_provider_attempts):
                 retry_wait = 0.0
                 async with sem:
                     if tools:
                         bound_model = self._bound_model_cache.get(cache_key)
                         if bound_model is None:
                             bind_kwargs = {}
-                            if tool_choice is not None:
-                                bind_kwargs["tool_choice"] = tool_choice
+                            if effective_tool_choice is not None:
+                                bind_kwargs["tool_choice"] = effective_tool_choice
                             bound_model = model.bind_tools(tools, **bind_kwargs)
                             self._bound_model_cache[cache_key] = bound_model
                     else:
@@ -182,9 +220,9 @@ class APIBalancer:
                         if tools:
                             print("--- tools ---")
                             print([getattr(t, "__name__", t.__class__.__name__) for t in tools])
-                        if tool_choice is not None:
+                        if effective_tool_choice is not None:
                             print("--- tool_choice ---")
-                            print(tool_choice)
+                            print(effective_tool_choice)
                         print("\033[96m===============================================\033[0m")
 
                     try:
@@ -202,7 +240,10 @@ class APIBalancer:
                             print(api_err)
                             print("\033[91m===============================================================\033[0m")
 
-                        retry_budget = self.max_retries_per_provider if retryable else 1
+                        if retryable and self._is_tool_arguments_json_error(api_err):
+                            retry_budget = max(self.max_retries_per_provider, 8)
+                        else:
+                            retry_budget = self.max_retries_per_provider if retryable else 1
                         if retry < retry_budget - 1:
                             retry_wait = min(
                                 self.retry_backoff_base_seconds * (2 ** retry),
@@ -274,6 +315,8 @@ def build_balancer_from_config(api_config: dict) -> APIBalancer:
             model=provider_cfg["model"],
             max_concurrency=provider_cfg.get("max_concurrency", 20),
             timeout=provider_cfg.get("timeout", default_timeout),
+            temperature=provider_cfg.get("temperature"),
+            tool_choice=provider_cfg.get("tool_choice"),
             extra_body=provider_cfg.get("extra_body", {}),
         )
         balancer.add_provider(cfg)

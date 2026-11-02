@@ -12,7 +12,7 @@ const tip = '极化指数 = 全体 Agent 情绪的标准差\n极端占比 = |sen
 <template>
   <div class="card">
     <div class="card-title">群体极化与信息茧房
-      <span class="info-btn" @mouseenter="showTip('p')" @mouseleave="hideTip">❕</span>
+      <span class="info-btn" @mouseenter="showTip('p')" @mouseleave="hideTip">i</span>
       <div v-if="activeTooltip === 'p'" class="custom-tooltip">{{ tip }}</div>
     </div>
     <div class="stat-grid">

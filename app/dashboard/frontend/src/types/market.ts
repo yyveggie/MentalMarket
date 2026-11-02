@@ -24,6 +24,8 @@ export interface Decision {
   tom_level: number
   reasoning: string
   action: string
+  sentiment?: number | null
+  confidence?: number | null
   tool_trace: ToolCall[]
   action_executed: ActionExecuted
 }
@@ -34,6 +36,8 @@ export interface ActionExecuted {
   decision_scope?: string
   price?: number
   quantity?: number
+  filled_quantity?: number
+  failure_reason?: string
   status?: string
   tool_trace?: ToolCall[]
 }
@@ -71,9 +75,49 @@ export interface L2Attribution {
 }
 
 /** CDA 订单簿数据 */
+/** 集合竞价虚拟参考价（竞价期间实时计算） */
+export interface CallAuctionInfo {
+  price: number
+  volume: number
+  imbalance: number
+  bid_unmatched: number
+  ask_unmatched: number
+  bid_total: number
+  ask_total: number
+}
+
+/** 一次集合竞价的撮合结果 */
+export interface AuctionResult {
+  sim_time: number
+  trading_day: number
+  symbol: string
+  kind: 'open' | 'close'
+  price: number | null
+  volume: number
+  imbalance: number
+  bid_unmatched: number
+  ask_unmatched: number
+  trades: number
+}
+
+/** 交易阶段：continuous 连续竞价 / open_call 开盘集合竞价 / close_call 收盘集合竞价 */
+export type SessionPhase = 'continuous' | 'open_call' | 'close_call' | string
+
+export interface SessionInfo {
+  phase: SessionPhase
+  open_call_seconds: number
+  close_call_seconds: number
+  auctions?: AuctionResult[]
+}
+
 export interface CDAData {
   last_price: number | null
   spread: number | null
+  phase?: SessionPhase
+  call_auction?: CallAuctionInfo | null
+  last_auction?: AuctionResult | null
+  limit_up?: number | null
+  limit_down?: number | null
   bids: L2Level[]
   asks: L2Level[]
   bids_attribution: L2Attribution[]
@@ -198,6 +242,28 @@ export interface PriceTrendPoint {
   p: number
 }
 
+/** 日线：真实历史日只有收盘价（real=true），仿真日为完整 OHLC（time 形如 "D3"） */
+export interface DailyBar {
+  time: string
+  day?: number
+  open?: number
+  high?: number
+  low?: number
+  close: number
+  volume: number
+  real: boolean
+}
+
+/** 盘中 K 线（t 为分桶起点的仿真秒） */
+export interface IntradayBar {
+  t: number
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
 /** 情绪趋势点 */
 export interface SentimentPoint {
   t: number
@@ -220,6 +286,7 @@ export interface ConfidencePoint {
 export interface Metrics {
   window_seconds: number
   total_agents: number
+  thinking_count?: number
   unique_decision_agents_10s: number
   unique_order_agents_10s: number
   completed_trade_agents: number
@@ -311,43 +378,89 @@ export interface BiasTrendPoint {
   tom2: BiasTrendTomSlice
 }
 
-/** 完整状态 payload（后端 _build_state 返回结构） */
+/** 追加型序列的差量（见后端 ws_session.py） */
+export interface SeriesDelta<T> {
+  full?: T[]
+  anchor?: unknown
+  replace_last?: boolean
+  rows?: T[]
+  limit?: number | null
+}
+
+export interface HoldingsDelta {
+  upsert: AgentHolding[]
+  remove: number[]
+}
+
+export interface LeaderboardEntry {
+  agent_id: number
+  tom_level: number
+  value: number
+}
+
+export interface Leaderboard {
+  total: number
+  by_key: Record<string, { top: LeaderboardEntry[]; bottom: LeaderboardEntry[] }>
+}
+
+/**
+ * 状态 payload（后端按订阅主题推送，字段可缺省；首条含静态字段，
+ * 追加型序列以 `<key>_delta` 给出，持仓以全量或 holdings_delta 给出）
+ */
 export interface MarketState {
   server_time: number
   sim_time: number
   trading_day: number
-  trading_day_seconds: number
-  metrics: Metrics
-  index_snapshot: IndexRow[]
-  index_series: Record<string, IndexRow[]>
-  broad_index_series: IndexRow[]
+  session?: SessionInfo
+  topics?: string[]
+  trading_day_seconds?: number
+  metrics?: Metrics
+  index_snapshot?: IndexRow[]
+  index_series?: Record<string, IndexRow[]>
+  index_series_delta?: Record<string, SeriesDelta<IndexRow>>
+  broad_index_series?: IndexRow[]
+  broad_index_series_delta?: SeriesDelta<IndexRow>
   real_index_series?: Record<string, RealIndexPoint[]>
   real_curve_calendar?: RealCalendarDay[]
-  active: ActiveState
-  holdings: AgentHolding[]
-  social_hot: SocialPost[]
-  social_latest: SocialPost[]
-  social_news: SocialPost[]
-  tom_summary: Record<string, TomLevelSummary>
-  technical_indicators: Record<string, TechnicalIndicator>
-  price_trend: Record<string, PriceTrendPoint[]>
-  sentiment_trend: SentimentPoint[]
-  confidence_trend: ConfidencePoint[]
-  deviation_trend: DeviationPoint[]
-  cda: CDAData
-  cda_by_symbol: Record<string, CDAData>
-  market_micro: Record<string, MarketMicro>
-  social_graph: Record<string, unknown>
-  bias_stats: BiasStats
-  bias_trends: BiasTrendPoint[]
-  cascade_stats: CascadeStats
-  liquidity_stats: LiquidityStats
-  plan_stats: PlanStats
+  active?: Partial<ActiveState>
+  holdings?: AgentHolding[]
+  holdings_delta?: HoldingsDelta
+  leaderboard?: Leaderboard
+  social_hot?: SocialPost[]
+  social_latest?: SocialPost[]
+  social_news?: SocialPost[]
+  tom_summary?: Record<string, TomLevelSummary>
+  technical_indicators?: Record<string, TechnicalIndicator>
+  price_trend?: Record<string, PriceTrendPoint[]>
+  price_trend_delta?: Record<string, SeriesDelta<PriceTrendPoint>>
+  daily_bars?: Record<string, DailyBar[]>
+  daily_bars_delta?: Record<string, SeriesDelta<DailyBar>>
+  intraday_bars?: Record<string, IntradayBar[]>
+  intraday_bars_delta?: Record<string, SeriesDelta<IntradayBar>>
+  intraday_bar_seconds?: number
+  sim_start_date?: string
+  sentiment_trend?: SentimentPoint[]
+  sentiment_trend_delta?: SeriesDelta<SentimentPoint>
+  confidence_trend?: ConfidencePoint[]
+  confidence_trend_delta?: SeriesDelta<ConfidencePoint>
+  deviation_trend?: DeviationPoint[]
+  deviation_trend_delta?: SeriesDelta<DeviationPoint>
+  cda?: CDAData
+  cda_by_symbol?: Record<string, CDAData>
+  market_micro?: Record<string, MarketMicro>
+  social_graph?: Record<string, unknown>
+  bias_stats?: BiasStats
+  bias_trends?: BiasTrendPoint[]
+  bias_trends_delta?: SeriesDelta<BiasTrendPoint>
+  cascade_stats?: CascadeStats
+  liquidity_stats?: LiquidityStats
+  plan_stats?: PlanStats
   mm_subsidy?: { cash_injected: number; cash_absorbed: number; shares_created: number; shares_absorbed: number; trade_count: number }
 }
 
 /** WebSocket 消息 */
 export type WSMessage =
+  | { type: 'state'; data: MarketState }
   | { type: 'full_state'; data: MarketState }
   | { type: 'event_trade'; data: TradeRecord }
   | { type: 'event_decision'; data: IncrementalDecision }
@@ -364,6 +477,8 @@ export interface IncrementalDecision {
   quantity: number
   tool_trace?: ToolCall[]
   reasoning?: string
+  sentiment?: number | null
+  confidence?: number | null
 }
 
 /** Agent 在 Arena 中的视觉状态 */

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { AgentHolding } from '@/types/market'
 import { useMarketStore } from '@/stores/marketStore'
-import { fmt, emotionEmoji, fmtCompact, pnlClass } from '@/utils/formatters'
+import { emotionLabel, fmtCn, fmtInt, fmtPct } from '@/utils/formatters'
 
 const props = defineProps<{
   agent: AgentHolding
@@ -12,13 +12,9 @@ const store = useMarketStore()
 
 const visual = computed(() => store.agentVisuals.get(props.agent.agent_id))
 const tomBadgeClass = computed(() => `badge-tom${props.agent.tom_level}`)
-
-const wealthChange = computed(() => {
-  const w = props.agent.wealth
-  const c = props.agent.cash
-  if (w > c * 1.05) return 'up'
-  if (w < c * 0.95) return 'down'
-  return 'flat'
+const returnClass = computed(() => {
+  const r = props.agent.return_pct ?? 0
+  return r > 0 ? 'color-up' : r < 0 ? 'color-down' : 'color-flat'
 })
 </script>
 
@@ -26,7 +22,7 @@ const wealthChange = computed(() => {
   <div class="agent-card" :class="{ thinking: visual?.phase === 'thinking' }">
     <div class="card-left">
       <div class="avatar" :class="tomBadgeClass">
-        <span class="avatar-emoji">{{ emotionEmoji(visual?.emotion ?? 'neutral') }}</span>
+        <span class="avatar-tom">T{{ agent.tom_level }}</span>
       </div>
     </div>
 
@@ -45,18 +41,14 @@ const wealthChange = computed(() => {
         >
           {{ visual.lastAction.toUpperCase() }}
         </span>
+        <span class="state-label">{{ emotionLabel(visual?.emotion ?? 'neutral') }}</span>
+        <span class="ret" :class="returnClass">{{ fmtPct(agent.return_pct) }}</span>
       </div>
 
       <div class="card-stats">
-        <span class="stat-item">
-          💰 <b :class="`color-${wealthChange}`">{{ fmtCompact(agent.wealth) }}</b>
-        </span>
-        <span class="stat-item">
-          💵 {{ fmtCompact(agent.cash) }}
-        </span>
-        <span class="stat-item">
-          📦 {{ agent.total_shares }}
-        </span>
+        <span class="stat-item"><span class="k">财富</span><b class="v">{{ fmtCn(agent.wealth, 2) }}</b></span>
+        <span class="stat-item"><span class="k">现金</span><span class="v">{{ fmtCn(agent.cash, 2) }}</span></span>
+        <span class="stat-item"><span class="k">持股</span><span class="v">{{ fmtInt(agent.total_shares) }}</span></span>
       </div>
 
       <div v-if="agent.current_positions_text" class="card-positions">
@@ -70,11 +62,15 @@ const wealthChange = computed(() => {
 .agent-card {
   display: flex;
   gap: 10px;
+  height: 88px;
+  box-sizing: border-box;
+  overflow: hidden;
   padding: 10px 12px;
   background: var(--surface-0);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
+  font-variant-numeric: tabular-nums;
 }
 
 .agent-card:hover {
@@ -90,8 +86,8 @@ const wealthChange = computed(() => {
 }
 
 .avatar {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -100,8 +96,10 @@ const wealthChange = computed(() => {
   background: var(--surface-2);
 }
 
-.avatar-emoji {
-  font-size: 18px;
+.avatar-tom {
+  font-size: 12px;
+  font-weight: 800;
+  font-family: var(--font-mono);
   line-height: 1;
 }
 
@@ -115,6 +113,7 @@ const wealthChange = computed(() => {
   align-items: center;
   gap: 5px;
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 .agent-id {
@@ -124,16 +123,53 @@ const wealthChange = computed(() => {
   color: var(--heading);
 }
 
+.state-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.ret {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
 .card-stats {
   display: flex;
-  gap: 10px;
-  font-size: 11px;
+  flex-wrap: wrap;
+  gap: 3px 14px;
+  font-size: 12px;
   font-family: var(--font-mono);
   color: var(--text-muted);
 }
 
+.stat-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.stat-item .k {
+  color: var(--text-dim);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.stat-item .v {
+  text-align: right;
+  white-space: nowrap;
+}
+
 .stat-item b {
   font-weight: 700;
+  color: var(--heading);
 }
 
 .card-positions {

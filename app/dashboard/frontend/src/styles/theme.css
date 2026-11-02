@@ -110,6 +110,7 @@ body {
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
   line-height: 1.5;
 }
 
@@ -199,3 +200,5 @@ body {
 .anim-fade-in { animation: fade-in 0.25s ease; }
 .anim-flash-up { animation: flash-up 0.5s ease-out; }
 .anim-flash-down { animation: flash-down 0.5s ease-out; }
+
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }

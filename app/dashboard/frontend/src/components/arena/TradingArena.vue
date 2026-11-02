@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useMarketStore } from '@/stores/marketStore'
-import { fmt, fmtCompact, emotionEmoji } from '@/utils/formatters'
+import { fmt, fmtCn, emotionLabel } from '@/utils/formatters'
 
 const emit = defineEmits<{
   'agent-click': [agentId: number]
@@ -73,7 +73,7 @@ const recentActivity = computed(() => {
           <div class="bar-stats">
             <div class="bar-stat">
               <span class="bs-label">财富（平均）</span>
-              <span class="bs-value">{{ fmtCompact(g.avgWealth) }}</span>
+              <span class="bs-value">{{ fmtCn(g.avgWealth, 2) }}</span>
             </div>
             <div class="bar-stat">
               <span class="bs-label">收益率（平均）</span>
@@ -124,7 +124,7 @@ const recentActivity = computed(() => {
           :class="act.action === 'buy' ? 'chip-buy' : act.action === 'sell' ? 'chip-sell' : 'chip-hold'"
           @click="emit('agent-click', act.agentId)"
         >
-          <span>{{ emotionEmoji(act.emotion) }}</span>
+          <span>{{ emotionLabel(act.emotion) }}</span>
           <span class="chip-id">A{{ act.agentId }}</span>
           <span class="chip-action">{{ act.action === 'buy' ? '▲' : act.action === 'sell' ? '▼' : '─' }}</span>
           <span v-if="act.price" class="chip-detail">{{ fmt(act.price, 2) }}×{{ act.quantity }}</span>

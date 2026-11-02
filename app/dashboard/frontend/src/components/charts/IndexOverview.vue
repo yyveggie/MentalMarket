@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import * as d3 from 'd3'
+import { ref, computed, watch } from 'vue'
 import { useMarketStore } from '@/stores/marketStore'
-import { fmt, fmtPct } from '@/utils/formatters'
+import { fmt, fmtPct, fmtCn } from '@/utils/formatters'
+import { simEpochFromDate, simDayToTime } from '@/utils/simTime'
+import KlineChart, { type OverlayPoint } from './pro/KlineChart.vue'
+import IndexCard from './IndexCard.vue'
+import EventTicker from './EventTicker.vue'
+import type { IndexCardData } from './indexOverviewTypes'
 
 const store = useMarketStore()
-const broadSvg = ref<SVGSVGElement>()
 
 const broad = computed(() => store.broadMarket)
 const currentTradingDay = computed(() => Math.max(1, Number(store.tradingDay || 1)))
@@ -15,12 +18,6 @@ type SortKey = 'symbol' | 'pctChg' | 'price' | 'volume'
 const sortKey = ref<SortKey>('pctChg')
 const sortAsc = ref(false)
 const selectedSymbol = ref<string | null>(null)
-const broadViewMode = ref<'today' | 'history'>('today')
-const broadViewOffset = ref(0)
-const broadWindowSize = ref<number | null>(null)
-const broadDragPx = ref(0)
-const broadVisibleStartDate = ref<string | null>(null)
-const broadVisibleEndDate = ref<string | null>(null)
 
 function toggleSort(key: SortKey) {
   if (sortKey.value === key) {
@@ -215,76 +212,7 @@ function computeMincerZarnowitz(realVar: number[], simVar: number[]): {
   return { alpha, beta, r2, waldChi2, pValue, n }
 }
 
-function compactDateLabel(dateStr: string | null | undefined): string {
-  if (!dateStr) return '--'
-  const s = String(dateStr)
-  // "Day N" 格式直接返回
-  if (s.startsWith('Day ')) return s
-  return s.length >= 10 ? s.slice(5, 10) : s
-}
-
-function calendarDateByDay(day: number): string | null {
-  const row = store.realCurveCalendar.find((item) => item.day === day)
-  return row?.date ?? null
-}
-
-function resolveDisplayDate(rawDate: string): string | null {
-  const day = simDateToTradingDay(rawDate, store.tradingDaySeconds)
-  if (day !== null) {
-    const calDate = calendarDateByDay(day)
-    if (calDate) return calDate
-    return `Day ${day}`
-  }
-  return rawDate || null
-}
-
-function collectClosedSegments(flags: boolean[]): Array<{ start: number; end: number }> {
-  const segments: Array<{ start: number; end: number }> = []
-  let start = -1
-  for (let i = 0; i < flags.length; i++) {
-    if (flags[i]) {
-      if (start < 0) start = i
-    } else if (start >= 0) {
-      segments.push({ start, end: i - 1 })
-      start = -1
-    }
-  }
-  if (start >= 0) segments.push({ start, end: flags.length - 1 })
-  return segments
-}
-
-function paintClosedBands(
-  g: d3.Selection<SVGGElement, unknown, null, undefined>,
-  x: d3.ScaleLinear<number, number>,
-  iW: number,
-  iH: number,
-  pointCount: number,
-  flags: boolean[],
-) {
-  if (pointCount < 2 || flags.length === 0) return
-  const segments = collectClosedSegments(flags.slice(0, pointCount))
-  if (!segments.length) return
-
-  const step = iW / Math.max(1, pointCount - 1)
-  const layer = g.append('g').attr('class', 'closed-bands')
-  for (const seg of segments) {
-    const x0 = seg.start <= 0 ? 0 : Math.max(0, x(seg.start - 1))
-    const x1 = seg.end === pointCount - 1
-      ? iW
-      : (seg.end <= 0 ? Math.min(iW, step) : Math.min(iW, x(seg.end)))
-    if (x1 <= x0) continue
-    layer.append('rect')
-      .attr('x', x0)
-      .attr('y', 0)
-      .attr('width', x1 - x0)
-      .attr('height', iH)
-      .attr('fill', '#cbd5e1')
-      .attr('opacity', 0.1)
-      .attr('pointer-events', 'none')
-  }
-}
-
-const indexData = computed(() => {
+const indexData = computed<IndexCardData[]>(() => {
   const calendarByDay = new Map<number, { date: string; market_status: string }>()
   for (const item of store.realCurveCalendar) {
     if (item.day > 0 && item.date) {
@@ -298,7 +226,7 @@ const indexData = computed(() => {
   const currentDay = currentTradingDay.value
 
   const symbols = Array.from(new Set([...Object.keys(store.realIndexSeries), ...Object.keys(store.indexSeries)])).filter(s => s !== '__BROAD__')
-  const items = symbols.map((symbol) => {
+  const items: IndexCardData[] = symbols.map((symbol) => {
     const simRows = store.indexSeries[symbol] ?? []
     const realRows = store.realIndexSeries[symbol] ?? []
 
@@ -522,30 +450,64 @@ const selectedIndexData = computed(() => {
   return indexData.value.find((item) => item.symbol === selectedSymbol.value) ?? null
 })
 
+const centerSymbol = computed(() => selectedSymbol.value ?? '__BROAD__')
 const centerTitle = computed(() => selectedIndexData.value?.symbol ?? (broad.value?.name ?? '大盘(加权)'))
 const centerValue = computed(() => selectedIndexData.value?.price ?? broad.value?.value ?? null)
 const centerPct = computed(() => selectedIndexData.value?.pctChg ?? broad.value?.pct_chg ?? null)
 
-const broadDateRange = computed(() => {
-  const rows = store.realCurveCalendar
-    .filter((item) => item.day > 0 && item.date)
-    .sort((a, b) => a.day - b.day)
-  if (!rows.length) {
-    return { start: null as string | null, end: null as string | null }
+// 预测拟合模式：把真实指数按交易日映射到仿真日的时间轴上，叠加在 K 线主图里（归一化坐标下可直接对比）
+const epoch = computed(() => simEpochFromDate(store.simStartDate))
+const realOverlay = computed<OverlayPoint[] | null>(() => {
+  const realRows = store.realIndexSeries[centerSymbol.value] ?? []
+  if (!realRows.length) return null
+  const dayByDate = new Map<string, number>()
+  for (const c of store.realCurveCalendar) {
+    if (c.day > 0 && c.date) dayByDate.set(c.date, c.day)
   }
-
-  const end = rows[rows.length - 1].date
-
-  return {
-    start: rows[0].date,
-    end,
+  const pts: OverlayPoint[] = []
+  for (const r of realRows) {
+    if (r.is_closed) continue
+    const day = dayByDate.get(String(r.date ?? ''))
+    const v = Number(r.close)
+    if (day == null || !Number.isFinite(v)) continue
+    pts.push({ time: simDayToTime(epoch.value, day), value: v })
   }
+  pts.sort((a, b) => a.time - b.time)
+  return pts.length ? pts : null
 })
 
-const centerStartDate = computed(() => selectedIndexData.value?.firstDate ?? broadDateRange.value.start)
-const centerEndDate = computed(() => selectedIndexData.value?.lastDate ?? broadDateRange.value.end)
-const visibleStartDate = computed(() => selectedIndexData.value?.firstDate ?? broadVisibleStartDate.value ?? centerStartDate.value)
-const visibleEndDate = computed(() => selectedIndexData.value?.lastDate ?? broadVisibleEndDate.value ?? centerEndDate.value)
+// ── 市场宽度 + 指数涨跌热力条（填充中心卡片下方） ──
+const heatRows = computed(() => {
+  const items = [...indexData.value].sort((a, b) => b.pctChg - a.pctChg)
+  const maxAbs = Math.max(0.01, ...items.map((i) => Math.abs(i.pctChg)))
+  return items.map((i) => ({
+    symbol: i.symbol,
+    pctChg: i.pctChg,
+    volume: i.volume,
+    width: (Math.abs(i.pctChg) / maxAbs) * 100,
+    selected: isCenterSymbol(i.symbol),
+  }))
+})
+
+const breadth = computed(() => {
+  const items = indexData.value
+  const up = items.filter((i) => i.pctChg > 0).length
+  const down = items.filter((i) => i.pctChg < 0).length
+  const flat = items.length - up - down
+  const avgPct = items.length ? items.reduce((s, i) => s + i.pctChg, 0) / items.length : null
+  const totalVolume = items.reduce((s, i) => s + (i.volume || 0), 0)
+  const broadBars = store.dailyBars['__BROAD__'] ?? []
+  const last = broadBars[broadBars.length - 1]
+  const prev = broadBars[broadBars.length - 2]
+  let amplitude: number | null = null
+  if (last && !last.real && last.high != null && last.low != null) {
+    const base = prev?.close ?? last.open ?? null
+    if (base) amplitude = ((last.high - last.low) / base) * 100
+  }
+  const best = heatRows.value[0] ?? null
+  const worst = heatRows.value[heatRows.value.length - 1] ?? null
+  return { up, down, flat, total: items.length, upPct: items.length ? (up / items.length) * 100 : 50, avgPct, totalVolume, amplitude, best, worst }
+})
 
 function toggleCenterSymbol(symbol: string) {
   selectedSymbol.value = selectedSymbol.value === symbol ? null : symbol
@@ -555,279 +517,10 @@ function isCenterSymbol(symbol: string): boolean {
   return selectedSymbol.value === symbol
 }
 
-function onIndexCardKeydown(event: KeyboardEvent, symbol: string) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault()
-    toggleCenterSymbol(symbol)
-  }
-}
-
-function resetBroadToToday() {
-  broadViewMode.value = 'today'
-  broadViewOffset.value = 0
-  broadWindowSize.value = null
-  broadDragPx.value = 0
-  renderCenterChart()
-}
-
-function sparklinePoints(prices: Array<number | null>, min: number, max: number): string {
-  const points: string[] = []
-  const validCount = prices.filter((v): v is number => v !== null).length
-  if (validCount < 2) return ''
-  const range = max - min
-  const isFlat = Math.abs(range) < 1e-12
-  for (let i = 0; i < prices.length; i++) {
-    const p = prices[i]
-    if (p === null) continue
-    const x = (i / Math.max(1, prices.length - 1)) * 80
-    const y = isFlat ? 11 : 20 - ((p - min) / range) * 18
-    points.push(`${x.toFixed(1)},${y.toFixed(1)}`)
-  }
-  return points.join(' ')
-}
-
-function renderCenterChart() {
-  if (!broadSvg.value) return
-  const svg = d3.select(broadSvg.value)
-  svg.selectAll('*').remove()
-
-  const rect = broadSvg.value.getBoundingClientRect()
-  const w = rect.width, h = rect.height
-  const m = { top: 8, right: 10, bottom: 10, left: 10 }
-  const iW = w - m.left - m.right, iH = h - m.top - m.bottom
-  if (iW <= 0 || iH <= 0) return
-
-  const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
-
-  const selected = selectedIndexData.value
-  if (selected) {
-    broadVisibleStartDate.value = selected.firstDate ?? null
-    broadVisibleEndDate.value = selected.lastDate ?? null
-
-    const realSeries = selected.normRealSparkline
-    const simSeries = selected.normSimSparkline
-    const n = Math.max(realSeries.length, simSeries.length)
-      const values = [...realSeries, ...simSeries].filter((v): v is number => v !== null && Number.isFinite(v))
-    if (n < 2 || values.length < 2) return
-
-    const x = d3.scaleLinear().domain([0, n - 1]).range([0, iW])
-    const ext = d3.extent(values) as [number, number]
-    const pad = (ext[1] - ext[0]) * 0.08 || 1
-    const y = d3.scaleLinear().domain([ext[0] - pad, ext[1] + pad]).range([iH, 0])
-
-    const closedMask = Array.from({ length: n }, (_, i) => Boolean(selected.closedMask?.[i]))
-    paintClosedBands(g, x, iW, iH, n, closedMask)
-
-    const line = d3.line<number | null>()
-      .defined((d) => d !== null && Number.isFinite(d))
-      .x((_, i) => x(i))
-      .y((d) => y(d as number))
-      .curve(d3.curveMonotoneX)
-
-      const lineSim = d3.line<number | null>()
-        .defined((d) => d !== null && Number.isFinite(d))
-        .x((_, i) => x(i))
-        .y((d) => y(d as number))
-        .curve(d3.curveLinear)
-
-    g.append('path')
-      .datum(realSeries)
-      .attr('fill', 'none')
-      .attr('stroke', '#64748b')
-      .attr('stroke-width', 2)
-      .attr('d', line)
-
-    g.append('path')
-      .datum(simSeries)
-      .attr('fill', 'none')
-      .attr('stroke', '#ef5350')
-      .attr('stroke-width', 2.4)
-      .attr('d', lineSim)
-    return
-  }
-
-  const data = store.broadIndexSeries
-  if (!data.length) {
-    broadVisibleStartDate.value = null
-    broadVisibleEndDate.value = null
-    return
-  }
-
-  // --- 真实大盘曲线（__BROAD__）对齐 ---
-  const realBroadRows = store.realIndexSeries['__BROAD__'] ?? []
-  const calendarByDay = new Map<number, { date: string }>()
-  for (const item of store.realCurveCalendar) {
-    if (item.day > 0 && item.date) calendarByDay.set(item.day, { date: item.date })
-  }
-  const dayByDate = new Map<string, number>()
-  for (const [day, item] of calendarByDay.entries()) {
-    if (item.date) dayByDate.set(item.date, day)
-  }
-  const realCloseByDay = new Map<number, number>()
-  for (const r of realBroadRows) {
-    const date = String(r.date ?? '')
-    const day = dayByDate.get(date)
-    const close = Number(r.close)
-    if (day != null && Number.isFinite(close)) realCloseByDay.set(day, close)
-  }
-  const hasRealBroad = realCloseByDay.size > 0
-
-  const prices = data.map((d) => Number(d.close))
-  const dateLabels = data.map((d) => resolveDisplayDate(String(d.date ?? '')))
-  const dayTags = data.map((d) => simDateToTradingDay(String(d.date ?? ''), store.tradingDaySeconds))
-
-  let todayStart = dayTags.findIndex((d) => d === currentTradingDay.value)
-  if (todayStart < 0) {
-    const lastKnownDay = [...dayTags].reverse().find((d) => d !== null)
-    if (lastKnownDay !== undefined && lastKnownDay !== null) {
-      todayStart = dayTags.findIndex((d) => d === lastKnownDay)
-    }
-  }
-  if (todayStart < 0) {
-    todayStart = Math.max(0, prices.length - 1)
-  }
-
-  const todayWindow = Math.max(8, prices.length - todayStart)
-  const baseWindowSize = Math.min(prices.length, todayWindow)
-  const windowSize = Math.max(
-    8,
-    Math.min(
-      prices.length,
-      broadWindowSize.value ?? baseWindowSize,
-    ),
-  )
-  broadWindowSize.value = windowSize
-  const maxOffset = Math.max(0, prices.length - windowSize)
-
-  if (broadViewMode.value === 'today') {
-    broadViewOffset.value = 0
-  }
-
-  const appliedOffset = broadViewMode.value === 'history'
-    ? Math.max(0, Math.min(maxOffset, broadViewOffset.value))
-    : 0
-  broadViewOffset.value = appliedOffset
-
-  const endIdx = prices.length - 1 - appliedOffset
-  const startIdx = Math.max(0, endIdx - windowSize + 1)
-  const viewPrices = prices.slice(startIdx, endIdx + 1)
-  const viewDates = dateLabels.slice(startIdx, endIdx + 1)
-
-  broadVisibleStartDate.value = viewDates[0] ?? null
-  broadVisibleEndDate.value = viewDates[viewDates.length - 1] ?? null
-
-  if (viewPrices.length < 2) return
-
-  if (hasRealBroad) {
-    const viewDayTags = dayTags.slice(startIdx, endIdx + 1)
-    const simBase = firstNonNull(viewPrices)
-    const normSim = normalizeSeries(viewPrices.map(v => v as number | null), simBase)
-
-    const realPricesRaw: Array<number | null> = viewDayTags.map(d => d !== null ? (realCloseByDay.get(d) ?? null) : null)
-    const realBase = firstNonNull(realPricesRaw)
-    const normReal = normalizeSeries(realPricesRaw, realBase)
-
-    const allVals = [...normSim, ...normReal].filter((v): v is number => v !== null && Number.isFinite(v))
-    if (allVals.length < 2) return
-
-    const x = d3.scaleLinear().domain([0, viewPrices.length - 1]).range([0, iW])
-    const ext = d3.extent(allVals) as [number, number]
-    const pad = (ext[1] - ext[0]) * 0.08 || 1
-    const y = d3.scaleLinear().domain([ext[0] - pad, ext[1] + pad]).range([iH, 0])
-
-    const lineReal = d3.line<number | null>()
-      .defined(d => d !== null && Number.isFinite(d as number))
-      .x((_, i) => x(i)).y(d => y(d as number)).curve(d3.curveLinear)
-    const lineSim = d3.line<number | null>()
-      .defined(d => d !== null && Number.isFinite(d as number))
-      .x((_, i) => x(i)).y(d => y(d as number)).curve(d3.curveLinear)
-
-    g.append('path').datum(normReal).attr('fill', 'none').attr('stroke', '#64748b').attr('stroke-width', 2).attr('d', lineReal)
-    g.append('path').datum(normSim).attr('fill', 'none').attr('stroke', '#ef5350').attr('stroke-width', 2.4).attr('d', lineSim)
-  } else {
-    const x = d3.scaleLinear().domain([0, viewPrices.length - 1]).range([0, iW])
-    const ext = d3.extent(viewPrices) as [number, number]
-    const pad = (ext[1] - ext[0]) * 0.1 || 1
-    const y = d3.scaleLinear().domain([ext[0] - pad, ext[1] + pad]).range([iH, 0])
-
-    const isUp = viewPrices[viewPrices.length - 1] >= viewPrices[0]
-    const color = isUp ? '#ef5350' : '#26a69a'
-
-    const area = d3.area<number>()
-      .x((_, i) => x(i)).y0(iH).y1((d) => y(d)).curve(d3.curveMonotoneX)
-    const line = d3.line<number>()
-      .x((_, i) => x(i)).y((d) => y(d)).curve(d3.curveMonotoneX)
-
-    g.append('path').datum(viewPrices).attr('fill', color).attr('opacity', 0.08).attr('d', area)
-    g.append('path').datum(viewPrices).attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2).attr('d', line)
-  }
-
-  const dragLayer = g.append('rect')
-    .attr('x', 0)
-    .attr('y', 0)
-    .attr('width', iW)
-    .attr('height', iH)
-    .attr('fill', 'transparent')
-    .style('cursor', maxOffset > 0 ? 'grab' : 'default')
-
-  if (maxOffset > 0) {
-    const pxPerStep = Math.max(2, iW / Math.max(24, windowSize))
-    const dragBehavior = d3.drag<SVGRectElement, unknown>()
-      .on('start', () => {
-        broadDragPx.value = 0
-        broadViewMode.value = 'history'
-      })
-      .on('drag', (event) => {
-        broadViewMode.value = 'history'
-        broadDragPx.value += event.dx
-        const step = Math.trunc(broadDragPx.value / pxPerStep)
-        if (step === 0) return
-        broadDragPx.value -= step * pxPerStep
-        broadViewOffset.value = Math.max(0, Math.min(maxOffset, broadViewOffset.value + step))
-        renderCenterChart()
-      })
-    dragLayer.call(dragBehavior)
-  }
-
-  dragLayer.on('wheel', (event: WheelEvent) => {
-    event.preventDefault()
-    if (prices.length <= 8) return
-
-    const curWindow = broadWindowSize.value ?? baseWindowSize
-    const step = Math.max(2, Math.round(curWindow * 0.08))
-    const nextWindow = Math.max(8, Math.min(prices.length, curWindow + (event.deltaY > 0 ? step : -step)))
-    if (nextWindow === curWindow) return
-
-    broadViewMode.value = 'history'
-    broadWindowSize.value = nextWindow
-    const nextMaxOffset = Math.max(0, prices.length - nextWindow)
-    broadViewOffset.value = Math.max(0, Math.min(nextMaxOffset, broadViewOffset.value))
-    renderCenterChart()
-  })
-}
-
-let resizeObs: ResizeObserver | null = null
-onMounted(() => {
-  renderCenterChart()
-  if (broadSvg.value) {
-    resizeObs = new ResizeObserver(() => renderCenterChart())
-    resizeObs.observe(broadSvg.value)
-  }
-})
-onUnmounted(() => resizeObs?.disconnect())
 watch(indexData, (items) => {
   if (selectedSymbol.value && !items.some((item) => item.symbol === selectedSymbol.value)) {
     selectedSymbol.value = null
   }
-  renderCenterChart()
-}, { deep: true })
-watch(() => store.broadIndexSeries, renderCenterChart, { deep: true })
-watch(selectedSymbol, renderCenterChart)
-watch(currentTradingDay, () => {
-  if (broadViewMode.value === 'today') {
-    broadViewOffset.value = 0
-  }
-  renderCenterChart()
 })
 </script>
 
@@ -836,38 +529,29 @@ watch(currentTradingDay, () => {
     <div class="panel-head">
       <div class="card-title">{{ centerTitle }}</div>
       <div class="global-fit-pills" v-if="store.metrics">
-        <span v-if="store.metrics.prediction_accuracy_same_day_pct != null || store.metrics.prediction_accuracy_pct != null" class="fit-pill">
-          🎯 同日 <b>{{ fmt(store.metrics.prediction_accuracy_same_day_pct ?? store.metrics.prediction_accuracy_pct, 1) }}%</b>
+        <span v-if="store.metrics.prediction_accuracy_same_day_pct != null || store.metrics.prediction_accuracy_pct != null" class="fit-pill" title="同日方向准确率">
+          同日 <b>{{ fmt(store.metrics.prediction_accuracy_same_day_pct ?? store.metrics.prediction_accuracy_pct, 1) }}%</b>
           <small v-if="(store.metrics.prediction_same_day_sample_count ?? store.metrics.prediction_sample_count ?? 0) > 0">
             n={{ store.metrics.prediction_same_day_sample_count ?? store.metrics.prediction_sample_count }}
           </small>
         </span>
-        <span v-if="store.metrics.prediction_accuracy_forward1_pct != null" class="fit-pill">
-          🧭 前瞻1日 <b>{{ fmt(store.metrics.prediction_accuracy_forward1_pct, 1) }}%</b>
+        <span v-if="store.metrics.prediction_accuracy_forward1_pct != null" class="fit-pill" title="前瞻 1 日方向准确率">
+          前瞻1日 <b>{{ fmt(store.metrics.prediction_accuracy_forward1_pct, 1) }}%</b>
           <small v-if="(store.metrics.prediction_forward1_sample_count ?? 0) > 0">n={{ store.metrics.prediction_forward1_sample_count }}</small>
         </span>
-        <span v-if="store.metrics.volatility_fit_pct != null" class="fit-pill">
-          📈 拟合 <b>{{ fmt(store.metrics.volatility_fit_pct, 1) }}%</b>
+        <span v-if="store.metrics.volatility_fit_pct != null" class="fit-pill" title="波动拟合度">
+          拟合 <b>{{ fmt(store.metrics.volatility_fit_pct, 1) }}%</b>
         </span>
-        <span v-if="store.metrics.volatility_qlike != null" class="fit-pill">
-          📐 QL <b>{{ fmt(store.metrics.volatility_qlike, 3) }}</b>
+        <span v-if="store.metrics.volatility_qlike != null" class="fit-pill" title="QLIKE 波动损失">
+          QLIKE <b>{{ fmt(store.metrics.volatility_qlike, 3) }}</b>
         </span>
-        <span v-if="store.metrics.volatility_log_rmse != null" class="fit-pill">
-          📏 LR <b>{{ fmt(store.metrics.volatility_log_rmse, 3) }}</b>
+        <span v-if="store.metrics.volatility_log_rmse != null" class="fit-pill" title="对数方差 RMSE">
+          Log-RMSE <b>{{ fmt(store.metrics.volatility_log_rmse, 3) }}</b>
         </span>
-        <span v-if="store.metrics.mz_beta != null || store.metrics.mz_p_value != null" class="fit-pill">
-          🧮 MZ β=<b>{{ store.metrics.mz_beta == null ? '-' : fmt(store.metrics.mz_beta, 3) }}</b>
+        <span v-if="store.metrics.mz_beta != null || store.metrics.mz_p_value != null" class="fit-pill" title="Mincer-Zarnowitz 回归">
+          MZ β=<b>{{ store.metrics.mz_beta == null ? '-' : fmt(store.metrics.mz_beta, 3) }}</b>
           p=<b>{{ store.metrics.mz_p_value == null ? '-' : fmt(store.metrics.mz_p_value, 3) }}</b>
         </span>
-      </div>
-      <div class="panel-actions">
-
-        <button
-          v-if="!selectedIndexData"
-          class="sort-btn"
-          :class="{ active: broadViewMode === 'today' }"
-          @click="resetBroadToToday"
-        >当日</button>
       </div>
     </div>
 
@@ -877,6 +561,7 @@ watch(currentTradingDay, () => {
         class="sort-btn" :class="{ active: sortKey === s.key }"
         @click="toggleSort(s.key)"
       >{{ s.label }}{{ sortArrow(s.key) }}</button>
+      <EventTicker class="sort-ticker" />
       <span class="selection-tip" :class="{ active: !!selectedIndexData }">
         {{ selectedIndexData ? ('已选中 ' + selectedIndexData.symbol + '，再次点击可恢复大盘') : '未选指数，当前显示大盘' }}
       </span>
@@ -884,64 +569,13 @@ watch(currentTradingDay, () => {
 
     <div class="top-layout">
       <div class="idx-column">
-        <div
+        <IndexCard
           v-for="idx in leftColumnData"
           :key="idx.symbol"
-          class="idx-card"
-          :class="[
-            idx.pctChg > 0 ? 'idx-up' : idx.pctChg < 0 ? 'idx-down' : '',
-            { 'idx-selected': isCenterSymbol(idx.symbol) }
-          ]"
-          role="button"
-          tabindex="0"
-          @click="toggleCenterSymbol(idx.symbol)"
-          @keydown="onIndexCardKeydown($event, idx.symbol)"
-        >
-          <div class="idx-row-top">
-            <span class="idx-sym">{{ idx.symbol }}</span>
-            <span class="idx-price">{{ fmt(idx.price, 2) }}</span>
-            <span class="idx-chg">
-              {{ idx.pctChg > 0 ? '▲' : idx.pctChg < 0 ? '▼' : '─' }}
-              {{ idx.pctChg > 0 ? '+' : '' }}{{ idx.pctChg.toFixed(2) }}%
-            </span>
-          </div>
-          <div class="sparkline-wrap chart-only">
-            <svg v-if="idx.normRealSparkline.length > 1 || idx.simSparklineRaw.length > 1" class="sparkline" :viewBox="`0 0 80 24`" preserveAspectRatio="none">
-              <polyline
-                v-if="idx.normRealSparkline.length > 1"
-                :points="sparklinePoints(idx.normRealSparkline, idx.normLow, idx.normHigh)"
-                fill="none"
-                stroke="#64748b"
-                stroke-width="1.2"
-                stroke-opacity="0.95"
-              />
-              <polyline
-                :points="sparklinePoints(idx.normSimSparkline, idx.normLow, idx.normHigh)"
-                fill="none"
-                :stroke="idx.normRealSparkline.length > 1 ? '#ef5350' : (idx.pctChg >= 0 ? '#ef5350' : '#26a69a')"
-                stroke-width="1.5"
-              />
-            </svg>
-          </div>
-          <div class="sparkline-meta text-below">
-            <div class="idx-metrics">
-              <span>同日 {{ idx.predictionSameDayAccuracyPct == null ? '-' : (idx.predictionSameDayAccuracyPct.toFixed(1) + '%') }}</span>
-              <span>前瞻 {{ idx.predictionForward1AccuracyPct == null ? '-' : (idx.predictionForward1AccuracyPct.toFixed(1) + '%') }}</span>
-              <span>拟合 {{ idx.volatilityFitPct == null ? '-' : (idx.volatilityFitPct.toFixed(1) + '%') }}</span>
-            </div>
-            <div class="idx-metrics-sub">
-              <span>QL {{ idx.qlike == null ? '-' : idx.qlike.toFixed(3) }}</span>
-              <span>LR {{ idx.logRmse == null ? '-' : idx.logRmse.toFixed(3) }}</span>
-              <span>MZ β {{ idx.mzBeta == null ? '-' : idx.mzBeta.toFixed(2) }}</span>
-              <span>p {{ idx.mzPValue == null ? '-' : idx.mzPValue.toFixed(3) }}</span>
-            </div>
-              <div class="sparkline-dates">
-                <span :title="idx.firstDate ?? ''">{{ compactDateLabel(idx.firstDate) }}</span>
-                <span>交易日日期</span>
-                <span :title="idx.lastDate ?? ''">{{ compactDateLabel(idx.lastDate) }}</span>
-              </div>
-          </div>
-        </div>
+          :idx="idx"
+          :selected="isCenterSymbol(idx.symbol)"
+          @select="toggleCenterSymbol"
+        />
       </div>
 
       <div class="center-card">
@@ -955,6 +589,7 @@ watch(currentTradingDay, () => {
             {{ centerPct > 0 ? '▲' : centerPct < 0 ? '▼' : '─' }}
             {{ fmtPct(centerPct) }}
           </span>
+          <span v-if="realOverlay" class="broad-hint">灰线为真实指数，仿真段为 K 线；归一化坐标下可直接对比</span>
         </div>
 
         <div v-if="selectedIndexData" class="center-stats">
@@ -985,76 +620,84 @@ watch(currentTradingDay, () => {
           <span class="color-up">涨 {{ broad.up_count }}</span>
           <span class="color-down">跌 {{ broad.down_count }}</span>
           <span>平 {{ broad.flat_count }}</span>
-          <span>成交 {{ fmt(broad.volume, 0) }}</span>
-          <span>{{ broadViewMode === 'today' ? '拖动回看，滚轮缩放，点当日回最新' : '历史回看中（可继续拖动/缩放）' }}</span>
+          <span>成交 {{ fmtCn(broad.volume) }}</span>
+          <span>拖动平移，滚轮缩放，复位回到全览</span>
         </div>
-        <svg ref="broadSvg" class="broad-chart" />
-          <div class="center-dates">
-            <span :title="visibleStartDate ?? ''">{{ compactDateLabel(visibleStartDate) }}</span>
-            <span>交易日日期</span>
-            <span :title="visibleEndDate ?? ''">{{ compactDateLabel(visibleEndDate) }}</span>
+
+        <KlineChart
+          :symbol="centerSymbol"
+          mode="daily"
+          height="fill"
+          :title="centerTitle"
+          :overlay="realOverlay"
+          overlay-label="真实指数"
+          :default-price-mode="realOverlay ? 'indexed' : 'normal'"
+          default-sub="rsi"
+        />
+
+        <div v-if="indexData.length" class="market-strip">
+          <div class="breadth">
+            <div class="breadth-title">市场宽度</div>
+            <div class="breadth-bar" :title="`上涨 ${breadth.up} / 下跌 ${breadth.down} / 平 ${breadth.flat}`">
+              <i class="b-up" :style="{ width: `${breadth.upPct}%` }" />
+              <i class="b-down" />
+            </div>
+            <div class="breadth-stats">
+              <span><b class="color-up">{{ breadth.up }}</b> 涨</span>
+              <span><b class="color-down">{{ breadth.down }}</b> 跌</span>
+              <span><b>{{ breadth.flat }}</b> 平</span>
+            </div>
+            <div class="breadth-kv">
+              <span class="k">平均涨跌</span>
+              <span class="v" :class="breadth.avgPct == null ? '' : breadth.avgPct > 0 ? 'color-up' : breadth.avgPct < 0 ? 'color-down' : ''">{{ breadth.avgPct == null ? '-' : fmtPct(breadth.avgPct) }}</span>
+              <span class="k">成交额</span>
+              <span class="v">{{ fmtCn(breadth.totalVolume) }}</span>
+              <span class="k" title="当日大盘 (最高 − 最低) / 前收">大盘振幅</span>
+              <span class="v">{{ breadth.amplitude == null ? '-' : breadth.amplitude.toFixed(2) + '%' }}</span>
+              <span class="k">领涨</span>
+              <span class="v color-up">{{ breadth.best ? `${breadth.best.symbol} ${fmtPct(breadth.best.pctChg)}` : '-' }}</span>
+              <span class="k">领跌</span>
+              <span class="v color-down">{{ breadth.worst ? `${breadth.worst.symbol} ${fmtPct(breadth.worst.pctChg)}` : '-' }}</span>
+            </div>
           </div>
+
+          <div class="heat">
+            <div class="heat-title">指数涨跌热力 <small>按当日涨跌幅排序，点击切换主图</small></div>
+            <div class="heat-grid">
+              <div
+                v-for="h in heatRows"
+                :key="h.symbol"
+                class="heat-row"
+                :class="{ selected: h.selected }"
+                role="button"
+                tabindex="0"
+                @click="toggleCenterSymbol(h.symbol)"
+                @keydown.enter.prevent="toggleCenterSymbol(h.symbol)"
+              >
+                <span class="heat-sym">{{ h.symbol }}</span>
+                <span class="heat-track">
+                  <i
+                    class="heat-bar"
+                    :class="h.pctChg >= 0 ? 'hb-up' : 'hb-down'"
+                    :style="{ width: `${Math.max(2, h.width / 2)}%`, [h.pctChg >= 0 ? 'left' : 'right']: '50%' }"
+                  />
+                </span>
+                <span class="heat-pct" :class="h.pctChg > 0 ? 'color-up' : h.pctChg < 0 ? 'color-down' : 'color-flat'">{{ fmtPct(h.pctChg) }}</span>
+                <span class="heat-vol" :title="'仿真累计成交额'">{{ fmtCn(h.volume) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="idx-column">
-        <div
+        <IndexCard
           v-for="idx in rightColumnData"
           :key="idx.symbol"
-          class="idx-card"
-          :class="[
-            idx.pctChg > 0 ? 'idx-up' : idx.pctChg < 0 ? 'idx-down' : '',
-            { 'idx-selected': isCenterSymbol(idx.symbol) }
-          ]"
-          role="button"
-          tabindex="0"
-          @click="toggleCenterSymbol(idx.symbol)"
-          @keydown="onIndexCardKeydown($event, idx.symbol)"
-        >
-          <div class="idx-row-top">
-            <span class="idx-sym">{{ idx.symbol }}</span>
-            <span class="idx-price">{{ fmt(idx.price, 2) }}</span>
-            <span class="idx-chg">
-              {{ idx.pctChg > 0 ? '▲' : idx.pctChg < 0 ? '▼' : '─' }}
-              {{ idx.pctChg > 0 ? '+' : '' }}{{ idx.pctChg.toFixed(2) }}%
-            </span>
-          </div>
-          <div class="sparkline-wrap chart-only">
-            <svg v-if="idx.normRealSparkline.length > 1 || idx.simSparklineRaw.length > 1" class="sparkline" :viewBox="`0 0 80 24`" preserveAspectRatio="none">
-              <polyline
-                v-if="idx.normRealSparkline.length > 1"
-                :points="sparklinePoints(idx.normRealSparkline, idx.normLow, idx.normHigh)"
-                fill="none"
-                stroke="#64748b"
-                stroke-width="1.2"
-                stroke-opacity="0.95"
-              />
-              <polyline
-                :points="sparklinePoints(idx.normSimSparkline, idx.normLow, idx.normHigh)"
-                fill="none"
-                :stroke="idx.normRealSparkline.length > 1 ? '#ef5350' : (idx.pctChg >= 0 ? '#ef5350' : '#26a69a')"
-                stroke-width="1.5"
-              />
-            </svg>
-          </div>
-          <div class="sparkline-meta text-below">
-            <div class="idx-metrics">
-              <span>同日 {{ idx.predictionSameDayAccuracyPct == null ? '-' : (idx.predictionSameDayAccuracyPct.toFixed(1) + '%') }}</span>
-              <span>前瞻 {{ idx.predictionForward1AccuracyPct == null ? '-' : (idx.predictionForward1AccuracyPct.toFixed(1) + '%') }}</span>
-              <span>拟合 {{ idx.volatilityFitPct == null ? '-' : (idx.volatilityFitPct.toFixed(1) + '%') }}</span>
-            </div>
-            <div class="idx-metrics-sub">
-              <span>QL {{ idx.qlike == null ? '-' : idx.qlike.toFixed(3) }}</span>
-              <span>LR {{ idx.logRmse == null ? '-' : idx.logRmse.toFixed(3) }}</span>
-              <span>MZ β {{ idx.mzBeta == null ? '-' : idx.mzBeta.toFixed(2) }}</span>
-              <span>p {{ idx.mzPValue == null ? '-' : idx.mzPValue.toFixed(3) }}</span>
-            </div>
-              <div class="sparkline-dates">
-                <span :title="idx.firstDate ?? ''">{{ compactDateLabel(idx.firstDate) }}</span>
-                <span>交易日日期</span>
-                <span :title="idx.lastDate ?? ''">{{ compactDateLabel(idx.lastDate) }}</span>
-              </div>
-          </div>
-        </div>
+          :idx="idx"
+          :selected="isCenterSymbol(idx.symbol)"
+          @select="toggleCenterSymbol"
+        />
       </div>
 
       <div v-if="indexData.length === 0" class="idx-empty">暂无指数数据</div>
@@ -1106,17 +749,14 @@ watch(currentTradingDay, () => {
   opacity: 0.7;
 }
 
-.panel-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .broad-top {
   display: flex;
   align-items: baseline;
   gap: 10px;
   margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  height: 22px;
 }
 
 .broad-value {
@@ -1132,9 +772,18 @@ watch(currentTradingDay, () => {
   font-family: var(--font-mono);
 }
 
+.broad-hint {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
 .broad-stats {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+  height: 18px;
   gap: 10px;
   font-size: 11px;
   font-family: var(--font-mono);
@@ -1142,27 +791,22 @@ watch(currentTradingDay, () => {
   margin-bottom: 6px;
 }
 
-.broad-chart {
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto;
-}
-
 .sort-bar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  min-height: 24px;
 }
 
-.mode-switch {
-  display: inline-flex;
-  gap: 4px;
+.sort-ticker {
+  margin: 0 10px;
 }
 
 .selection-tip {
-  margin-left: auto;
+  margin-left: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 10px;
   font-family: var(--font-mono);
   color: var(--text-dim);
@@ -1221,131 +865,159 @@ watch(currentTradingDay, () => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
   height: 100%;
 }
 
-.idx-card {
-  padding: 8px 9px;
-  border-radius: var(--radius);
+/* ── 市场宽度 + 热力条 ── */
+.market-strip {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.9fr) minmax(0, 2.1fr);
+  gap: 14px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
   font-family: var(--font-mono);
-  background: var(--surface-1);
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  font-variant-numeric: tabular-nums;
 }
 
-.idx-card:hover {
-  transform: translateY(-1px);
-  border-color: var(--border);
+.breadth-title,
+.heat-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 6px;
 }
 
-.idx-card:focus-visible {
-  outline: none;
-  border-color: var(--accent);
+.heat-title small {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-left: 6px;
 }
 
-.idx-selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-.idx-up {
-  background: var(--up-soft);
-}
-
-.idx-down {
+.breadth-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
   background: var(--down-soft);
 }
 
-.idx-row-top {
+.breadth-bar .b-up {
+  display: block;
+  height: 100%;
+  background: var(--up);
+  opacity: 0.75;
+  transition: width 0.3s ease;
+}
+
+.breadth-bar .b-down {
+  display: block;
+  flex: 1;
+  height: 100%;
+  background: var(--down);
+  opacity: 0.75;
+}
+
+.breadth-stats {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 3px;
-}
-
-.idx-sym {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--heading);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 70px;
-}
-
-.idx-price {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--heading);
-}
-
-.idx-chg {
+  gap: 12px;
+  margin: 6px 0 8px;
   font-size: 11px;
-  font-weight: 700;
-  margin-left: auto;
-}
-
-.idx-up .idx-chg { color: var(--up); }
-.idx-down .idx-chg { color: var(--down); }
-
-.sparkline {
-  width: 100%;
-  height: 32px;
-  margin: 2px 0 0;
-}
-
-.sparkline-wrap {
-  margin-top: 1px;
-}
-
-.sparkline-meta {
-  margin-top: 3px;
-}
-
-.chart-only {
-  padding-bottom: 2px;
-}
-
-.text-below {
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sparkline-legend {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 0;
-  line-height: 1.2;
-  font-size: 8px;
-  color: var(--text-dim);
-}
-
-.idx-metrics {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 0;
-  line-height: 1.2;
-  font-size: 9px;
   color: var(--text-muted);
 }
 
-.idx-metrics-sub {
-  display: flex;
+.breadth-stats b {
+  color: var(--heading);
+  font-weight: 700;
+}
+
+.breadth-kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  font-size: 10px;
+}
+
+.breadth-kv .k {
+  color: var(--text-dim);
+}
+
+.breadth-kv .v {
+  color: var(--heading);
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.heat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 16px;
+}
+
+.heat-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 56px 56px;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 2px;
-  line-height: 1.2;
-  font-size: 9px;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.heat-row:hover {
+  background: var(--surface-1);
+}
+
+.heat-row.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.heat-sym {
+  font-weight: 700;
+  color: var(--heading);
+}
+
+.heat-track {
+  position: relative;
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.heat-track::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-light);
+}
+
+.heat-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: width 0.3s ease;
+}
+
+.hb-up { background: var(--up); opacity: 0.8; }
+.hb-down { background: var(--down); opacity: 0.8; }
+
+.heat-pct {
+  text-align: right;
+  font-weight: 600;
+}
+
+.heat-vol {
+  text-align: right;
   color: var(--text-dim);
 }
 
@@ -1396,39 +1068,6 @@ watch(currentTradingDay, () => {
   background: color-mix(in srgb, #64748b 16%, var(--surface-1));
 }
 
-.sparkline-dates,
-.center-dates {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 3px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-dim);
-}
-
-.sparkline-dates span:nth-child(2),
-.center-dates span:nth-child(2) {
-  opacity: 0.85;
-}
-
-.dot {
-  display: inline-block;
-  width: 6px;
-  height: 2px;
-  vertical-align: middle;
-  margin-right: 3px;
-}
-
-.dot.real {
-  background: #64748b;
-}
-
-.dot.sim {
-  background: #ef5350;
-}
-
 .idx-empty {
   grid-column: 1 / -1;
   color: var(--text-dim);
@@ -1461,10 +1100,6 @@ watch(currentTradingDay, () => {
 @media (max-width: 640px) {
   .idx-column {
     grid-template-columns: 1fr;
-  }
-
-  .broad-chart {
-    height: 200px;
   }
 }
 </style>

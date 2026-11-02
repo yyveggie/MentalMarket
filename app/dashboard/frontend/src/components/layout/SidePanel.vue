@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useMarketStore } from '@/stores/marketStore'
-import { fmt, tomLabel, emotionEmoji, fmtPct } from '@/utils/formatters'
+import { fmt, tomLabel, emotionLabel, fmtPct } from '@/utils/formatters'
 import ReasoningChain from '@/components/agent/ReasoningChain.vue'
 
 const props = defineProps<{
@@ -41,7 +41,7 @@ const tomClass = computed(() => `badge-tom${agent.value?.tom_level ?? 0}`)
     <aside v-if="open && agent" class="side-panel">
       <div class="panel-header">
         <div class="agent-avatar" :class="tomClass">
-          <span class="avatar-emoji">{{ emotionEmoji(visual?.emotion ?? 'neutral') }}</span>
+          <span class="avatar-emoji">T{{ agent?.tom_level ?? 0 }}</span>
           <span class="avatar-id">A{{ agent.agent_id }}</span>
         </div>
         <div class="agent-meta">
@@ -56,7 +56,7 @@ const tomClass = computed(() => `badge-tom${agent.value?.tom_level ?? 0}`)
 
       <div class="panel-body">
         <section class="section">
-          <h3 class="section-title">💰 财务状况</h3>
+          <h3 class="section-title">财务状况</h3>
           <div class="stat-grid">
             <div class="stat">
               <span class="stat-label">总财富</span>
@@ -72,12 +72,12 @@ const tomClass = computed(() => `badge-tom${agent.value?.tom_level ?? 0}`)
             </div>
           </div>
           <div v-if="agent.current_positions_text" class="positions-text">
-            📊 {{ agent.current_positions_text }}
+            持仓 {{ agent.current_positions_text }}
           </div>
         </section>
 
         <section v-if="agent.tom_level > 0 && agentDecisions.length > 0 && agentDecisions[0].reasoning" class="section">
-          <h3 class="section-title">🧠 最近心智推理</h3>
+          <h3 class="section-title">最近心智推理</h3>
           <div class="mind-block">
             <span class="mind-label">{{ agent.tom_level === 2 ? 'tom1 + tom2 reasoning' : 'mental_reasoning' }}</span>
             <p>{{ agentDecisions[0].reasoning }}</p>
@@ -85,7 +85,7 @@ const tomClass = computed(() => `badge-tom${agent.value?.tom_level ?? 0}`)
         </section>
 
         <section class="section">
-          <h3 class="section-title">🔗 推理历史</h3>
+          <h3 class="section-title">推理历史</h3>
           <ReasoningChain :decisions="agentDecisions" />
         </section>
       </div>

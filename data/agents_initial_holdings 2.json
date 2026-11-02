@@ -1,0 +1,6087 @@
+{
+  "config": {
+    "n_agents": 1000,
+    "random_seed": 42,
+    "max_holdings": 6,
+    "min_holdings": 1,
+    "min_holders_per_index": 100,
+    "source": "data/index_holding_prob.json",
+    "config_file": "config.yaml"
+  },
+  "statistics": {
+    "avg_holdings_per_agent": 4.01,
+    "holding_count_distribution": {
+      "1": 44,
+      "2": 106,
+      "3": 199,
+      "4": 263,
+      "5": 222,
+      "6": 166
+    },
+    "index_holder_counts": {
+      "CPEI": {
+        "holders": 598,
+        "holder_pct": 59.8,
+        "configured_prob": 59.5
+      },
+      "FSEI": {
+        "holders": 568,
+        "holder_pct": 56.8,
+        "configured_prob": 56.8
+      },
+      "REEI": {
+        "holders": 452,
+        "holder_pct": 45.2,
+        "configured_prob": 48.5
+      },
+      "MEI": {
+        "holders": 446,
+        "holder_pct": 44.6,
+        "configured_prob": 43.2
+      },
+      "TTEI": {
+        "holders": 430,
+        "holder_pct": 43.0,
+        "configured_prob": 43.3
+      },
+      "CGEI": {
+        "holders": 415,
+        "holder_pct": 41.5,
+        "configured_prob": 41.1
+      },
+      "EREI": {
+        "holders": 339,
+        "holder_pct": 33.9,
+        "configured_prob": 35.2
+      },
+      "IEEI": {
+        "holders": 324,
+        "holder_pct": 32.4,
+        "configured_prob": 33.1
+      },
+      "TSEI": {
+        "holders": 270,
+        "holder_pct": 27.0,
+        "configured_prob": 28.4
+      },
+      "TLEI": {
+        "holders": 169,
+        "holder_pct": 16.9,
+        "configured_prob": 20.5
+      }
+    }
+  },
+  "agents": {
+    "1": [
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "2": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "3": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "4": [
+      "MEI"
+    ],
+    "5": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "6": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "7": [
+      "EREI",
+      "IEEI"
+    ],
+    "8": [
+      "CGEI",
+      "CPEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "9": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "10": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "TTEI"
+    ],
+    "11": [
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "12": [
+      "EREI",
+      "FSEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "13": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "14": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "15": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "16": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "17": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "18": [
+      "CGEI",
+      "EREI",
+      "REEI"
+    ],
+    "19": [
+      "CGEI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "20": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "21": [
+      "CGEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "22": [
+      "CPEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "23": [
+      "MEI",
+      "TSEI"
+    ],
+    "24": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "25": [
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "26": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "27": [
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "28": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "29": [
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "30": [
+      "CPEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "31": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "32": [
+      "FSEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "33": [
+      "EREI",
+      "MEI"
+    ],
+    "34": [
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "35": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "36": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "37": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "38": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI"
+    ],
+    "39": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "40": [
+      "CGEI",
+      "MEI",
+      "REEI"
+    ],
+    "41": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "42": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "43": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "REEI"
+    ],
+    "44": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "45": [
+      "CPEI"
+    ],
+    "46": [
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "47": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "48": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "49": [
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "50": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "51": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "52": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "53": [
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "54": [
+      "CPEI",
+      "EREI",
+      "TLEI",
+      "TTEI"
+    ],
+    "55": [
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "56": [
+      "EREI",
+      "REEI"
+    ],
+    "57": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "58": [
+      "FSEI",
+      "MEI"
+    ],
+    "59": [
+      "CGEI",
+      "CPEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "60": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "61": [
+      "CPEI",
+      "TSEI"
+    ],
+    "62": [
+      "FSEI",
+      "IEEI"
+    ],
+    "63": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "64": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "65": [
+      "FSEI",
+      "TTEI"
+    ],
+    "66": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "67": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "68": [
+      "CPEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "69": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "70": [
+      "FSEI"
+    ],
+    "71": [
+      "CGEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "72": [
+      "CGEI",
+      "EREI"
+    ],
+    "73": [
+      "CPEI",
+      "IEEI",
+      "TSEI"
+    ],
+    "74": [
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "75": [
+      "MEI",
+      "REEI"
+    ],
+    "76": [
+      "CPEI",
+      "REEI",
+      "TSEI"
+    ],
+    "77": [
+      "TSEI",
+      "TTEI"
+    ],
+    "78": [
+      "CGEI",
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "79": [
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "80": [
+      "FSEI",
+      "MEI"
+    ],
+    "81": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "82": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "83": [
+      "EREI",
+      "FSEI"
+    ],
+    "84": [
+      "CGEI",
+      "FSEI",
+      "IEEI"
+    ],
+    "85": [
+      "CPEI",
+      "IEEI"
+    ],
+    "86": [
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "87": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "88": [
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "89": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "90": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "91": [
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "92": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "93": [
+      "CGEI",
+      "TLEI"
+    ],
+    "94": [
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "95": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "96": [
+      "EREI",
+      "MEI"
+    ],
+    "97": [
+      "CGEI",
+      "EREI",
+      "MEI"
+    ],
+    "98": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "99": [
+      "CPEI",
+      "REEI",
+      "TLEI"
+    ],
+    "100": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "101": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "102": [
+      "CGEI",
+      "EREI",
+      "TSEI",
+      "TTEI"
+    ],
+    "103": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "104": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "105": [
+      "EREI",
+      "FSEI",
+      "TLEI"
+    ],
+    "106": [
+      "CGEI"
+    ],
+    "107": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "108": [
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "109": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "110": [
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "111": [
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "112": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "113": [
+      "CGEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "114": [
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "115": [
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "116": [
+      "CPEI",
+      "IEEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "117": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "118": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "119": [
+      "CGEI",
+      "MEI",
+      "REEI"
+    ],
+    "120": [
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "121": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "122": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "123": [
+      "TTEI"
+    ],
+    "124": [
+      "CGEI",
+      "CPEI",
+      "EREI"
+    ],
+    "125": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "126": [
+      "CPEI",
+      "FSEI"
+    ],
+    "127": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "128": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "129": [
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "130": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "131": [
+      "CPEI"
+    ],
+    "132": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "133": [
+      "CGEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "134": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "135": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "136": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI"
+    ],
+    "137": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "138": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "139": [
+      "CGEI",
+      "MEI",
+      "TSEI"
+    ],
+    "140": [
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "141": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "142": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "143": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "144": [
+      "EREI",
+      "FSEI",
+      "IEEI"
+    ],
+    "145": [
+      "CPEI",
+      "EREI",
+      "REEI"
+    ],
+    "146": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI"
+    ],
+    "147": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "TTEI"
+    ],
+    "148": [
+      "FSEI",
+      "IEEI"
+    ],
+    "149": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "150": [
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "151": [
+      "CGEI",
+      "EREI",
+      "REEI"
+    ],
+    "152": [
+      "CPEI",
+      "MEI"
+    ],
+    "153": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "154": [
+      "CPEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "155": [
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "156": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "157": [
+      "CPEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "158": [
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "159": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "160": [
+      "CGEI",
+      "EREI",
+      "REEI",
+      "TLEI"
+    ],
+    "161": [
+      "FSEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "162": [
+      "MEI"
+    ],
+    "163": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "164": [
+      "CGEI",
+      "CPEI"
+    ],
+    "165": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "166": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI"
+    ],
+    "167": [
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "168": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TLEI"
+    ],
+    "169": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "170": [
+      "CGEI",
+      "EREI",
+      "REEI"
+    ],
+    "171": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "172": [
+      "CPEI",
+      "MEI",
+      "REEI"
+    ],
+    "173": [
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "174": [
+      "CGEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "175": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "176": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "TTEI"
+    ],
+    "177": [
+      "EREI",
+      "MEI",
+      "TTEI"
+    ],
+    "178": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "179": [
+      "CGEI",
+      "MEI"
+    ],
+    "180": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "181": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "182": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "TLEI"
+    ],
+    "183": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI"
+    ],
+    "184": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TSEI"
+    ],
+    "185": [
+      "CPEI",
+      "IEEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "186": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "187": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "188": [
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "189": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "190": [
+      "CPEI",
+      "FSEI",
+      "MEI"
+    ],
+    "191": [
+      "CPEI",
+      "EREI",
+      "TSEI",
+      "TTEI"
+    ],
+    "192": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "193": [
+      "FSEI",
+      "MEI"
+    ],
+    "194": [
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "195": [
+      "CPEI"
+    ],
+    "196": [
+      "CGEI",
+      "CPEI",
+      "EREI"
+    ],
+    "197": [
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "198": [
+      "CPEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "199": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "200": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "201": [
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "202": [
+      "CGEI",
+      "CPEI",
+      "IEEI"
+    ],
+    "203": [
+      "CPEI",
+      "REEI",
+      "TLEI"
+    ],
+    "204": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TSEI"
+    ],
+    "205": [
+      "REEI"
+    ],
+    "206": [
+      "CPEI",
+      "EREI",
+      "TSEI",
+      "TTEI"
+    ],
+    "207": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "208": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "209": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "210": [
+      "EREI",
+      "MEI"
+    ],
+    "211": [
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "212": [
+      "CPEI",
+      "MEI",
+      "REEI"
+    ],
+    "213": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "214": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "215": [
+      "CPEI",
+      "FSEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "216": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "217": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "218": [
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "219": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "220": [
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "221": [
+      "CGEI",
+      "FSEI",
+      "REEI"
+    ],
+    "222": [
+      "CGEI",
+      "CPEI",
+      "MEI"
+    ],
+    "223": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "224": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "225": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "226": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "227": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "228": [
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TTEI"
+    ],
+    "229": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "230": [
+      "FSEI",
+      "MEI"
+    ],
+    "231": [
+      "CGEI",
+      "FSEI"
+    ],
+    "232": [
+      "MEI",
+      "TSEI"
+    ],
+    "233": [
+      "FSEI",
+      "TTEI"
+    ],
+    "234": [
+      "CPEI",
+      "FSEI"
+    ],
+    "235": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "236": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI"
+    ],
+    "237": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "TTEI"
+    ],
+    "238": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "239": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "240": [
+      "CPEI"
+    ],
+    "241": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "242": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "243": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "244": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "245": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "246": [
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "247": [
+      "CPEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "248": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "249": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "250": [
+      "CGEI",
+      "IEEI"
+    ],
+    "251": [
+      "MEI",
+      "TLEI"
+    ],
+    "252": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "253": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "254": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "255": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "256": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "257": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "TSEI",
+      "TTEI"
+    ],
+    "258": [
+      "CGEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "259": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "260": [
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "261": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "262": [
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "263": [
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "264": [
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "265": [
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "266": [
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "267": [
+      "CGEI",
+      "EREI",
+      "FSEI"
+    ],
+    "268": [
+      "CPEI",
+      "EREI",
+      "TTEI"
+    ],
+    "269": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "270": [
+      "CGEI",
+      "CPEI",
+      "TTEI"
+    ],
+    "271": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "272": [
+      "CPEI",
+      "IEEI"
+    ],
+    "273": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "274": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "275": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "276": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TLEI"
+    ],
+    "277": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "278": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "279": [
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "280": [
+      "CPEI",
+      "MEI",
+      "TTEI"
+    ],
+    "281": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "282": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "283": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "284": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "285": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "TTEI"
+    ],
+    "286": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "287": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "288": [
+      "MEI"
+    ],
+    "289": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "290": [
+      "EREI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "291": [
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "292": [
+      "MEI"
+    ],
+    "293": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "294": [
+      "FSEI",
+      "REEI"
+    ],
+    "295": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "296": [
+      "CGEI",
+      "CPEI",
+      "IEEI"
+    ],
+    "297": [
+      "CPEI",
+      "IEEI",
+      "MEI"
+    ],
+    "298": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "299": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "300": [
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "301": [
+      "EREI",
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "302": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TLEI"
+    ],
+    "303": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "304": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "305": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "306": [
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "307": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "308": [
+      "CPEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "309": [
+      "IEEI",
+      "TLEI"
+    ],
+    "310": [
+      "MEI",
+      "TTEI"
+    ],
+    "311": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "312": [
+      "CGEI",
+      "MEI",
+      "TTEI"
+    ],
+    "313": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "314": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "315": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "316": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "317": [
+      "CGEI",
+      "IEEI",
+      "MEI"
+    ],
+    "318": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "319": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "320": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "321": [
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "322": [
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "323": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI"
+    ],
+    "324": [
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "325": [
+      "FSEI",
+      "REEI"
+    ],
+    "326": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "327": [
+      "FSEI"
+    ],
+    "328": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "329": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI"
+    ],
+    "330": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "331": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "332": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "333": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "334": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TSEI"
+    ],
+    "335": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "336": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "337": [
+      "CGEI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "338": [
+      "TLEI",
+      "TTEI"
+    ],
+    "339": [
+      "CGEI",
+      "IEEI",
+      "REEI",
+      "TLEI"
+    ],
+    "340": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "341": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "342": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "343": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "344": [
+      "CPEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "345": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "346": [
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "347": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TLEI"
+    ],
+    "348": [
+      "CPEI",
+      "FSEI"
+    ],
+    "349": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI"
+    ],
+    "350": [
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "351": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "352": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "353": [
+      "FSEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "354": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "REEI"
+    ],
+    "355": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "356": [
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "357": [
+      "EREI",
+      "TLEI"
+    ],
+    "358": [
+      "CGEI",
+      "REEI",
+      "TSEI"
+    ],
+    "359": [
+      "IEEI",
+      "TTEI"
+    ],
+    "360": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "361": [
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "362": [
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "363": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TLEI"
+    ],
+    "364": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "365": [
+      "IEEI",
+      "MEI"
+    ],
+    "366": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "TTEI"
+    ],
+    "367": [
+      "CPEI"
+    ],
+    "368": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "369": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "370": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "371": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "372": [
+      "REEI"
+    ],
+    "373": [
+      "CGEI",
+      "CPEI",
+      "TTEI"
+    ],
+    "374": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "375": [
+      "CGEI",
+      "CPEI",
+      "MEI"
+    ],
+    "376": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "TTEI"
+    ],
+    "377": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "378": [
+      "EREI",
+      "MEI",
+      "TLEI"
+    ],
+    "379": [
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "380": [
+      "FSEI"
+    ],
+    "381": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "382": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "383": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "REEI"
+    ],
+    "384": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "385": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "386": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI"
+    ],
+    "387": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "388": [
+      "CPEI",
+      "FSEI"
+    ],
+    "389": [
+      "CPEI",
+      "TTEI"
+    ],
+    "390": [
+      "CGEI",
+      "REEI"
+    ],
+    "391": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "392": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "393": [
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "394": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "TSEI"
+    ],
+    "395": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "396": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "397": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "398": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "399": [
+      "EREI",
+      "FSEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "400": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "401": [
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "402": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "403": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "404": [
+      "EREI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "405": [
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "406": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "407": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "408": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "409": [
+      "CPEI"
+    ],
+    "410": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "411": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "412": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI"
+    ],
+    "413": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "414": [
+      "CPEI"
+    ],
+    "415": [
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "416": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "417": [
+      "CPEI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "418": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "419": [
+      "TTEI"
+    ],
+    "420": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "TTEI"
+    ],
+    "421": [
+      "CPEI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "422": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "423": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "424": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "425": [
+      "CGEI"
+    ],
+    "426": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "427": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "428": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "429": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "430": [
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "431": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "432": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "433": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "434": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "435": [
+      "CPEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "436": [
+      "CGEI",
+      "CPEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "437": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "438": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "439": [
+      "CGEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "440": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "441": [
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "442": [
+      "CGEI",
+      "FSEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "443": [
+      "CGEI",
+      "FSEI"
+    ],
+    "444": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "445": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "446": [
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "447": [
+      "MEI",
+      "TSEI"
+    ],
+    "448": [
+      "CGEI",
+      "TSEI"
+    ],
+    "449": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "450": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "451": [
+      "CPEI",
+      "FSEI",
+      "MEI"
+    ],
+    "452": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "453": [
+      "FSEI",
+      "TTEI"
+    ],
+    "454": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "455": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "456": [
+      "CGEI",
+      "IEEI",
+      "REEI",
+      "TLEI"
+    ],
+    "457": [
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "458": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "459": [
+      "CGEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "460": [
+      "CPEI",
+      "FSEI",
+      "IEEI"
+    ],
+    "461": [
+      "FSEI",
+      "MEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "462": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "463": [
+      "REEI"
+    ],
+    "464": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "465": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "466": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "467": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "468": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "469": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "470": [
+      "EREI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "471": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TSEI"
+    ],
+    "472": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "473": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "474": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "475": [
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TTEI"
+    ],
+    "476": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "477": [
+      "FSEI",
+      "IEEI"
+    ],
+    "478": [
+      "CPEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "479": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "TTEI"
+    ],
+    "480": [
+      "CPEI",
+      "EREI",
+      "TTEI"
+    ],
+    "481": [
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "482": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "483": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "484": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "485": [
+      "CPEI",
+      "MEI"
+    ],
+    "486": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "487": [
+      "CPEI",
+      "EREI"
+    ],
+    "488": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "489": [
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "490": [
+      "CGEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "491": [
+      "CGEI",
+      "CPEI",
+      "EREI"
+    ],
+    "492": [
+      "CGEI",
+      "CPEI",
+      "MEI"
+    ],
+    "493": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "494": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "495": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "496": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "497": [
+      "CPEI",
+      "FSEI",
+      "IEEI"
+    ],
+    "498": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "499": [
+      "EREI",
+      "FSEI"
+    ],
+    "500": [
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "501": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TLEI"
+    ],
+    "502": [
+      "CPEI",
+      "REEI"
+    ],
+    "503": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "504": [
+      "CGEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "505": [
+      "CPEI",
+      "MEI"
+    ],
+    "506": [
+      "FSEI",
+      "TTEI"
+    ],
+    "507": [
+      "CGEI",
+      "CPEI"
+    ],
+    "508": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "509": [
+      "IEEI",
+      "MEI"
+    ],
+    "510": [
+      "CPEI",
+      "IEEI",
+      "REEI"
+    ],
+    "511": [
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "512": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "513": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "514": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "515": [
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "516": [
+      "IEEI"
+    ],
+    "517": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI"
+    ],
+    "518": [
+      "CPEI",
+      "EREI"
+    ],
+    "519": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "520": [
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "521": [
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "522": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "523": [
+      "CPEI",
+      "FSEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "524": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "525": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "526": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "527": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "528": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "529": [
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "530": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "531": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "532": [
+      "EREI",
+      "MEI"
+    ],
+    "533": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "TTEI"
+    ],
+    "534": [
+      "CGEI",
+      "FSEI",
+      "MEI"
+    ],
+    "535": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "536": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "537": [
+      "CPEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "538": [
+      "CGEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "539": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI",
+      "TTEI"
+    ],
+    "540": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "541": [
+      "FSEI"
+    ],
+    "542": [
+      "CPEI",
+      "IEEI",
+      "REEI"
+    ],
+    "543": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "544": [
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "545": [
+      "FSEI",
+      "TSEI"
+    ],
+    "546": [
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "547": [
+      "CGEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "548": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "549": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "550": [
+      "CPEI"
+    ],
+    "551": [
+      "CPEI"
+    ],
+    "552": [
+      "FSEI",
+      "MEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "553": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TLEI"
+    ],
+    "554": [
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "555": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "556": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "557": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "558": [
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "559": [
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "560": [
+      "CGEI",
+      "CPEI",
+      "EREI"
+    ],
+    "561": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "562": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "563": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "564": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "565": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "566": [
+      "CPEI",
+      "EREI",
+      "TTEI"
+    ],
+    "567": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "568": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "569": [
+      "CGEI",
+      "EREI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "570": [
+      "CPEI",
+      "EREI",
+      "TLEI"
+    ],
+    "571": [
+      "CGEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "572": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "573": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "574": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "575": [
+      "CPEI",
+      "FSEI",
+      "MEI"
+    ],
+    "576": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "577": [
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "578": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "579": [
+      "CGEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "580": [
+      "CPEI",
+      "FSEI",
+      "MEI"
+    ],
+    "581": [
+      "IEEI",
+      "MEI"
+    ],
+    "582": [
+      "FSEI",
+      "REEI"
+    ],
+    "583": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "584": [
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "585": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "586": [
+      "CPEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "587": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "588": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "589": [
+      "CGEI",
+      "REEI",
+      "TLEI"
+    ],
+    "590": [
+      "CPEI",
+      "EREI",
+      "REEI"
+    ],
+    "591": [
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "592": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "593": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "594": [
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "595": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "596": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI"
+    ],
+    "597": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "598": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "599": [
+      "FSEI",
+      "TLEI"
+    ],
+    "600": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "601": [
+      "CPEI",
+      "REEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "602": [
+      "CGEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "603": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "604": [
+      "CPEI",
+      "TSEI"
+    ],
+    "605": [
+      "CGEI",
+      "CPEI",
+      "MEI"
+    ],
+    "606": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "607": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "TTEI"
+    ],
+    "608": [
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "609": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "610": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "611": [
+      "CGEI",
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "612": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "613": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "614": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "615": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "616": [
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "617": [
+      "CGEI",
+      "REEI"
+    ],
+    "618": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "619": [
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "620": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "621": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "622": [
+      "CGEI",
+      "FSEI",
+      "REEI"
+    ],
+    "623": [
+      "CPEI",
+      "TTEI"
+    ],
+    "624": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "625": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "626": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "627": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "628": [
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "629": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "630": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "631": [
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "632": [
+      "FSEI"
+    ],
+    "633": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "634": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "635": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "636": [
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "637": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "638": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "639": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "640": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "641": [
+      "CPEI",
+      "TTEI"
+    ],
+    "642": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "643": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "644": [
+      "CGEI",
+      "MEI"
+    ],
+    "645": [
+      "CPEI"
+    ],
+    "646": [
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "647": [
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "648": [
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "649": [
+      "CPEI",
+      "MEI"
+    ],
+    "650": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "651": [
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TSEI"
+    ],
+    "652": [
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "653": [
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "654": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "655": [
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "656": [
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "657": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "658": [
+      "EREI",
+      "IEEI",
+      "REEI"
+    ],
+    "659": [
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "660": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "661": [
+      "CGEI",
+      "EREI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "662": [
+      "CPEI",
+      "EREI"
+    ],
+    "663": [
+      "CPEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "664": [
+      "FSEI",
+      "MEI"
+    ],
+    "665": [
+      "EREI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "666": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "667": [
+      "EREI",
+      "REEI",
+      "TSEI"
+    ],
+    "668": [
+      "FSEI"
+    ],
+    "669": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "670": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "671": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "672": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "673": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "674": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "TTEI"
+    ],
+    "675": [
+      "CPEI"
+    ],
+    "676": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "677": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "678": [
+      "CGEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "679": [
+      "IEEI"
+    ],
+    "680": [
+      "CPEI",
+      "TLEI"
+    ],
+    "681": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI"
+    ],
+    "682": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "683": [
+      "CPEI"
+    ],
+    "684": [
+      "CGEI",
+      "REEI",
+      "TTEI"
+    ],
+    "685": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "686": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "687": [
+      "FSEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "688": [
+      "CGEI",
+      "MEI",
+      "TLEI"
+    ],
+    "689": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "690": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI"
+    ],
+    "691": [
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "692": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "693": [
+      "CPEI",
+      "EREI",
+      "FSEI"
+    ],
+    "694": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "695": [
+      "CPEI",
+      "MEI"
+    ],
+    "696": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "697": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI"
+    ],
+    "698": [
+      "CGEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "699": [
+      "CPEI",
+      "FSEI"
+    ],
+    "700": [
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "701": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "702": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "703": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "TSEI"
+    ],
+    "704": [
+      "FSEI",
+      "REEI"
+    ],
+    "705": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "706": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "707": [
+      "CPEI"
+    ],
+    "708": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "709": [
+      "CPEI"
+    ],
+    "710": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "711": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "712": [
+      "CGEI",
+      "REEI",
+      "TTEI"
+    ],
+    "713": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "714": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "715": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TSEI"
+    ],
+    "716": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "717": [
+      "CGEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "718": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TLEI"
+    ],
+    "719": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "720": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "721": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "722": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "723": [
+      "EREI",
+      "IEEI"
+    ],
+    "724": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "725": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "726": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "727": [
+      "CPEI",
+      "TLEI"
+    ],
+    "728": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "729": [
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "730": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TSEI"
+    ],
+    "731": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "732": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "733": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "734": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "TLEI"
+    ],
+    "735": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "736": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "737": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI",
+      "TSEI"
+    ],
+    "738": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "739": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "740": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TLEI"
+    ],
+    "741": [
+      "CPEI",
+      "TTEI"
+    ],
+    "742": [
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "743": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "744": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "745": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "746": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "747": [
+      "CGEI",
+      "EREI",
+      "TLEI"
+    ],
+    "748": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "749": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TSEI"
+    ],
+    "750": [
+      "FSEI"
+    ],
+    "751": [
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "752": [
+      "FSEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "753": [
+      "CPEI",
+      "FSEI"
+    ],
+    "754": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "755": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "756": [
+      "CPEI",
+      "IEEI"
+    ],
+    "757": [
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "758": [
+      "CPEI",
+      "REEI"
+    ],
+    "759": [
+      "CPEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "760": [
+      "CPEI",
+      "MEI",
+      "TTEI"
+    ],
+    "761": [
+      "CGEI",
+      "CPEI",
+      "TTEI"
+    ],
+    "762": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "763": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "764": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "765": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI"
+    ],
+    "766": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "MEI"
+    ],
+    "767": [
+      "CPEI",
+      "EREI"
+    ],
+    "768": [
+      "CGEI",
+      "FSEI",
+      "MEI"
+    ],
+    "769": [
+      "CPEI",
+      "EREI",
+      "MEI",
+      "REEI"
+    ],
+    "770": [
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "771": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "772": [
+      "CGEI",
+      "FSEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "773": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI"
+    ],
+    "774": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "775": [
+      "IEEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "776": [
+      "CGEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "777": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "TSEI"
+    ],
+    "778": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "779": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "780": [
+      "EREI",
+      "REEI"
+    ],
+    "781": [
+      "IEEI",
+      "MEI"
+    ],
+    "782": [
+      "CGEI",
+      "CPEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "783": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "784": [
+      "CGEI",
+      "CPEI",
+      "EREI"
+    ],
+    "785": [
+      "CGEI",
+      "EREI",
+      "REEI",
+      "TTEI"
+    ],
+    "786": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TLEI"
+    ],
+    "787": [
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "788": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "789": [
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "790": [
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "791": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "792": [
+      "CPEI"
+    ],
+    "793": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "794": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TSEI"
+    ],
+    "795": [
+      "IEEI",
+      "MEI"
+    ],
+    "796": [
+      "CGEI",
+      "FSEI",
+      "TLEI"
+    ],
+    "797": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "798": [
+      "CGEI",
+      "FSEI",
+      "MEI"
+    ],
+    "799": [
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "800": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "801": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI"
+    ],
+    "802": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "803": [
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "804": [
+      "CPEI",
+      "IEEI"
+    ],
+    "805": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "806": [
+      "EREI",
+      "FSEI"
+    ],
+    "807": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "808": [
+      "CPEI",
+      "IEEI",
+      "TLEI",
+      "TSEI"
+    ],
+    "809": [
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "810": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "811": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "TLEI"
+    ],
+    "812": [
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "813": [
+      "CPEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "814": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "815": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "816": [
+      "CGEI",
+      "FSEI",
+      "REEI"
+    ],
+    "817": [
+      "EREI",
+      "FSEI",
+      "TSEI"
+    ],
+    "818": [
+      "CGEI",
+      "FSEI"
+    ],
+    "819": [
+      "CGEI",
+      "TTEI"
+    ],
+    "820": [
+      "TTEI"
+    ],
+    "821": [
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "822": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "823": [
+      "MEI",
+      "TLEI"
+    ],
+    "824": [
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "825": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "826": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "REEI"
+    ],
+    "827": [
+      "CPEI",
+      "EREI",
+      "TTEI"
+    ],
+    "828": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "829": [
+      "EREI",
+      "FSEI"
+    ],
+    "830": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "REEI",
+      "TSEI"
+    ],
+    "831": [
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "832": [
+      "FSEI"
+    ],
+    "833": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "834": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "835": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "836": [
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "837": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "838": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "839": [
+      "CPEI",
+      "FSEI",
+      "IEEI"
+    ],
+    "840": [
+      "CPEI",
+      "IEEI",
+      "TSEI"
+    ],
+    "841": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "842": [
+      "CGEI",
+      "FSEI"
+    ],
+    "843": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "844": [
+      "CPEI"
+    ],
+    "845": [
+      "CPEI",
+      "MEI"
+    ],
+    "846": [
+      "FSEI"
+    ],
+    "847": [
+      "MEI",
+      "TTEI"
+    ],
+    "848": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "849": [
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "850": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "851": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "852": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "853": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "854": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "855": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "856": [
+      "CPEI",
+      "EREI",
+      "REEI"
+    ],
+    "857": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "858": [
+      "IEEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "859": [
+      "CGEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "860": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "861": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "862": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "863": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "864": [
+      "CGEI",
+      "REEI"
+    ],
+    "865": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "866": [
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "867": [
+      "FSEI",
+      "REEI"
+    ],
+    "868": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "869": [
+      "EREI",
+      "IEEI"
+    ],
+    "870": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "871": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "872": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "873": [
+      "CGEI",
+      "FSEI"
+    ],
+    "874": [
+      "FSEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "875": [
+      "CGEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "876": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "877": [
+      "FSEI",
+      "IEEI"
+    ],
+    "878": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "879": [
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "880": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "TLEI",
+      "TTEI"
+    ],
+    "881": [
+      "CGEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "882": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "883": [
+      "EREI",
+      "REEI"
+    ],
+    "884": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TSEI"
+    ],
+    "885": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "886": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "887": [
+      "CPEI",
+      "MEI",
+      "TTEI"
+    ],
+    "888": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TLEI"
+    ],
+    "889": [
+      "CPEI",
+      "MEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "890": [
+      "CGEI",
+      "EREI",
+      "TTEI"
+    ],
+    "891": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TSEI"
+    ],
+    "892": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI"
+    ],
+    "893": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "894": [
+      "CPEI"
+    ],
+    "895": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "896": [
+      "CPEI",
+      "IEEI",
+      "MEI"
+    ],
+    "897": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "898": [
+      "CGEI",
+      "FSEI",
+      "MEI"
+    ],
+    "899": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "900": [
+      "CGEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "901": [
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TTEI"
+    ],
+    "902": [
+      "REEI"
+    ],
+    "903": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TLEI",
+      "TTEI"
+    ],
+    "904": [
+      "CPEI",
+      "MEI",
+      "TLEI"
+    ],
+    "905": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "906": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "907": [
+      "REEI",
+      "TTEI"
+    ],
+    "908": [
+      "CGEI",
+      "IEEI"
+    ],
+    "909": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI",
+      "TTEI"
+    ],
+    "910": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI"
+    ],
+    "911": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "912": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "913": [
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "914": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "TTEI"
+    ],
+    "915": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI"
+    ],
+    "916": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TLEI"
+    ],
+    "917": [
+      "CGEI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "918": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "919": [
+      "MEI",
+      "REEI"
+    ],
+    "920": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TLEI"
+    ],
+    "921": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "922": [
+      "REEI",
+      "TLEI"
+    ],
+    "923": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "924": [
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "925": [
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TLEI"
+    ],
+    "926": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TSEI"
+    ],
+    "927": [
+      "CGEI",
+      "CPEI",
+      "TSEI"
+    ],
+    "928": [
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "929": [
+      "CPEI",
+      "IEEI",
+      "REEI",
+      "TTEI"
+    ],
+    "930": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "931": [
+      "CPEI",
+      "EREI",
+      "FSEI"
+    ],
+    "932": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "933": [
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "934": [
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "935": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "936": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "937": [
+      "FSEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "938": [
+      "EREI",
+      "REEI",
+      "TTEI"
+    ],
+    "939": [
+      "FSEI"
+    ],
+    "940": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "941": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI"
+    ],
+    "942": [
+      "CPEI",
+      "FSEI",
+      "REEI"
+    ],
+    "943": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "944": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI"
+    ],
+    "945": [
+      "CPEI",
+      "EREI",
+      "FSEI"
+    ],
+    "946": [
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "947": [
+      "CPEI",
+      "FSEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "948": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "949": [
+      "EREI",
+      "FSEI",
+      "TSEI"
+    ],
+    "950": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI",
+      "TSEI"
+    ],
+    "951": [
+      "CGEI",
+      "TTEI"
+    ],
+    "952": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "953": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "954": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "955": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "IEEI"
+    ],
+    "956": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI"
+    ],
+    "957": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "958": [
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "959": [
+      "CGEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "960": [
+      "CGEI",
+      "EREI",
+      "FSEI",
+      "REEI"
+    ],
+    "961": [
+      "EREI",
+      "REEI",
+      "TSEI"
+    ],
+    "962": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "963": [
+      "EREI",
+      "IEEI"
+    ],
+    "964": [
+      "CGEI",
+      "EREI",
+      "MEI",
+      "TTEI"
+    ],
+    "965": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "966": [
+      "CGEI",
+      "REEI",
+      "TLEI"
+    ],
+    "967": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "MEI"
+    ],
+    "968": [
+      "EREI"
+    ],
+    "969": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TTEI"
+    ],
+    "970": [
+      "EREI",
+      "FSEI"
+    ],
+    "971": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TTEI"
+    ],
+    "972": [
+      "FSEI",
+      "MEI",
+      "REEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "973": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI"
+    ],
+    "974": [
+      "CGEI",
+      "CPEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "975": [
+      "CGEI",
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "976": [
+      "FSEI",
+      "MEI",
+      "REEI"
+    ],
+    "977": [
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI"
+    ],
+    "978": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "979": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "REEI"
+    ],
+    "980": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "MEI"
+    ],
+    "981": [
+      "CGEI",
+      "REEI",
+      "TLEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "982": [
+      "FSEI",
+      "IEEI",
+      "REEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "983": [
+      "CPEI"
+    ],
+    "984": [
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "985": [
+      "CPEI",
+      "IEEI",
+      "MEI",
+      "REEI"
+    ],
+    "986": [
+      "CGEI",
+      "CPEI",
+      "FSEI"
+    ],
+    "987": [
+      "CGEI",
+      "CPEI",
+      "REEI",
+      "TSEI"
+    ],
+    "988": [
+      "CGEI",
+      "CPEI",
+      "IEEI",
+      "REEI"
+    ],
+    "989": [
+      "FSEI",
+      "REEI",
+      "TSEI"
+    ],
+    "990": [
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "MEI",
+      "TSEI",
+      "TTEI"
+    ],
+    "991": [
+      "CGEI",
+      "CPEI",
+      "IEEI"
+    ],
+    "992": [
+      "CGEI",
+      "CPEI",
+      "FSEI",
+      "TTEI"
+    ],
+    "993": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "REEI",
+      "TLEI"
+    ],
+    "994": [
+      "CPEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "995": [
+      "CPEI",
+      "FSEI",
+      "MEI",
+      "TTEI"
+    ],
+    "996": [
+      "CGEI",
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "REEI",
+      "TLEI"
+    ],
+    "997": [
+      "CPEI",
+      "EREI",
+      "IEEI",
+      "MEI",
+      "REEI",
+      "TTEI"
+    ],
+    "998": [
+      "CGEI",
+      "CPEI",
+      "REEI"
+    ],
+    "999": [
+      "CPEI",
+      "EREI",
+      "FSEI",
+      "IEEI",
+      "TTEI"
+    ],
+    "1000": [
+      "CPEI",
+      "REEI",
+      "TLEI",
+      "TSEI"
+    ]
+  }
+}

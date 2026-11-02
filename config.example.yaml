@@ -14,6 +14,13 @@ simulation:
   # --- 时间与批次 ---
   max_sim_time: 360000         # 总仿真时长（秒）。每交易日=3600s，100交易日=360000s
   snapshot_interval: 3600      # 交易日快照间隔（秒），即一个交易日的仿真时长
+
+  # --- 集合竞价（A 股制度）---
+  # 开盘/收盘集合竞价时长（仿真秒，0=关闭）。按 3600s/日对应真实 09:15-09:25 与 14:57-15:00 折算：
+  # 3600 × 10/337 ≈ 107s，3600 × 3/337 ≈ 32s。竞价期间只收单不撮合，结束时以单一价格集中成交；
+  # 启用后未成交委托在收盘后失效，涨跌停按当日收盘价更新
+  call_auction_open_seconds: 107
+  call_auction_close_seconds: 32
   batch_size: 300              # 每批最大并发 Agent 数
   batch_timeout: 180           # 每批 LLM 推理的最大等待时间（秒）
   event_window: 600.0          # 事件窗口（秒）：扩大窗口以聚集更多 Agent 到同一批次
@@ -65,7 +72,7 @@ agent:
   # 幂律分布参数（cash_mode=power_law 时生效）
   cash_min: 5000
   cash_max: 500000
-  cash_alpha: 1.16             # 幂律指数，越大分布越陡（大多数人钱少）
+  cash_alpha: 1.16             # 截断Pareto尾指数(须>0)；越小尾越厚、财富越不均等（多数人钱少、少数极富）
   # 等额分布参数（cash_mode=equal 时生效）
   cash_equal_amount: 200000
   # 按 ToM 阶数差异化资金（最高优先级，设置后覆盖 cash_mode）
@@ -121,6 +128,18 @@ market_indices:
   quotes_maxlen: 2000
 
 # ================================================================
+#  A 股交易制度（每条均可开关；缺省值 = 关闭 T+1 / 开启涨跌停 / 整手取 orderbook.lot_size / 禁止融券）
+# ================================================================
+market_rules:
+  t_plus_one: true                 # T+1：当日买入的股份次日才能卖出（提示词持仓会标注“今买/可卖”）
+  price_limit_enabled: true        # 涨跌停板：比例见 orderbook.price_limit_pct；关闭后价格不设上下限
+  price_limit_rounding: round      # 涨跌停价取整：round = 交易所规则四舍五入到 0.01；outward = 向外取整
+  price_limit_pct_by_symbol: {}    # 按标的覆盖比例，例如 {TTEI: 0.20}（科创/创业板 ±20%，ST ±5%）
+  lot_size: 100                    # 整手：买入须为 100 股整数倍；卖出按整手，零股可一次性卖出；做市商播种也按整手
+  allow_short_selling: false       # 融券限制：false = 只能卖出实际持有且可卖的股份；true = 允许融券卖出形成负持仓
+  short_sell_max_ratio: 0.5        # 允许融券时，融券总市值上限 = 总资产 × 此比例
+
+# ================================================================
 #  4. 订单簿参数
 # ================================================================
 orderbook:
@@ -171,6 +190,7 @@ social:
   reputation_window: 20        # 事后分析用的预测历史窗口
   reputation_initial: 1.0      # 所有 agent 起始声誉
   reputation_neutral_threshold: 0.2
+  reputation_return_neutral_threshold: 0.0   # |实际收益| <= 此值视为无方向，不计对错（价格未变不判为下跌）
   reputation_min_window: 3
   reputation_max_pending: 50000
   # 多因子权重：
@@ -201,6 +221,8 @@ news_events_config:
   # --- 默认模式（experimental_daily_title_mode=false）---
   news_file: data/news.json    # 新闻数据文件
   news_per_day: 4              # 每交易日随机选取的新闻条数
+  news_per_agent: 0            # 每个 Agent 随机看到的条数（0=全部可见；>0 时建议 news_per_day: 0 注入全天所有新闻）
+  news_window_seconds: 0      # 新闻有效窗口（仿真秒）：>0 时 Agent 醒来只看到最近这段时间内的新闻；0=整个交易日有效
   coverage_cycle: 3            # 覆盖周期：每 N 天所有指数至少出现一次
   # --- 实验模式（experimental_daily_title_mode=true）---
   # 开启后使用 news2 按日全量标题推送，用于预测拟合实验
@@ -241,6 +263,9 @@ dashboard:
   max_recent_events: 200
   # --- 图表参数 ---
   price_trend_maxlen: 600
+  # --- K 线（lightweight-charts）---
+  intraday_bar_seconds: 0      # 盘中 K 线分桶秒数；0=自动（一个交易日映射到 09:30~15:00 共 330 分钟，每分钟一根）
+  intraday_bars_maxlen: 600    # 每个标的保留的盘中 bar 数
   sentiment_trend_maxlen: 600
   deviation_trend_maxlen: 600
   sentiment_window: 500
@@ -259,7 +284,7 @@ dashboard:
 # ================================================================
 api:
   inference:
-    temperature: 0.7
+    temperature: 1.0
     max_tokens: 1024
     print_full_prompt: false
     debug_print: false
@@ -272,6 +297,7 @@ api:
       model: "<your-model-name>"
       max_concurrency: 20
       timeout: 60
+      tool_choice: required       # 可选：覆盖业务层发出的 required 策略，如 required/auto/none
       extra_body: {}
 
   # ToM 阶数 → 使用的服务商（轮询）

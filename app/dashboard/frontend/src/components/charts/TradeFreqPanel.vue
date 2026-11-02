@@ -24,7 +24,7 @@ const tradeFreqByTom = computed(() => {
 <template>
   <div class="card">
     <div class="card-title">交易频率分析
-      <span class="info-btn" @mouseenter="showTip('tf')" @mouseleave="hideTip">❕</span>
+      <span class="info-btn" @mouseenter="showTip('tf')" @mouseleave="hideTip">i</span>
       <div v-if="activeTooltip === 'tf'" class="custom-tooltip">{{ tip }}</div>
     </div>
     <div class="wealth-list">

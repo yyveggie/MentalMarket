@@ -24,6 +24,14 @@ from pathlib import Path
 
 import yaml
 
+# 让 Python 的 HTTPS 客户端使用操作系统信任库（macOS 钥匙串 / 系统 CA）：校内 LLM 网关等使用自有 CA 签发的证书，
+# certifi 自带的公共根证书不认，但系统已安装其 CA。仍然做完整证书校验，只是换了信任来源。
+try:
+    import truststore as _truststore
+    _truststore.inject_into_ssl()
+except ImportError:  # 未安装时退回 certifi 默认行为
+    pass
+
 from app.domain.agent import AgentManager
 from app.infrastructure.api_balancer import build_balancer_from_config
 from app.infrastructure.data_logger import DataLogger
@@ -32,6 +40,7 @@ from app.domain.orderbook import OrderBook, Side
 from app.domain.index_board import IndexBoard
 from app.dashboard.server import RealtimeDashboard
 from prompts import build_system_templates
+from prompts.system import describe_market_rules
 from app.domain.social_board import SocialBoard
 from app.domain.social_graph import SocialGraph
 from app.domain.reputation import ReputationTracker
@@ -76,78 +85,45 @@ def seed_orderbook(
             seed_min_qty = max(seed_min_qty, int(seed_min_qty * scale))
             qty_decay = max(1, int(qty_decay * scale))
 
-    anchor_qty = seed_max_qty * 3
+    anchor_qty = orderbook.round_to_lot(seed_max_qty * 3)
     anchor_order, anchor_trades = orderbook.submit_order(agent_id=0, side=Side.BID, price=initial_price, quantity=anchor_qty)
     if not anchor_trades and orderbook.last_price is None:
         orderbook._last_trade_price = initial_price
 
     spread = initial_price * spread_pct
+    tick = float(orderbook.tick_size)
     for i in range(n_levels):
-        bid_price = round(initial_price - spread * (i + 1), 2)
-        ask_price = round(initial_price + spread * (i + 1), 2)
-        qty = max(seed_min_qty, seed_max_qty - i * qty_decay)
+        # 低价标的（约 < 2.5 元）上 spread 小于一个 tick，四舍五入后首个卖单会与锚定买单同价而自成交；
+        # 买卖档位至少各错开 (i+1) 个 tick
+        bid_price = min(round(initial_price - spread * (i + 1), 2), round(initial_price - tick * (i + 1), 2))
+        ask_price = max(round(initial_price + spread * (i + 1), 2), round(initial_price + tick * (i + 1), 2))
+        qty = orderbook.round_to_lot(max(seed_min_qty, seed_max_qty - i * qty_decay))
         orderbook.submit_order(agent_id=0, side=Side.BID, price=bid_price, quantity=qty)
         orderbook.submit_order(agent_id=0, side=Side.ASK, price=ask_price, quantity=qty)
 
 
-def _kill_listeners_on_port(port: int) -> None:
-    """启动前清理占用 dashboard 端口的旧进程。"""
-    import shutil
-    if shutil.which("lsof") is None:
-        return
-    cmd = ["lsof", "-nP", f"-iTCP:{int(port)}", "-sTCP:LISTEN", "-t"]
+def _resolve_dashboard_port(port: int, host: str = "", max_tries: int = 20) -> int:
+    """返回可用的看板端口。端口被占用时不再终止占用进程（可能是另一个正在运行的仿真，
+    SIGKILL 会丢掉它的缓冲日志），而是顺延到下一个空闲端口并给出提示。"""
+    import socket
 
-    def _query_listeners() -> subprocess.CompletedProcess:
-        return subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-    proc = _query_listeners()
-    if proc.returncode not in (0, 1):
-        raise RuntimeError(f"failed to query port listeners via lsof (code={proc.returncode}): {proc.stderr.strip()}")
-
-    current_pid = os.getpid()
-    pids: list[int] = []
-    for line in (proc.stdout or "").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        pid = int(line)
-        if pid != current_pid:
-            pids.append(pid)
-
-    if not pids:
-        return
-
-    logger.warning("Port %d already in use, terminating existing listeners: %s", int(port), pids)
-    for pid in pids:
-        os.kill(pid, signal.SIGTERM)
-
-    deadline = time.time() + 3.0
-    alive = set(pids)
-    while alive and time.time() < deadline:
-        for pid in list(alive):
+    bind_host = "" if host in ("", "0.0.0.0", "::") else host
+    for candidate in range(int(port), int(port) + max_tries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             try:
-                os.kill(pid, 0)
+                s.bind((bind_host, candidate))
             except OSError:
-                alive.discard(pid)
-        if alive:
-            time.sleep(0.1)
-
-    for pid in list(alive):
-        logger.warning("PID %d did not exit after SIGTERM, sending SIGKILL", pid)
-        os.kill(pid, signal.SIGKILL)
-
-    # macOS 上偶发：进程已退出，但端口释放有短延迟；在绑定前再确认一次。
-    release_deadline = time.time() + 2.0
-    while time.time() < release_deadline:
-        p = _query_listeners()
-        if p.returncode == 1 or not (p.stdout or "").strip():
-            return
-        time.sleep(0.1)
-
-    p = _query_listeners()
-    if p.returncode == 0 and (p.stdout or "").strip():
-        residual = [ln.strip() for ln in (p.stdout or "").splitlines() if ln.strip()]
-        logger.warning("Port %d still reports listeners right before bind: %s", int(port), residual)
+                continue
+        if candidate != int(port):
+            logger.warning(
+                "Dashboard port %d is in use (another simulation may be running); using port %d instead",
+                int(port), candidate,
+            )
+        return candidate
+    raise RuntimeError(
+        f"no free dashboard port in range {int(port)}..{int(port) + max_tries - 1}; "
+        "stop the other process or change dashboard.port"
+    )
 
 
 async def main():
@@ -190,6 +166,13 @@ async def main():
     evo_cfg = config.get("evolution", {})
     social_cfg = config.get("social", {})
     ob_cfg = config.get("orderbook", {})
+    # A 股交易制度开关（T+1 / 涨跌停 / 整手 / 融券）；缺省值保持旧行为，lot_size 优先取 market_rules
+    market_rules = dict(config.get("market_rules", {}) or {})
+    market_rules.setdefault("lot_size", int(ob_cfg.get("lot_size", 1)))
+    market_rules.setdefault("price_limit_enabled", True)
+    market_rules.setdefault("t_plus_one", False)
+    market_rules.setdefault("allow_short_selling", False)
+    ob_cfg["lot_size"] = int(market_rules["lot_size"])
     indices_cfg = config.get("market_indices", {})
     news_events_cfg = config.get("news_events_config", {})
     dashboard_cfg = dict(config.get("dashboard", {}))
@@ -248,6 +231,7 @@ async def main():
         dislike_weight=float(social_cfg.get("reputation_dislike_weight", 0.05)),
         retweet_weight=float(social_cfg.get("reputation_retweet_weight", 0.1)),
         decay_rate=float(social_cfg.get("reputation_decay_rate", 0.97)),
+        return_neutral_threshold=float(social_cfg.get("reputation_return_neutral_threshold", 0.0)),
     ) if reputation_enabled else None
     social_board = SocialBoard(
         max_posts=int(social_cfg.get("max_posts", 5000)),
@@ -289,10 +273,12 @@ async def main():
     # 初始化推理存储
     storage_cfg = config.get("storage", {})
     resume_run_id = None
+    resuming_from_checkpoint = False
     if args.resume:
         resume_path = Path(args.resume)
         if resume_path.exists():
             resume_run_id = resume_path.name
+            resuming_from_checkpoint = (resume_path / "checkpoint.pkl").exists()
     data_logger = DataLogger(
         base_dir=storage_cfg.get("base_dir", "runs"),
         buffer_size=storage_cfg.get("buffer_size", 100),
@@ -317,7 +303,8 @@ async def main():
     await api_balancer.init()
 
     # 设置按 ToM 分层的系统 prompt 缓存
-    api_balancer.set_system_cache(build_system_templates())
+    api_balancer.set_system_cache(build_system_templates(extra_rules=describe_market_rules(market_rules)))
+    logger.info("Market rules: %s", {k: v for k, v in market_rules.items() if k != "price_limit_pct_by_symbol"})
 
     # 创建多标的订单簿
     configured_symbol = str(sim_cfg.get("symbol", "MentalMarket")).upper()
@@ -337,21 +324,17 @@ async def main():
         if _rt_syms:
             tradable_symbols = set(_rt_syms)
             configured_symbol = sorted(tradable_symbols)[0]
-            # 启动时拉取真实价格和名称，用于播种 OrderBook & 行情表
+            # 启动时拉取真实价格和名称，用于播种 OrderBook & 行情表（新浪 hq 为主，东方财富/雪球为备）
             try:
-                import akshare as ak
-                for _sym in _rt_syms:
-                    _df = ak.stock_individual_spot_xq(symbol=_sym)
-                    if _df is not None and not _df.empty:
-                        _row_map = {}
-                        for _, _row in _df.iterrows():
-                            _row_map[str(_row.iloc[0]).strip()] = _row.iloc[1]
-                        _px = float(_row_map.get("现价", 0))
-                        if _px > 0:
-                            _rt_real_prices[_sym] = _px
-                        _name = str(_row_map.get("股票名称", ""))
-                        if _name:
-                            _rt_symbol_names[_sym] = _name
+                from realtime.quote_fetcher import AkshareQuoteFetcher as _RtQuoteFetcher
+                _boot_quotes = _RtQuoteFetcher(_rt_syms, max_history=1).fetch()
+                for _sym, _q in _boot_quotes.items():
+                    _px = float(_q.get("现价", 0) or 0)
+                    if _px > 0:
+                        _rt_real_prices[_sym] = _px
+                    _name = str(_q.get("股票名称", "") or "")
+                    if _name and _name != _sym:
+                        _rt_symbol_names[_sym] = _name
                 logger.info("Realtime mode: fetched real prices %s, names %s", _rt_real_prices, _rt_symbol_names)
             except Exception as _e:
                 logger.warning("Realtime mode: failed to fetch real prices, using initial_price: %s", _e)
@@ -359,6 +342,9 @@ async def main():
 
     sim_cfg["symbol"] = configured_symbol
     sim_cfg["_ob_cfg"] = ob_cfg
+    sim_cfg["_market_rules"] = market_rules
+    sim_cfg["news_per_agent"] = int((config.get("news_events_config", {}) or {}).get("news_per_agent", 0) or 0)
+    sim_cfg["news_window_seconds"] = float((config.get("news_events_config", {}) or {}).get("news_window_seconds", 0) or 0)
     latest_close_map = index_board.latest_close_map() if index_board is not None else {}
     # 实时模式：用真实价格覆盖 latest_close_map
     if _rt_real_prices:
@@ -375,12 +361,16 @@ async def main():
     for symbol in sorted(tradable_symbols):
         ref_price_raw = latest_close_map.get(symbol)
         ref_price = float(ref_price_raw if ref_price_raw is not None else initial_price)
+        _pct_by_symbol = market_rules.get("price_limit_pct_by_symbol") or {}
+        _pct = float(_pct_by_symbol.get(symbol, ob_cfg.get("price_limit_pct", 0.10)))
         ob = OrderBook(
             max_trade_log=int(ob_cfg.get("max_trade_log", 200000)),
             tick_size=float(ob_cfg.get("tick_size", 0.01)),
-            lot_size=int(ob_cfg.get("lot_size", 1)),
-            price_limit_pct=float(ob_cfg.get("price_limit_pct", 0.10)),
+            lot_size=int(market_rules["lot_size"]),
+            price_limit_pct=_pct,
             limit_reference_price=ref_price,
+            price_limit_enabled=bool(market_rules.get("price_limit_enabled", True)),
+            price_limit_rounding=str(market_rules.get("price_limit_rounding", "round")),
         )
         ob.order_ttl = float(ob_cfg.get("order_ttl", 0))
         est_position = int(n_agents * est_avg_cash * avg_stock_ratio / n_tradable / max(0.01, ref_price)) if ref_price > 0 else 0
@@ -429,8 +419,10 @@ async def main():
         tom_levels = {aid: a.tom_level for aid, a in agent_mgr.agents.items()}
         # 先绑定声誉追踪器，保证 init_agents 内部触发的 KOL 复核能读到正确声誉
         social_graph.set_reputation_tracker(reputation_tracker)
+        social_graph.set_trading_day_seconds(float(snapshot_interval))
         social_graph.init_agents(
-            agent_ids=list(agent_mgr.agents.keys()),
+            # 虚拟做市商（agent 0）不参与社交网络：既不随机关注他人，也不能被关注
+            agent_ids=[aid for aid in agent_mgr.agents.keys() if aid != 0],
             tom_levels=tom_levels,
             kol_reputation_threshold=float(social_cfg.get("kol_reputation_threshold", 5.0)),
             kol_reputation_loss_threshold=float(social_cfg.get("kol_reputation_loss_threshold", 3.0)),
@@ -446,19 +438,21 @@ async def main():
             data_logger.log_reputation_history(evt)
         reputation_tracker.set_event_callback(_on_reputation_event)
 
-    # 记录 Agent 初始状态
-    data_logger.log_agents_init_batch(agent_mgr.agents)
+    # 记录 Agent 初始状态（续跑时 run 目录已有原始记录，此处的随机初始化并非真实初始状态，不再重复写入）
+    if not resuming_from_checkpoint:
+        data_logger.log_agents_init_batch(agent_mgr.agents)
 
     # 创建仿真引擎
     if dashboard_enabled:
-        _kill_listeners_on_port(int(dashboard_cfg.get("port", 8765)))
+        dashboard_host = str(dashboard_cfg.get("host", "127.0.0.1"))
+        dashboard_port = _resolve_dashboard_port(int(dashboard_cfg.get("port", 8765)), host=dashboard_host)
         dashboard = RealtimeDashboard(
             agent_manager=agent_mgr,
             orderbook=orderbooks,
             index_board=index_board,
             data_logger=data_logger,
-            host=str(dashboard_cfg.get("host", "127.0.0.1")),
-            port=int(dashboard_cfg.get("port", 8765)),
+            host=dashboard_host,
+            port=dashboard_port,
             l2_depth=int(dashboard_cfg.get("l2_depth", l2_depth)),
             l2_quote_orders=int(dashboard_cfg.get("l2_quote_orders", 6)),
             trading_day_seconds=float(dashboard_cfg.get("trading_day_seconds", snapshot_interval)),
@@ -617,6 +611,10 @@ async def main():
                 )
             else:
                 news_per_day = int(news_events_cfg.get("news_per_day", 4))
+                all_news_mode = news_per_day <= 0
+                if all_news_mode:
+                    # 0 = 每天全部新闻都注入（不做按指数覆盖抽样），配合 news_per_agent 让每个 Agent 随机看到其中几条
+                    news_per_day = max(len(v) for v in by_day.values()) if by_day else 0
                 coverage_cycle = int(news_events_cfg.get("coverage_cycle", 3))
 
                 recent_indices: list[set[str]] = []
@@ -643,6 +641,10 @@ async def main():
 
                     selected: list[dict] = []
                     used_indices: set[str] = set()
+                    if all_news_mode:
+                        selected = list(pool)
+                        used_indices = {idx for idx in by_index if idx}
+                        priority_order = []
                     for idx in priority_order:
                         if len(selected) >= news_per_day:
                             break
@@ -652,7 +654,7 @@ async def main():
                         selected.append(random.choice(candidates))
                         used_indices.add(idx)
 
-                    if len(selected) < news_per_day:
+                    if len(selected) < news_per_day and not all_news_mode:
                         remaining = [it for it in pool if it not in selected]
                         random.shuffle(remaining)
                         for it in remaining:
@@ -684,6 +686,8 @@ async def main():
         if ckpt_path.exists():
             engine.restore_checkpoint(str(ckpt_path))
             logger.info("Resumed from checkpoint: %s", ckpt_path)
+            # 丢弃 checkpoint 之后（崩溃前）已落盘的记录，避免续跑后重复行与 decision_id 复用
+            data_logger.truncate_after_sim_time(engine._sim_time)
             if dashboard is not None:
                 dashboard.replay_historical_records(Path(args.resume))
         else:
@@ -923,4 +927,10 @@ async def main():
 
 
 if __name__ == "__main__":
+    try:
+        import uvloop
+        uvloop.install()
+        logger.info("uvloop enabled")
+    except ImportError:
+        pass
     asyncio.run(main())

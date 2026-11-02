@@ -21,7 +21,7 @@ function fmt(v: number): string {
 <template>
   <div class="card">
     <div class="card-title">做市商补贴
-      <span class="info-btn" @mouseenter="showTip('mm')" @mouseleave="hideTip">❕</span>
+      <span class="info-btn" @mouseenter="showTip('mm')" @mouseleave="hideTip">i</span>
       <div v-if="activeTooltip === 'mm'" class="custom-tooltip">{{ tip }}</div>
     </div>
     <div class="stat-grid">
